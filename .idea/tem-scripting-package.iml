@@ -7,9 +7,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
-  <component name="PyDocumentationSettings">
-    <option name="format" value="PLAIN" />
-    <option name="myDocStringFormat" value="Plain" />
+  <component name="PackageRequirementsSettings">
+    <option name="requirementsPath" value="" />
   </component>
   <component name="TestRunnerService">
     <option name="PROJECT_TEST_RUNNER" value="py.test" />
