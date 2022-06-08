@@ -94,14 +94,14 @@ class ModeMixin:
         else:
             print("The requested projection mode (" + new_projection_mode + ") isn't recognized.. no changes made.")
 
-    def get_projection_submode(self):
+    def get_projection_sub_mode(self):
         """
         :return: str:
             The current projection sub-mode.
         """
         return self._tem.Projection.SubModeString
 
-    def print_projection_submode(self):
+    def print_projection_sub_mode(self):
         """
         :return: str:
             The current projection sub-mode, along with the zoom range.

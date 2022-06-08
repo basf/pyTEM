@@ -407,17 +407,17 @@ class StageMixin:
         """
         stage_type = self._tem.Stage.Holder
         if stage_type == 0:
-            print("hoInvalid (0): The ‘invalid’ holder. No holder has been selected yet or the current selection has "
-                  "become invalid.")
+            print("hoNone (0): Holder is removed.")
         elif stage_type == 1:
             print("hoSingleTilt (1): Single tilt holder.")
         elif stage_type == 2:
             print("hoDoubleTilt (2): Double tilt holder.")
-        elif stage_type == 3:
-            print("hoNone (3): Holder is removed.")
         elif stage_type == 4:
-            print("hoPolara (4): Non-removable Polara holder.")
+            print("hoInvalid (4): The ‘invalid’ holder. No holder has been selected yet or the current selection has "
+                  "become invalid.")
         elif stage_type == 5:
-            print("hoDualAxis (5): Dual-axis tomography holder.")
+            print("hoPolara (5): Non-removable Polara holder.")
+        elif stage_type == 6:
+            print("hoDualAxis (6): Dual-axis tomography holder.")
         else:
             raise Exception("Stage type - " + str(stage_type) + " - not recognized.")
