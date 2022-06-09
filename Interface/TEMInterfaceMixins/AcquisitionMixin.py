@@ -28,10 +28,10 @@ class AcquisitionMixin:
             - 'BM-Falcon' (use this camera carefully!)
         :param binning: str:
             One of:
-            - '4k' for 4k images
-            - '2k' for 2k images
-            - '1k' for 1k images
-            - '0.5k' for 05.k images
+            - '4k' for 4k images (4096 x 4096; sampling=1)
+            - '2k' for 2k images (2048 x 2048; sampling=2)
+            - '1k' for 1k images (1024 x 1024; sampling=3)
+            - '0.5k' for 05.k images (512 x 512; sampling=8)
         :param exposure_time: float:
             Exposure time is in seconds. Please expose responsibly.
         :param readout_area: int:
@@ -59,13 +59,13 @@ class AcquisitionMixin:
         if binning is not None:  # if a binning keyword argument was entered
             supported_binnings = camera_single_acquisition.CameraSettings.Capabilities.SupportedBinnings
             if binning == '4k':
-                camera_settings.Binning = supported_binnings[0]  # 4k images
+                camera_settings.Binning = supported_binnings[0]  # 4k images (4096 x 4096)
             elif binning == '2k':
-                camera_settings.Binning = supported_binnings[1]  # 2k images
+                camera_settings.Binning = supported_binnings[1]  # 2k images (2048 x 2048)
             elif binning == '1k':
-                camera_settings.Binning = supported_binnings[2]  # 1k images
+                camera_settings.Binning = supported_binnings[2]  # 1k images (1024 x 1024)
             elif binning == '0.5k':
-                camera_settings.Binning = supported_binnings[3]  # 0.5k images
+                camera_settings.Binning = supported_binnings[3]  # 0.5k images (512 x 512)
             else:
                 print('Unknown Binning Type. Binning not changed.')
 
