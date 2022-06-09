@@ -40,5 +40,30 @@ def hello_world():
     root.mainloop()
 
 
+def display_text(entry, label):
+    string = entry.get()
+    label.configure(text=string)
+
+
+def get_user_input():
+    # Create an instance of Tkinter frame
+    root = tk.Tk()
+
+    # Initialize a Label to display the User Input
+    label = ttk.Label(root, text="", font=("Courier 22 bold"))
+    label.pack()
+
+    # Create an Entry widget to accept User Input
+    entry = ttk.Entry(root, width=40)
+    entry.focus_set()
+    entry.pack()
+
+    # Create a Button to validate Entry Widget
+    ttk.Button(root, text="Okay", width=20, command=lambda: display_text(entry, label)).pack(pady=20)
+
+    root.mainloop()
+
+
 if __name__ == "__main__":
-    hello_world()
+    # hello_world()
+    get_user_input()
