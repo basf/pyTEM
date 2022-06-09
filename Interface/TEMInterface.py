@@ -94,6 +94,15 @@ class TEMInterface(ModeMixin,  # Microscope mode controls, including those for p
         """
         self._tem.NormalizeAll()
 
+    def make_safe(self):
+        """
+        Return the microscope to a safe state.
+        :return: None
+        """
+        self.close_column_valve()
+        self.blank_beam()
+        # TODO: What else
+
     """
     When multiple of the same methods exist across mixins, override to ensure we get the one we want.
     """
