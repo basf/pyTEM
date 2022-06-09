@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
 
 
 def hello_world():
@@ -64,6 +65,21 @@ def get_user_input():
     root.mainloop()
 
 
+def get_save_directory():
+
+    root = tk.Tk()
+
+    # root.filename = filedialog.asksaveasfilename(initialdir="/", title="Select out directory",
+    #                                              filetypes=(("jpeg files", "*.jpg"), ("all files", "*.*")))
+    # print(root.filename)
+
+    root.directory = filedialog.askdirectory()
+
+    print(root.directory)
+
+
 if __name__ == "__main__":
     # hello_world()
-    get_user_input()
+    # get_user_input()
+
+    get_save_directory()

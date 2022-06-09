@@ -2,6 +2,7 @@ import sys
 import tkinter as tk
 import warnings
 from tkinter import ttk
+from tkinter import filedialog
 
 # from Interface.TEMInterface import TEMInterface
 
@@ -202,6 +203,10 @@ def get_camera_parameters(microscope):
             - '1k' for 1k images (1024 x 1024; sampling=3)
             - '0.5k' for 05.k images (512 x 512; sampling=8)
     """
+    # TODO: Obtain option lists directly from the microscope object
+    camera_options = ['BM-Ceta', 'BM-Falcon']
+    sampling_options = ['4k (4096 x 4096)', '2k (2048 x 2048)', '1k (1024 x 1024)', '0.5k (512 x 512)']
+
     root = tk.Tk()
     style = ttk.Style()
 
@@ -219,35 +224,120 @@ def get_camera_parameters(microscope):
     sampling_label = ttk.Label(root, text="Sampling:")
     sampling_label.grid(column=0, row=3, sticky="e", padx=5, pady=5)
 
-    # Add entry boxes for user input.
+    # Create widgets for user entry
     # TODO: Add tkinter validation to Entry widgets
     camera = tk.StringVar()
-    camera_entrybox = ttk.Entry(root, textvariable=camera)
-    camera_entrybox.grid(column=1, row=1, padx=5, pady=5)
-    integration_time = tk.StringVar()
-    integration_time_entrybox = ttk.Entry(root, textvariable=integration_time)
-    integration_time_entrybox.grid(column=1, row=2, padx=5, pady=5)
-    sampling = tk.StringVar()
-    sampling_entrybox = ttk.Entry(root, textvariable=sampling)
-    sampling_entrybox.grid(column=1, row=3, padx=5, pady=5)
+    camera.set(camera_options[0])  # Default to the first option in the list
+    camera_option_menu = ttk.OptionMenu(root, camera, camera_options[0], *camera_options)
+    camera_option_menu.grid(column=1, row=1, padx=5, pady=5)
 
-    # Add labels showing the units.
+    integration_time = tk.StringVar()  # TODO: Add a default value into this entry box
+    integration_time_entry_box = ttk.Entry(root, textvariable=integration_time)
+    integration_time_entry_box.grid(column=1, row=2, padx=5, pady=5)
+
+    sampling = tk.StringVar()
+    sampling.set(sampling_options[0])  # Default to the first option in the list
+    sampling_option_menu = ttk.OptionMenu(root, sampling, sampling_options[0], *sampling_options)
+    sampling_option_menu.grid(column=1, row=3, padx=5, pady=5)
+
+    # Add label showing integration time units.
     stop_units_label = ttk.Label(root, text="s")
     stop_units_label.grid(column=2, row=2, sticky="w", padx=5, pady=5)
 
     # Create continue and exit buttons
     continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=1, row=4, padx=5, pady=5)
+    continue_button.grid(column=0, columnspan=3, row=4, padx=5, pady=5)
     exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                              style="big.TButton")
-    exit_button.grid(column=1, row=5, padx=5, pady=5)
+    exit_button.grid(column=0, columnspan=3, row=5, padx=5, pady=5)
 
     style.configure('big.TButton', font=(None, 10), foreground="blue4")
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
     root.mainloop()
 
-    return str(camera.get()), float(integration_time.get()), str(sampling.get())
+    return str(camera.get()), float(integration_time.get()), str(sampling.get())[0:2]
+
+
+def get_out_path(microscope):
+    """
+    Get the out directory, where we will store the microED sequence.
+
+    :param microscope: TEMInterface (or None):
+        The microscope interface, needed to return the microscope to a safe state if the user exits the script
+         through the quit button on the message box.
+
+    :return: str:
+        The out directory where the microED acquisition results will be saved.
+    """
+    # Create a pop-up warning the user they are about to have to select an out directory.
+    root = tk.Tk()
+    style = ttk.Style()
+
+    root.title("Select out directory")
+    root.iconbitmap("./ico/BASF.ico")  # Add BASF Icon
+
+    # Build a message, letting the user know that we need directory and file name information
+    message = ttk.Label(root, text="Where would you like to save the results?", font=(None, 15))
+    message.grid(column=0, row=0, columnspan=2, sticky='w', padx=5, pady=5)
+
+    # Create 'select directory' and 'exit' buttons
+    continue_button = ttk.Button(root, text="Select Directory", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, columnspan=2, row=1, padx=5, pady=5)
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=0, columnspan=2, row=2, padx=5, pady=5)
+
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+    root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+
+    root.mainloop()
+
+    # Make the user select an out directory
+    root = tk.Tk()
+    root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+    root.directory = filedialog.askdirectory()
+    out_dir = str(root.directory)
+
+    root.destroy()
+
+    # Make the user select a file-name
+    root = tk.Tk()
+    style = ttk.Style()
+
+    root.title("Select file name")
+    root.iconbitmap("./ico/BASF.ico")  # Add BASF Icon
+
+    message = ttk.Label(root, text="Please select a file name:", font=(None, 15))
+    message.grid(column=0, row=0, columnspan=3, sticky='w', padx=5, pady=5)
+
+    # Label the filename box with the out directory
+    camera_label = ttk.Label(root, text=out_dir + "/")
+    camera_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
+
+    file_name = tk.StringVar()
+    file_name_entry_box = ttk.Entry(root, textvariable=file_name)
+    file_name_entry_box.grid(column=1, row=1, padx=5, pady=5)
+
+    # Add label showing the file extension
+    stop_units_label = ttk.Label(root, text=".emi")  # TODO: Check this is the file extension
+    stop_units_label.grid(column=2, row=1, sticky="w", padx=5, pady=5)
+
+    # Create continue and exit buttons
+    continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, columnspan=2, row=2, padx=5, pady=5)
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
+
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+    root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+
+    root.mainloop()
+
+    # Build and return the complete path
+    out_path = out_dir + str(file_name.get()) + ".emi"
+    return out_path
 
 
 def ued_tilt_series():
@@ -284,11 +374,10 @@ def ued_tilt_series():
 
         # Get the required camera parameters
         camera_name, integration_time, sampling = get_camera_parameters(microscope=microscope)
-        print(camera_name)
-        print(integration_time)
-        print(sampling)
 
-
+        # Get the out path (where in the file system to save the results)
+        out_path = get_out_path(microscope=microscope)
+        print(out_path)
 
 
     except KeyboardInterrupt:
