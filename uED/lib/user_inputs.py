@@ -9,6 +9,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from datetime import date
 
+from uED.lib.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 from uED.lib.exit_script import exit_script
 
 
@@ -38,7 +39,8 @@ def get_tilt_range(microscope):
     style = ttk.Style()
 
     root.title("Please ensure your seat back is straight up and your tray table is stowed.")
-    root.iconbitmap("./ico/BASF.ico")  # Add BASF Icon
+
+    add_basf_icon_to_tkinter_window(root)
 
     message = ttk.Label(root, text="Please enter the tilt range.", font=(None, 15), justify='center')
     message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
@@ -119,7 +121,8 @@ def get_camera_parameters(microscope):
     style = ttk.Style()
 
     root.title("Please review the ‘Safety Instructions’ card in the seat pocket in front of you.")
-    root.iconbitmap("./ico/BASF.ico")  # Add BASF Icon
+
+    add_basf_icon_to_tkinter_window(root)
 
     message = ttk.Label(root, text="Please provide the following acquisition\nparameters:",
                         font=(None, 15), justify='center')
@@ -186,7 +189,7 @@ def get_out_file(microscope):
 
     root.title("Take a moment to locate the exit nearest you keeping in mind that the closest usable exit may "
                "be located behind you.")
-    root.iconbitmap("./ico/BASF.ico")  # Add BASF Icon
+    add_basf_icon_to_tkinter_window(root)
 
     # Build a message, letting the user know that we need directory and file name information
     message = ttk.Label(root, text="Where would you like to save the results?", font=(None, 15), justify='center')

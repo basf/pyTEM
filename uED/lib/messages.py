@@ -5,6 +5,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from uED.lib.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 from uED.lib.exit_script import exit_script
 
 
@@ -12,7 +13,7 @@ def get_welcome_message():
     """
     :return: str: A welcome message.
     """
-    title = "Good morning ladies and gentlemen. On behalf of TEM Air, it is my pleasure to welcome you aboard flight " \
+    title = "Good morning ladies and gentlemen. On behalf of TEM Air, it's my pleasure to welcome you aboard flight " \
             "uED-4567."
     message = "Welcome to BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging " \
               "script. MicroED allows fast, high resolution 3D structure determination of small chemical " \
@@ -113,7 +114,7 @@ def display_message(title, message, microscope, position="centered"):
     style = ttk.Style()
 
     root.title(title)
-    root.iconbitmap("./ico/BASF.ico")  # Add BASF Icon
+    add_basf_icon_to_tkinter_window(root)
 
     window_width = 650
     message = ttk.Label(root, text=message, wraplength=window_width, font=(None, 15), justify='center')
@@ -132,9 +133,16 @@ def display_message(title, message, microscope, position="centered"):
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
     elif position == "out-of-the-way":
-        pass  # TODO: Position the window somewhere out of the way. Probably in the upper right-hand corner.
-
+        root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=root.winfo_height(),
+                                                        x=int(0.65 * root.winfo_screenwidth()),
+                                                        y=int(0.025 * root.winfo_screenheight())))
     else:
         raise Exception("Display message position '" + str(position) + "' not recognized.")
 
     root.mainloop()
+
+
+if __name__ == "__main__":
+    """ Testing """
+    title_, message_ = get_alignment_message()
+    display_message(title=title_, message=message_, microscope=None, position="out-of-the-way")
