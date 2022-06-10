@@ -83,7 +83,9 @@ class ModeMixin:
             print("The microscope is already in '" + new_projection_mode + "' mode.. no changes made.")
             return
 
-        # TODO: Insert screen before switching modes to avoid damaging the camera.
+        # Insert the screen before switching moves to avoid damaging the camera
+        if self.get_screen_position() == 'Removed':
+            self.insert_screen()
 
         if new_projection_mode in {"Imaging", "I"}:
             self._tem.Projection.Mode = 1  # Switch microscope into imaging mode
@@ -163,3 +165,25 @@ class ModeMixin:
 
         else:
             print("The requested illumination mode (" + new_mode + ") isn't recognized.. no changes made.")
+
+    def get_screen_position(self):
+        """
+        :return: str: The position of the phosphor screen, one of:
+            - 'Inserted' (required to use the Flucam to view the live image)
+            - 'Removed' (required to take images)
+        """
+        raise NotImplemented  # TODO
+
+    def insert_screen(self):
+        """
+        Insert the screen.
+        :return: None
+        """
+        raise NotImplemented  # TODO
+
+    def remove_screen(self):
+        """
+        Remove the screen.
+        :return:
+        """
+        raise NotImplemented  # TODO
