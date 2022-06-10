@@ -421,3 +421,33 @@ class StageMixin:
             print("hoDualAxis (6): Dual-axis tomography holder.")
         else:
             raise Exception("Stage type - " + str(stage_type) + " - not recognized.")
+
+    def get_stage_limits(self, axis):
+        """
+        Get stage limits along a certain axis.
+
+        # TODO: This function remains untested.
+
+        :param axis: str:
+            The axis of which to need the stage limits.
+        :return: float, float: min, max:
+            The minimum and maximum allowable stage values along that axis, in meters / degrees.
+        """
+        axis = axis.lower()
+        if axis == 'x':  # m -> um
+            return 1e6 * self._tem.Stage.AxisData.MinPos.X, 1e6 * self._tem.Stage.AxisData.MaxPos.X
+
+        elif axis == 'y':  # m -> um
+            return 1e6 * self._tem.Stage.AxisData.MinPos.Y, 1e6 * self._tem.Stage.AxisData.MaxPos.Y
+
+        elif axis == 'z':   # m -> um
+            return 1e6 * self._tem.Stage.AxisData.MinPos.Z, 1e6 * self._tem.Stage.AxisData.MaxPos.Z
+
+        elif axis in {'alpha', 'a'}:  # rad -> deg
+            return math.degrees(self._tem.Stage.AxisData.MinPos.A), math.degrees(self._tem.Stage.AxisData.MaxPos.A)
+
+        elif axis in {'beta', 'b'}:  # rad -> deg
+            return math.degrees(self._tem.Stage.AxisData.MinPos.B), math.degrees(self._tem.Stage.AxisData.MaxPos.B)
+
+        else:
+            raise Exception("Error: axis '" + str(axis) + "' not recognized!")
