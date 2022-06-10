@@ -30,11 +30,13 @@ def get_initialization_message():
             "carry-on items."
     message = "In order to initialize the microscope for MicroED, we are now going to: " \
               "\n - Connect to the microscope." \
+              "\n - Insert the Flucam screen." \
               "\n - Make sure the microscope is in 'TEM' mode." \
               "\n - Make sure the microscope is in 'Imaging' mode. " \
               "\n - Zero the image shift." \
               "\n - Zero the \u03B1 tilt." \
               "\n - Normalize all lenses." \
+              "\n - Unblank the beam." \
               "\n\n To start this initialization procedure, please click the continue button."
     return title, message
 
@@ -64,15 +66,15 @@ def get_start_message():
     return title, message
 
 
-def get_end_message(out_file_path):
+def get_end_message(out_file):
     """
-    :param: out_file_path: str:
+    :param: out_file: str:
         The out file path.
     :return: str: An end message.
     """
     title = "Ladies and gentlemen, we have begun our descent."
     message = "We have now completed the MicroED tilt acquisition series!" \
-              "\n\nYour images can be found in " + out_file_path
+              "\n\nYour images can be found in " + str(out_file)
     return title, message
 
 
