@@ -101,6 +101,7 @@ class TEMInterface(ModeMixin,  # Microscope mode controls, including those for p
         """
         self.close_column_valve()
         self.blank_beam()
+        self.insert_screen()
         # TODO: What else
 
     """
