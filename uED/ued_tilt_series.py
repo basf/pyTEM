@@ -52,8 +52,11 @@ def ued_tilt_series():
         # Get tilt range info
         while True:
             start_alpha, stop_alpha, step_alpha = get_tilt_range(microscope=microscope)
+            # Check to make sure that step_alpha has the right sign
             if (start_alpha > stop_alpha and step_alpha < 0) or (start_alpha < stop_alpha and step_alpha > 0):
-                break
+                # Check to make sure the tilt range includes 0
+                if (start_alpha > 0 and stop_alpha < 0) or (start_alpha < 0 and stop_alpha > 0):
+                    break  # Input is okay  # TODO: Add tkinter validation to Entry widgets
             else:
                 warnings.warn("Invalid tilt range, please try again!")
 
@@ -61,7 +64,7 @@ def ued_tilt_series():
         while True:
             camera_name, integration_time, sampling = get_camera_parameters(microscope=microscope)
             if 0.1 < integration_time < 10:
-                break
+                break  # Input is okay  # TODO: Add tkinter validation to Entry widgets
             else:
                 warnings.warn("Invalid integration time. Integration time must be between 0.1 and 10 seconds.")
 

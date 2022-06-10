@@ -56,7 +56,6 @@ def get_tilt_range(microscope):
     step_label.grid(column=0, row=4, sticky="e", padx=5, pady=5)
 
     # Add entry boxes for user input.
-    # TODO: Add tkinter validation to Entry widgets
     start = tk.StringVar()
     start_entry_box = ttk.Entry(root, textvariable=start)
     start_entry_box.insert(0, "-10")
@@ -135,7 +134,6 @@ def get_camera_parameters(microscope):
     sampling_label.grid(column=0, row=3, sticky="e", padx=5, pady=5)
 
     # Create widgets for user entry
-    # TODO: Add tkinter validation to Entry widgets
     camera = tk.StringVar()
     camera.set(camera_options[0])  # Default to the first option in the list
     camera_option_menu = ttk.OptionMenu(root, camera, camera_options[0], *camera_options)
