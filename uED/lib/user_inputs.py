@@ -7,6 +7,7 @@ import tkinter as tk
 
 from tkinter import ttk
 from tkinter import filedialog
+from datetime import date
 
 from uED.lib.exit_script import exit_script
 
@@ -169,9 +170,9 @@ def get_camera_parameters(microscope):
     return str(camera.get()), float(integration_time.get()), str(sampling.get())[0:2]
 
 
-def get_out_path(microscope):
+def get_out_file(microscope):
     """
-    Get the out path, this is where we will store the results of the microED sequence.
+    Get the out file, this is where we will store the results of the microED sequence.
 
     :param microscope: TEMInterface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
@@ -230,6 +231,7 @@ def get_out_path(microscope):
 
     file_name = tk.StringVar()
     file_name_entry_box = ttk.Entry(root, textvariable=file_name)
+    file_name_entry_box.insert(0, "MicroED_" + str(date.today()))  # Default value
     file_name_entry_box.grid(column=1, row=1, padx=5, pady=5)
 
     # Add label showing the file extension
