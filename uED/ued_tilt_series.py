@@ -62,7 +62,7 @@ def ued_tilt_series():
 
         # Get the required camera parameters
         while True:
-            camera_name, integration_time, sampling = get_camera_parameters(microscope=microscope)
+            camera_name, integration_time, binning = get_camera_parameters(microscope=microscope)
             if 0.1 < integration_time < 10:
                 break  # Input is okay  # TODO: Add tkinter validation to Entry widgets
             else:
@@ -79,7 +79,7 @@ def ued_tilt_series():
         num_alpha = int((stop_alpha - start_alpha) / step_alpha + 1)
         alpha_arr = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
 
-        shifts = obtain_shifts(microscope=microscope, alpha_arr=alpha_arr)
+        shifts = obtain_shifts(microscope=microscope, camera=camera_name, alphas=alpha_arr[0:-1] + step_alpha / 2)
 
         # Switch to diffraction mode
         # microscope.insert_screen()  # For safety when switching modes
@@ -87,7 +87,7 @@ def ued_tilt_series():
         # microscope.remove_screen()
 
         perform_tilt_series(microscope=microscope, camera=camera_name, integration_time=integration_time,
-                            sampling=sampling, alpha_arr=alpha_arr, shifts=shifts, out_file=out_file)
+                            binning=binning, alpha_arr=alpha_arr, shifts=shifts, out_file=out_file)
 
         # The acquisition is now complete, inform the user.
         title, message = get_end_message(out_file=out_file)
