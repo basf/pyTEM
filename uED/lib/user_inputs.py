@@ -105,7 +105,7 @@ def get_camera_parameters(microscope):
             - 'BM-Ceta'
             - 'BM-Falcon'
         float: integration_time: Total exposure time.
-        str: sampling: Photo resolution, one of:
+        str: binning: Photo resolution, one of:
             - '4k' for 4k images (4096 x 4096; sampling=1)
             - '2k' for 2k images (2048 x 2048; sampling=2)
             - '1k' for 1k images (1024 x 1024; sampling=3)
@@ -113,7 +113,7 @@ def get_camera_parameters(microscope):
     """
     # TODO: Obtain option lists directly from the provided microscope object
     camera_options = ['BM-Ceta', 'BM-Falcon']
-    sampling_options = ['4k (4096 x 4096)', '2k (2048 x 2048)', '1k (1024 x 1024)', '0.5k (512 x 512)']
+    binning_options = ['4k (4096 x 4096)', '2k (2048 x 2048)', '1k (1024 x 1024)', '0.5k (512 x 512)']
 
     root = tk.Tk()
     style = ttk.Style()
@@ -130,8 +130,8 @@ def get_camera_parameters(microscope):
     camera_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
     integration_time_label = ttk.Label(root, text="Integration Time:")
     integration_time_label.grid(column=0, row=2, sticky="e", padx=5, pady=5)
-    sampling_label = ttk.Label(root, text="Sampling:")
-    sampling_label.grid(column=0, row=3, sticky="e", padx=5, pady=5)
+    binning_label = ttk.Label(root, text="binning:")
+    binning_label.grid(column=0, row=3, sticky="e", padx=5, pady=5)
 
     # Create widgets for user entry
     camera = tk.StringVar()
@@ -144,10 +144,10 @@ def get_camera_parameters(microscope):
     integration_time_entry_box.insert(0, "3")  # Default value
     integration_time_entry_box.grid(column=1, row=2, padx=5, pady=5)
 
-    sampling = tk.StringVar()
-    sampling.set(sampling_options[0])  # Default to the first option in the list
-    sampling_option_menu = ttk.OptionMenu(root, sampling, sampling_options[0], *sampling_options)
-    sampling_option_menu.grid(column=1, row=3, padx=5, pady=5)
+    binning = tk.StringVar()
+    binning.set(binning_options[0])  # Default to the first option in the list
+    binning_option_menu = ttk.OptionMenu(root, binning, binning_options[0], *binning_options)
+    binning_option_menu.grid(column=1, row=3, padx=5, pady=5)
 
     # Add label showing integration time units.
     stop_units_label = ttk.Label(root, text="seconds")
@@ -165,7 +165,7 @@ def get_camera_parameters(microscope):
 
     root.mainloop()
 
-    return str(camera.get()), float(integration_time.get()), str(sampling.get())[0:2]
+    return str(camera.get()), float(integration_time.get()), str(binning.get())[0:2]
 
 
 def get_out_file(microscope):
