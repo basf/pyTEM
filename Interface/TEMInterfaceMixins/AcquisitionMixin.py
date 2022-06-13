@@ -116,3 +116,13 @@ class AcquisitionMixin:
 
         print("\nSupports Recording Duration:")
         print(camera_single_acquisition.CameraSettings.Capabilities.SupportsRecordingDuration)
+
+    def get_available_cameras(self):
+        """
+        Get a list of the available cameras.
+        :return: list of strings:
+            A list of the available cameras, by name.
+        """
+        camera_single_acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
+        supported_cameras = camera_single_acquisition.SupportedCameras
+        return supported_cameras
