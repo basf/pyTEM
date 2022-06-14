@@ -173,7 +173,8 @@ def _complete_one_sign(microscope, camera_name, this_signs_alphas, max_images_pe
             current_index = current_index + 1
 
         # Advance the image shift so the specimen is centered at the most extreme tilt of the batch
-        microscope.set_image_shift(x=this_signs_shifts[current_index - 1], y=this_signs_shifts[current_index - 1])
+        microscope.set_image_shift(x=this_signs_shifts[current_index - 1][0],
+                                   y=this_signs_shifts[current_index - 1][1])
 
     return this_signs_shifts
 
