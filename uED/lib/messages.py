@@ -2,6 +2,7 @@
  Author:  Michael Luciuk
  Date:    Summer 2022
 """
+
 import tkinter as tk
 from tkinter import ttk
 
@@ -48,10 +49,21 @@ def get_alignment_message():
     """
     title = "Fasten your seat belt by placing the metal fitting into the buckle, and adjust the strap so it fits " \
             "low and tight around your hips."
-    message = "Using the microscope control panel, please select the desired magnification and center the microscope " \
-              "on the particle of interest. " \
+    message = "Using the microscope control panel, please select a magnification in the SA range and center the " \
+              "microscope on the particle of interest. " \
               "\n\nPlease do not adjust the stage tilt nor the image shift. " \
               "\n\nOnce the particle is centered, please click the continue button."
+    return title, message
+
+
+def get_eucentric_height_message():
+    """
+    :return: str: An eucentric height message.
+    """
+    title = "At this time, portable electronic devices must be switched into ‘airplane’ mode."
+    message = "Please, using the alpha wobble and z-axis buttons on the microscope control panel, manually set the " \
+              "microscope to the eucentric height. That is, please find and select the z-shift where tilting the " \
+              "specimen leads to a minimal lateral movement of the image."
     return title, message
 
 

@@ -43,7 +43,7 @@ class ModeMixin:
         new_mode = str(new_mode).upper()
 
         if self.get_mode() == new_mode:
-            print("The microscope is already in '" + new_mode + "' mode.. no changes made")
+            print("The microscope is already in '" + new_mode + "' mode.. no changes made.")
             return
 
         if new_mode == "TEM":
@@ -83,30 +83,38 @@ class ModeMixin:
             print("The microscope is already in '" + new_projection_mode + "' mode.. no changes made.")
             return
 
-        # Insert the screen before switching moves to avoid damaging the camera
-        if self.get_screen_position() == 'Removed':
+        screen_position = self.get_screen_position()
+
+        if screen_position == 'Removed':
+            # Insert the screen before switching moves to avoid damaging the camera
             self.insert_screen()
 
         if new_projection_mode in {"Imaging", "I"}:
             self._tem.Projection.Mode = 1  # Switch microscope into imaging mode
+            if screen_position == 'Removed':
+                # Put the screen back where the user had it
+                self.remove_screen()
 
         elif new_projection_mode in {"Diffraction", "D"}:
             self._tem.Projection.Mode = 2  # Switch microscope into diffraction mode
+            if screen_position == 'Removed':
+                # Put the screen back where the user had it
+                self.remove_screen()
 
         else:
             print("The requested projection mode (" + new_projection_mode + ") isn't recognized.. no changes made.")
 
-    def get_projection_sub_mode(self):
+    def get_projection_submode(self):
         """
         :return: str:
             The current projection sub-mode.
         """
         return self._tem.Projection.SubModeString
 
-    def print_projection_sub_mode(self):
+    def print_projection_submode(self):
         """
         :return: str:
-            The current projection sub-mode, along with the zoom range.
+            The current projection submode, along with the zoom range.
         """
         submode = self._tem.Projection.SubMode
         if submode == 1:
@@ -138,7 +146,7 @@ class ModeMixin:
             return "Microprobe"
 
         else:
-            raise Exception("Error: Projection mode " + str(self._tem.Illumination.Mode) + " not recognized.")
+            raise Exception("Error: Projection mode '" + str(self._tem.Illumination.Mode) + "' not recognized.")
 
     def set_illumination_mode(self, new_mode):
         """
@@ -154,7 +162,7 @@ class ModeMixin:
         new_mode = str(new_mode).title()
 
         if self.get_illumination_mode() == new_mode:
-            print("The microscope is already in '" + new_mode + "' mode.. no changes made")
+            print("The microscope is already in '" + new_mode + "' mode.. no changes made.")
             return
 
         if new_mode == "Nanoprobe":
@@ -168,22 +176,39 @@ class ModeMixin:
 
     def get_screen_position(self):
         """
-        :return: str: The position of the phosphor screen, one of:
-            - 'Inserted' (required to use the Flucam to view the live image)
+        :return: str: The position of the FluCam's fluorescent screen, one of:
             - 'Removed' (required to take images)
+            - 'Inserted' (required to use the FluCam to view the live image)
         """
-        raise NotImplemented  # TODO
+        if self._tem.Camera.MainScreen == 2:
+            return "Removed"
+
+        elif self._tem.Camera.MainScreen == 3:
+            return "Inserted"
+
+        else:
+            raise Exception("Error: Current screen position (" + str(self._tem.Camera.MainScreen) + ") not recognized.")
 
     def insert_screen(self):
         """
-        Insert the screen.
-        :return: None
+        Insert the FluCam's fluorescent screen.
+        This is required to use the FluCam to view the live image.
+        :return: None.
         """
-        raise NotImplemented  # TODO
+        if self.get_screen_position() == "Inserted":
+            print("The microscope screen is already inserted.. no changes made.")
+            return
+
+        self._tem.Camera.MainScreen = 3  # Insert the screen
 
     def remove_screen(self):
         """
-        Remove the screen.
-        :return:
+        Remove the FluCam's fluorescent screen.
+        This is required to take images.
+        :return: None.
         """
-        raise NotImplemented  # TODO
+        if self.get_screen_position() == "Removed":
+            print("The microscope screen is already removed.. no changes made.")
+            return
+
+        self._tem.Camera.MainScreen = 2  # Remove the screen

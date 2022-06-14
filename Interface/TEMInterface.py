@@ -48,6 +48,9 @@ class TEMInterface(ModeMixin,  # Microscope mode controls, including those for p
      facilitating communication between the "user-friendly" wrapper and the underlying Thermo-Fisher 'Instrument'
      object.
 
+    Public Attributes:
+        None.
+
     Protected Attributes:
         _tem: Thermo Fisher 'Instrument' object:
             This is used "under-the-hood" to actually interact with and control a subset the microscope's features
@@ -63,8 +66,9 @@ class TEMInterface(ModeMixin,  # Microscope mode controls, including those for p
             Matrix used to translate between the stage-plane and the beam-plane.
             This matrix is based on the image shift matrix.
 
-    Note: TEMInterface attributes cannot be made private otherwise the mixins will not be able to access them through
-     the COM object.
+    Private Attributes:
+        None.  Note: TEMInterface attributes required by another mixin cannot be made private otherwise the mixins
+                        will not be able to access them through the COM interface.
     """
 
     def __init__(self):
@@ -102,7 +106,6 @@ class TEMInterface(ModeMixin,  # Microscope mode controls, including those for p
         self.close_column_valve()
         self.blank_beam()
         self.insert_screen()
-        # TODO: What else
 
     """
     When multiple of the same methods exist across mixins, override to ensure we get the one we want.
@@ -115,4 +118,4 @@ class TEMInterface(ModeMixin,  # Microscope mode controls, including those for p
         return ModeMixin.get_projection_mode(self)
 
     def get_projection_submode(self):
-        return ModeMixin.get_projection_mode(self)
+        return ModeMixin.get_projection_submode(self)

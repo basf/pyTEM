@@ -362,6 +362,13 @@ class StageMixin:
         self._update_stage_position()  # Encase something external caused the stage to move.
         self.set_stage_position(beta=beta, speed=speed, movement_type="go")
 
+    def reset_stage_position(self):
+        """
+        Reset (zero) the stage position.
+        :return: None.
+        """
+        self.set_stage_position(x=0, y=0, z=0, alpha=0, beta=0)
+
     def print_stage_position(self):
         """
         Print out the current stage position (current x, y, z, alpha, and beta values).
@@ -426,28 +433,32 @@ class StageMixin:
         """
         Get stage limits along a certain axis.
 
-        # TODO: This function remains untested.
-
         :param axis: str:
-            The axis of which to need the stage limits.
+            The axis of which to need the stage limits. One of, 'x', 'y', 'z', 'alpha', and 'beta'.
         :return: float, float: min, max:
-            The minimum and maximum allowable stage values along that axis, in meters / degrees.
+            The minimum and maximum allowable stage values along axis, in microns / degrees.
         """
         axis = axis.lower()
-        if axis == 'x':  # m -> um
-            return 1e6 * self._tem.Stage.AxisData.MinPos.X, 1e6 * self._tem.Stage.AxisData.MaxPos.X
 
-        elif axis == 'y':  # m -> um
-            return 1e6 * self._tem.Stage.AxisData.MinPos.Y, 1e6 * self._tem.Stage.AxisData.MaxPos.Y
+        if axis == 'x':
+            stage_axis_data = self._tem.Stage.AxisData(1)
+            return 1e6 * stage_axis_data.MinPos, 1e6 * stage_axis_data.MaxPos  # m -> um
 
-        elif axis == 'z':   # m -> um
-            return 1e6 * self._tem.Stage.AxisData.MinPos.Z, 1e6 * self._tem.Stage.AxisData.MaxPos.Z
+        elif axis == 'y':
+            stage_axis_data = self._tem.Stage.AxisData(2)
+            return 1e6 * stage_axis_data.MinPos, 1e6 * stage_axis_data.MaxPos  # m -> um
 
-        elif axis in {'alpha', 'a'}:  # rad -> deg
-            return math.degrees(self._tem.Stage.AxisData.MinPos.A), math.degrees(self._tem.Stage.AxisData.MaxPos.A)
+        elif axis == 'z':
+            stage_axis_data = self._tem.Stage.AxisData(4)
+            return 1e6 * stage_axis_data.MinPos, 1e6 * stage_axis_data.MaxPos  # m -> um
 
-        elif axis in {'beta', 'b'}:  # rad -> deg
-            return math.degrees(self._tem.Stage.AxisData.MinPos.B), math.degrees(self._tem.Stage.AxisData.MaxPos.B)
+        elif axis in {'alpha', 'a'}:
+            stage_axis_data = self._tem.Stage.AxisData(8)
+            return math.degrees(stage_axis_data.MinPos), math.degrees(stage_axis_data.MaxPos)
+
+        elif axis in {'beta', 'b'}:
+            stage_axis_data = self._tem.Stage.AxisData(8)
+            return math.degrees(stage_axis_data.MinPos), math.degrees(stage_axis_data.MaxPos)
 
         else:
             raise Exception("Error: axis '" + str(axis) + "' not recognized!")

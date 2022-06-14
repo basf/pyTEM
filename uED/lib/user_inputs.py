@@ -2,6 +2,7 @@
  Author:  Michael Luciuk
  Date:    Summer 2022
 """
+
 import math
 import tkinter as tk
 
@@ -29,11 +30,9 @@ def get_tilt_range(microscope):
 
     # Obtain the tilt range limits
     try:
-        alpha_min, alpha_max = microscope.get_stage_limits()
+        alpha_min, alpha_max = microscope.get_stage_limits(axis='alpha')
     except AttributeError:
         alpha_min, alpha_max = math.nan, math.nan
-    except BaseException as e:
-        raise e
 
     root = tk.Tk()
     style = ttk.Style()
@@ -45,8 +44,8 @@ def get_tilt_range(microscope):
     message = ttk.Label(root, text="Please enter the tilt range.", font=(None, 15), justify='center')
     message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
 
-    max_range_label = ttk.Label(root, text="Maximum allowed tilt range: " + str(alpha_min) + " through "
-                                           + str(alpha_max) + " deg", font=(None, 15), justify='center')
+    max_range_label = ttk.Label(root, text="Maximum allowed tilt range: " + str(round(alpha_min, 2)) + " through "
+                                           + str(round(alpha_max, 2)) + " deg", font=(None, 15), justify='center')
     max_range_label.grid(column=0, row=1, columnspan=3, sticky='w', padx=5, pady=5)
 
     # Add labels for the parameters we are trying to collect.
@@ -107,15 +106,15 @@ def get_camera_parameters(microscope):
             - 'BM-Ceta'
             - 'BM-Falcon'
         float: integration_time: Total exposure time.
-        str: binning: Photo resolution, one of:
+        str: sampling: Photo resolution, one of:
             - '4k' for 4k images (4096 x 4096; sampling=1)
             - '2k' for 2k images (2048 x 2048; sampling=2)
             - '1k' for 1k images (1024 x 1024; sampling=3)
             - '0.5k' for 05.k images (512 x 512; sampling=8)
     """
-    # TODO: Obtain option lists directly from the provided microscope object
-    camera_options = ['BM-Ceta', 'BM-Falcon']
-    binning_options = ['4k (4096 x 4096)', '2k (2048 x 2048)', '1k (1024 x 1024)', '0.5k (512 x 512)']
+    camera_options = microscope.get_available_cameras()
+    # TODO: Obtain available sampling options directly from the provided microscope object
+    sampling_options = ['4k (4096 x 4096)', '2k (2048 x 2048)', '1k (1024 x 1024)', '0.5k (512 x 512)']
 
     root = tk.Tk()
     style = ttk.Style()
@@ -148,8 +147,8 @@ def get_camera_parameters(microscope):
     integration_time_entry_box.grid(column=1, row=2, padx=5, pady=5)
 
     binning = tk.StringVar()
-    binning.set(binning_options[0])  # Default to the first option in the list
-    binning_option_menu = ttk.OptionMenu(root, binning, binning_options[0], *binning_options)
+    binning.set(sampling_options[0])  # Default to the first option in the list
+    binning_option_menu = ttk.OptionMenu(root, binning, sampling_options[0], *sampling_options)
     binning_option_menu.grid(column=1, row=3, padx=5, pady=5)
 
     # Add label showing integration time units.
