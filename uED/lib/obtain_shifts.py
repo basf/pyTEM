@@ -9,7 +9,7 @@ import hyperspy.api as hs
 # TODO: Still requires testing
 
 
-def obtain_shifts(microscope, camera, alphas, exposure_time=3, sampling='1k'):
+def obtain_shifts(microscope, alphas, camera_name):
     """
     Automatically obtain the image shifts required to keep the currently centered section of the specimen centered at
      all alpha tilt angles.
@@ -23,16 +23,9 @@ def obtain_shifts(microscope, camera, alphas, exposure_time=3, sampling='1k'):
         A TEMInterface interface to the microscope.
     :param alphas: np.array:
         An array of tilt angles at which to compute shifts.
-    :param camera: str:
-        The name of the camera being used.
-    :param sampling: str (default is '1k', this should be sufficient for just taking alignment photos):
-        Photo resolution of the alignment images provided to hyperspy, one of:
-        - '4k' for 4k images (4096 x 4096; sampling=1)
-        - '2k' for 2k images (2048 x 2048; sampling=2)
-        - '1k' for 1k images (1024 x 1024; sampling=3)
-        - '0.5k' for 05.k images (512 x 512; sampling=8)
-    :param exposure_time: float:
-        Camera shutter speed, in seconds.
+    :param camera_name: str:
+        The name of the camera to be used in the image shift calculation - probably want to use the same camera you are
+         using for the tilt series itself.
 
     :return: np.array: shifts:
         An array of tuples of the form (x, y) where x and y are the required image shifts (in microns) required to
@@ -61,9 +54,8 @@ def obtain_shifts(microscope, camera, alphas, exposure_time=3, sampling='1k'):
 
     print("\nComputing negative shifts using the following alphas: " + str(negative_alphas))
     # Compute the required shifts at negative alphas
-    negative_shifts = _complete_one_sign(microscope=microscope, this_signs_alphas=negative_alphas, camera=camera,
-                                         sampling=sampling, exposure_time=exposure_time,
-                                         max_images_per_batch=max_images_per_batch)
+    negative_shifts = _complete_one_sign(microscope=microscope, this_signs_alphas=negative_alphas,
+                                         max_images_per_batch=max_images_per_batch, camera_name=camera_name)
 
     # Reset the image shift and tilt to 0 deg
     microscope.set_stage_position(alpha=0)  # Zero the stage tilt
@@ -71,9 +63,8 @@ def obtain_shifts(microscope, camera, alphas, exposure_time=3, sampling='1k'):
 
     # Compute the required shifts at positive alphas
     print("\nComputing positive shifts using the following alphas: " + str(positive_alphas))
-    positive_shifts = _complete_one_sign(microscope=microscope, this_signs_alphas=positive_alphas, camera=camera,
-                                         sampling=sampling, exposure_time=exposure_time,
-                                         max_images_per_batch=max_images_per_batch)
+    positive_shifts = _complete_one_sign(microscope=microscope, this_signs_alphas=positive_alphas,
+                                         max_images_per_batch=max_images_per_batch, camera_name=camera_name)
 
     # One array of shifts will need to be flipped back (because it will have been built from a flipped array)
     if alphas[0] > 0:
@@ -88,7 +79,7 @@ def obtain_shifts(microscope, camera, alphas, exposure_time=3, sampling='1k'):
     return shifts
 
 
-def _complete_one_sign(microscope, this_signs_alphas, max_images_per_batch, camera, sampling, exposure_time):
+def _complete_one_sign(microscope, camera_name, this_signs_alphas, max_images_per_batch=10):
     """
     Because we want the user to center the specimen at 0 degrees (to reduce the overall shift), we need to separately
      compute:
@@ -99,25 +90,24 @@ def _complete_one_sign(microscope, this_signs_alphas, max_images_per_batch, came
 
     :param microscope: TEMInterface:
         A TEMInterface interface to the microscope.
+    :param camera_name: str:
+        The name of the camera to be used for shift calculation - probably the same camera you are using for the tilt
+         series itself.
     :param this_signs_alphas: np.array:
         An array with either the positive alphas or the negative alphas.
-    :param max_images_per_batch: int:
+    :param max_images_per_batch: int (optional; default is 10):
+        # TODO: Switch this to a max_degrees per batch parameter
+        To make sure that the images don't deviate too far from the reference image, image shifts are computed in
+         batches. This parameter controls the maximum number of images per batch.
 
-    :param camera: str:
-        The name of the camera being used.
-    :param sampling: str (default is '1k', this should be sufficient for most applications):
-        Photo resolution of the image-shift calibration images, one of:
-        - '4k' for 4k images (4096 x 4096; sampling=1)
-        - '2k' for 2k images (2048 x 2048; sampling=2)
-        - '1k' for 1k images (1024 x 1024; sampling=3)
-        - '0.5k' for 05.k images (512 x 512; sampling=8)
-    :param exposure_time: float:
-        Camera shutter speed, in seconds.
-
-    :return: np.array:
+    :return: np.array of float tuples:
         An array of tuples of the form (x, y) where x and y are the required image shifts (in microns) required to
          align the image at the corresponding tilt.
     """
+    # Define acquisition parameters, these should be sufficient for alignment photos
+    sampling = '1k'
+    exposure_time = 1
+
     # Preallocate
     this_signs_shifts = np.full(shape=len(this_signs_alphas), dtype=(float, 2), fill_value=np.nan)
 
@@ -126,8 +116,9 @@ def _complete_one_sign(microscope, this_signs_alphas, max_images_per_batch, came
 
     # When computing the number of batches, we subtract one to make room for the reference image
     number_of_batches = int(len(this_signs_alphas) / (max_images_per_batch - 1))
-    alpha_batches = np.split(this_signs_alphas, number_of_batches)
+    print("Number of batches: " + str(number_of_batches))
 
+    alpha_batches = np.split(this_signs_alphas, number_of_batches)
     print("\nHere are the alpha_batches: ")
     print(alpha_batches)
 
@@ -139,7 +130,7 @@ def _complete_one_sign(microscope, this_signs_alphas, max_images_per_batch, came
         reference_image_shift = microscope.get_image_shift()
 
         # Take a reference image
-        reference_acq = microscope.acquisition(camera_name=camera, sampling=sampling, exposure_time=exposure_time)
+        reference_acq = microscope.acquisition(camera_name=camera_name, sampling=sampling, exposure_time=exposure_time)
         reference_image = reference_acq.get_image()
 
         # Preallocate
@@ -159,7 +150,7 @@ def _complete_one_sign(microscope, this_signs_alphas, max_images_per_batch, came
         for j, alpha in enumerate(batch):
             print("Taking image at index j=" + str(j))
             microscope.set_stage_position(alpha=alpha)  # Tilt the stage to the required alpha
-            acq = microscope.acquisition(camera_name=camera, sampling=sampling, exposure_time=exposure_time)
+            acq = microscope.acquisition(camera_name=camera_name, sampling=sampling, exposure_time=exposure_time)
             image_stack_arr[j + 1] = acq.get_image()
 
         print(np.shape(image_stack_arr))
@@ -167,9 +158,13 @@ def _complete_one_sign(microscope, this_signs_alphas, max_images_per_batch, came
 
         # Use Hyperspy to compute shifts for this batch's stack
         # image_stack = hs.stack([image for image in image_stack_arr])
-        image_stack = hs.stack(signal_list=image_stack_arr, axis=0)  # TODO: StopIteration Error
+        image_stack = hs.stack(image_stack_arr)  # TODO: We were getting a StopIteration Error here.
+        print("Image stack: " + str(image_stack))
         batch_shifts = image_stack.estimate_shift2D()
+
+        print("Full list of batch shifts: " + str(batch_shifts))
         batch_shifts = np.delete(batch_shifts, 0)  # The first shift corresponds to the reference image, throw it away.
+        print("Batch shifts after throwing away the first image: " + str(batch_shifts))
 
         # Log the rest of shifts in the array, make sure to multiply by the pixel size so the result is in microns.
         for j in batch_shifts:
@@ -177,9 +172,8 @@ def _complete_one_sign(microscope, this_signs_alphas, max_images_per_batch, came
                                                 pixel_size_y * (batch_shifts[j][1]) + reference_image_shift[1])
             current_index = current_index + 1
 
-        # reset the image shift and reference image to be the last image in the batch
-        reference_image_shift = this_signs_shifts[current_index - 1]
-        microscope.set_image_shift(x=reference_image_shift[0], y=reference_image_shift[1])
+        # Advance the image shift so the specimen is centered at the most extreme tilt of the batch
+        microscope.set_image_shift(x=this_signs_shifts[current_index - 1], y=this_signs_shifts[current_index - 1])
 
     return this_signs_shifts
 
@@ -195,7 +189,7 @@ if __name__ == "__main__":
     try:
         from Interface.TEMInterface import TEMInterface
         scope = TEMInterface()
-    except:
+    except BaseException as e:
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 
@@ -211,4 +205,4 @@ if __name__ == "__main__":
     print("\nAlphas at which shifts will be computed: " + str(middle_alphas))
 
     print("\nObtaining shifts...")
-    obtain_shifts(microscope=scope, camera='BM-Ceta', alphas=middle_alphas, exposure_time=1, sampling='1k')
+    obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas)

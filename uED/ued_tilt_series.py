@@ -17,6 +17,7 @@ sys.path.append(str(package_directory))
 
 try:
     from uED.lib.exit_script import exit_script
+    from uED.lib.AcquisitionProperties import AcquisitionProperties
     from Interface.TEMInterface import TEMInterface
     from uED.lib.messages import get_welcome_message, get_initialization_message, display_message, \
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
@@ -90,7 +91,7 @@ def ued_tilt_series():
 
         # Get the required camera parameters
         while True:
-            camera_name, integration_time, binning = get_camera_parameters(microscope=microscope)
+            camera_name, integration_time, sampling = get_camera_parameters(microscope=microscope)
             min_supported_exposure_time, max_supported_exposure_time = microscope.get_exposure_time_range(camera_name)
             if min_supported_exposure_time < integration_time < max_supported_exposure_time:
                 break  # Input is okay  # TODO: Add tkinter validation to Entry widgets
@@ -102,26 +103,31 @@ def ued_tilt_series():
         # Get the out path (where in the file system should we save the results?)
         out_file = get_out_file(microscope=microscope)
 
+        num_alpha = int((stop_alpha - start_alpha) / step_alpha + 1)
+        alpha_arr = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
+
         # Confirm the user is happy, remove the screen, and start the procedure
         title, message = get_start_message()
         display_message(title=title, message=message, microscope=microscope, position="centered")
         microscope.remove_screen()
 
-        num_alpha = int((stop_alpha - start_alpha) / step_alpha + 1)
-        alpha_arr = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
+        # Store all the acquisition properties in a AcquisitionProperties object, this just makes it easier and safer
+        #  to pass around
+        acquisition_properties = AcquisitionProperties(camera_name=camera_name, alpha_arr=alpha_arr, out_file=out_file,
+                                                       integration_time=integration_time, sampling=sampling)
 
         # Compute the image shifts required to keep the currently centered section of the specimen centered at all
         #  alpha tilt angles.
-        shifts = obtain_shifts(microscope=microscope, camera=camera_name, alphas=alpha_arr[0:-1] + step_alpha / 2)
+        shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas,
+                               camera_name=acquisition_properties.camera_name)
 
-        print("alphas: " + str(alpha_arr[0:-1] + step_alpha / 2))
+        print("alphas: " + str(acquisition_properties.alphas))
         print("Shifts: " + str(shifts))
 
-        microscope.set_projection_mode("Diffraction")  # Switch to diffraction mode
+        # microscope.set_projection_mode("Diffraction")  # Switch to diffraction mode
 
         # Go ahead and actually perform the tilt series, saving the results to file.
-        perform_tilt_series(microscope=microscope, camera=camera_name, integration_time=integration_time,
-                            binning=binning, alpha_arr=alpha_arr, shifts=shifts, out_file=out_file)
+        perform_tilt_series(microscope=microscope, acquisition_properties=acquisition_properties, shifts=shifts)
 
         # The acquisition is now complete, inform the user.
         title, message = get_end_message(out_file=out_file)
