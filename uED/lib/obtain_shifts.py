@@ -4,10 +4,13 @@
 """
 
 import math
+import warnings
+
 import numpy as np
 import pandas as pd
 
 import hyperspy.api as hs
+from scipy.signal import find_peaks
 
 # TODO: Still requires testing
 
@@ -87,10 +90,23 @@ def obtain_shifts(microscope, alphas, camera_name, verbose=False):
         negative_shifts = np.flip(negative_shifts, axis=0)
         shifts = np.concatenate((negative_shifts, positive_shifts))
 
+    x_peaks, _ = find_peaks(shifts[:, 0])
+    y_peaks, _ = find_peaks(shifts[:, 1])
+    if verbose:
+        print("\nAnalysing peaks to assess the quality of the results...")
+        print("Number of x-peaks: " + str(x_peaks))
+        print("Number of y-peaks: " + str(y_peaks))
+    if x_peaks > 4 or y_peaks > 4:
+        # Then we were probably unsuccessful, warn the user
+        warnings.warn("Based on the number of peaks, it is unlikely that the automated shift determination was "
+                      "successful. Please ensure the specimen is at the eucentric height and try again (you may need "
+                      "to reduce the number of images per batch).")
+        raise Exception("obtain_shifts(): Automated shift alignment failed, unsafe to proceed.")
+
     if verbose:
         # Put the obtained shifts in a dataframe for easy viewing
         df = pd.DataFrame({'alpha': alphas, 'x-shift': shifts[:, 0], 'y-shift': shifts[:, 1]})
-        print("")
+        print("\nObtained shifts:")
         print(df.to_string())  # Required to see the whole dataframe
 
     return shifts
@@ -113,7 +129,7 @@ def _complete_one_sign(microscope, camera_name, this_signs_alphas, max_images_pe
     :param this_signs_alphas: np.array:
         An array with either the positive alphas or the negative alphas.
     :param max_images_per_batch: int (optional; default is 10):
-        # TODO: Switch this to a max_degrees per batch parameter
+        # TODO: Adjust based on number of peaks in results.
         To make sure that the images don't deviate too far from the reference image, image shifts are computed in
          batches. This parameter controls the maximum number of images per batch.
     :param verbose: bool:
