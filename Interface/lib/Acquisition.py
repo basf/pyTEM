@@ -2,9 +2,11 @@
  Author:  Michael Luciuk
  Date:    Summer 2022
 """
+
 import numpy as np
 
 from datetime import datetime
+from tifffile import tifffile
 
 
 def _build_metadata_dictionary(tm_acquisition_object):
@@ -42,8 +44,8 @@ def _build_metadata_dictionary(tm_acquisition_object):
             'PixelUnit':                (tm_acquisition_object.Metadata[21].ValueAsString,
                                          tm_acquisition_object.Metadata[22].ValueAsString),
             'Epoch':                    epoch,
-            'Date':                     date_time.date(),
-            'Time':                     date_time.time(),
+            'Date':                     str(date_time.date()),  # Object of type 'date' is not JSON serializable
+            'Time':                     str(date_time.time()),  # Object of type 'time' is not JSON serializable
             'MaxPossiblePixelValue':    int(tm_acquisition_object.Metadata[24].ValueAsString),
             'SaturationPoint':          int(tm_acquisition_object.Metadata[25].ValueAsString),
             'DigitalGain':              int(tm_acquisition_object.Metadata[26].ValueAsString),
@@ -89,3 +91,19 @@ class Acquisition:
             The returned dictionary can then be searched for the entries of interest, or further modified as required.
         """
         return self.__metadata
+
+    def save_as_tif(self, out_file):
+        """
+        Save the acquisition as a tif image.
+        :param out_file: str or path:
+            Out file path (where you want to save the file).
+            Optionally, you can include the .tif extension, otherwise it will be added automatically.
+        :return: None.
+        """
+        out_file = str(out_file)  # Encase we received a path.
+
+        # In case we are missing the .tif extension, add it on.
+        if out_file[-4:] != ".tif":
+            out_file = out_file + ".tif"
+
+        tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata())

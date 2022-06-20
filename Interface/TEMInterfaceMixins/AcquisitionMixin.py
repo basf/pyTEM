@@ -3,11 +3,19 @@
  Date:    Summer 2022
 """
 
+import pathlib
+import sys
 import warnings
 
 import comtypes.client as cc
 
-from Interface.lib.Acquisition import Acquisition
+package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve()
+sys.path.append(str(package_directory))
+
+try:
+    from Interface.lib.Acquisition import Acquisition
+except Exception as e:
+    raise e
 
 
 class AcquisitionMixin:
@@ -110,6 +118,8 @@ class AcquisitionMixin:
 
         capabilities = acquisition.CameraSettings.Capabilities
 
+        print("\n-- " + camera_name + " Capabilities --")
+
         print("\nSupported Samplings:")
         for sampling in capabilities.SupportedBinnings:
             print(str(sampling.Height) + " x " + str(sampling.Width)
@@ -171,3 +181,27 @@ class AcquisitionMixin:
         exposure_time_range = acquisition.CameraSettings.Capabilities.ExposureTimeRange
 
         return exposure_time_range.Begin, exposure_time_range.End
+
+
+class AcquisitionMixinTesting(AcquisitionMixin):
+    """ Testing """
+
+    def __init__(self):
+        self._tem_advanced = cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument")
+
+
+if __name__ == "__main__":
+
+    out_dir = package_directory / "Testing_Interface" / "test_images"
+    print("out_dir: " + str(out_dir))
+
+    acq_mixin_tester = AcquisitionMixinTesting()
+    available_cameras = acq_mixin_tester.get_available_cameras()
+    acq_mixin_tester.print_camera_capabilities(available_cameras[0])
+
+    print("Performing an acquisition...")
+    test_acq = acq_mixin_tester.acquisition(camera_name="BM-Ceta", sampling='1k', exposure_time=2, readout_area=None)
+
+    out_file_ = out_dir / "test_image.tif"
+    print("Saving the image as " + str(out_file_))
+    test_acq.save_as_tif(out_file=out_file_)

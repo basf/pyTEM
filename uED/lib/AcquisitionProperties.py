@@ -48,4 +48,4 @@ class AcquisitionProperties:
         self.sampling = sampling
         self.out_file = out_file
         self.alphas = alpha_arr[0:-1] + self.alpha_step / 2
-        self.tilt_speed = 1.4768 * (self.alpha_step / integration_time) + 0.0001
+        self.tilt_speed = 1.4768 * (self.alpha_step / integration_time) + 0.0001  # TODO: Confirm
