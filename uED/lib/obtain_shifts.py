@@ -32,8 +32,8 @@ def obtain_shifts(microscope, alphas, camera_name, verbose=False):
     :param camera_name: str:
         The name of the camera to be used in the image shift calculation - probably want to use the same camera you are
          using for the tilt series itself.
-    :param verbose: bool:
-        Useful for debugging.
+     :param verbose: bool:
+        Print out extra information. Useful for debugging.
 
     :return: np.array: shifts:
         An array of tuples of the form (x, y) where x and y are the required image shifts (in microns) required to
