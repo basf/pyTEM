@@ -13,7 +13,7 @@ package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 
 try:
-    from Interface.lib.Acquisition import Acquisition
+    from TEMInterface.lib.Acquisition import Acquisition
 except Exception as e:
     raise e
 
@@ -22,7 +22,7 @@ class AcquisitionMixin:
     """
     Microscope image acquisition controls.
 
-    This mixin was developed in support of Interface.TEMInterface, but can be included in other projects where helpful.
+    This mixin was developed in support of TEMInterface.TEMInterface, but can be included in other projects where helpful.
     """
     _tem_advanced: type(cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument"))
 

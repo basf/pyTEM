@@ -228,7 +228,7 @@ if __name__ == "__main__":
     sys.path.append(str(package_directory))
 
     try:
-        from Interface.TEMInterface import TEMInterface
+        from TEMInterface.TEMInterface import TEMInterface
 
         scope = TEMInterface()
     except BaseException as e:

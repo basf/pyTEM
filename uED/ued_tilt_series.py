@@ -18,7 +18,7 @@ sys.path.append(str(package_directory))
 try:
     from uED.lib.exit_script import exit_script
     from uED.lib.AcquisitionProperties import AcquisitionProperties
-    from Interface.TEMInterface import TEMInterface
+    from TEMInterface.TEMInterface import TEMInterface
     from uED.lib.messages import get_welcome_message, get_initialization_message, display_message, \
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
     from uED.lib.obtain_shifts import obtain_shifts

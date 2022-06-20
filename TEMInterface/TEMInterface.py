@@ -14,18 +14,18 @@ package_directory = pathlib.Path().resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
     # Library imports
-    from Interface.lib.pascal_to_log import pascal_to_log
-    from Interface.lib.StagePosition import StagePosition
+    from TEMInterface.lib.pascal_to_log import pascal_to_log
+    from TEMInterface.lib.StagePosition import StagePosition
 
     # Mixin imports
-    from Interface.TEMInterfaceMixins.ModeMixin import ModeMixin
-    from Interface.TEMInterfaceMixins.StageMixin import StageMixin
-    from Interface.TEMInterfaceMixins.MagnificationMixin import MagnificationMixin
-    from Interface.TEMInterfaceMixins.VacuumMixin import VacuumMixin
-    from Interface.TEMInterfaceMixins.BeamBlankerMixin import BeamBlankerMixin
-    from Interface.TEMInterfaceMixins.ImageShiftMixin import ImageShiftMixin
-    from Interface.TEMInterfaceMixins.BeamShiftMixin import BeamShiftMixin
-    from Interface.TEMInterfaceMixins.AcquisitionMixin import AcquisitionMixin
+    from TEMInterface.TEMInterfaceMixins.ModeMixin import ModeMixin
+    from TEMInterface.TEMInterfaceMixins.StageMixin import StageMixin
+    from TEMInterface.TEMInterfaceMixins.MagnificationMixin import MagnificationMixin
+    from TEMInterface.TEMInterfaceMixins.VacuumMixin import VacuumMixin
+    from TEMInterface.TEMInterfaceMixins.BeamBlankerMixin import BeamBlankerMixin
+    from TEMInterface.TEMInterfaceMixins.ImageShiftMixin import ImageShiftMixin
+    from TEMInterface.TEMInterfaceMixins.BeamShiftMixin import BeamShiftMixin
+    from TEMInterface.TEMInterfaceMixins.AcquisitionMixin import AcquisitionMixin
 
 except Exception as e:
     raise e

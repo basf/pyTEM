@@ -3,7 +3,7 @@ Some manual testing of the TEMInterface stage stuff - getting and setting the st
 """
 import sys
 sys.path.append('T:/Michael L/tem-scripting-package')
-from Interface.TEMInterface import TEMInterface
+from TEMInterface.TEMInterface import TEMInterface
 talos = TEMInterface()
 
 print("Getting initial stage position...")

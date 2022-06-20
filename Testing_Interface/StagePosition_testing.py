@@ -5,7 +5,7 @@ Some manual testing of the StagePosition class
 
 import sys
 sys.path.append('T:/Michael L/tem-scripting-package')
-from Interface.lib.StagePosition import StagePosition
+from TEMInterface.lib.StagePosition import StagePosition
 
 
 print("\nCreating a stage position object with x=0, y=1, z=2, alpha=-0.35, and beta=0.35...")
