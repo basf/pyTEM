@@ -4,7 +4,7 @@ Some manual testing of the StagePosition class
 """
 
 import sys
-sys.path.append('T:/Michael L/tem-scripting-package')
+sys.path.append('T:/Michael L/pyTEM')
 from TEMInterface.lib.StagePosition import StagePosition
 
 

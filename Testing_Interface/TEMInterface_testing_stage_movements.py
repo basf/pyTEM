@@ -2,7 +2,7 @@
 Some manual testing of the TEMInterface stage stuff - getting and setting the stage position, etc.
 """
 import sys
-sys.path.append('T:/Michael L/tem-scripting-package')
+sys.path.append('T:/Michael L/pyTEM')
 from TEMInterface.TEMInterface import TEMInterface
 talos = TEMInterface()
 
