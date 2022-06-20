@@ -29,7 +29,7 @@ except Exception as ImportException:
     raise ImportException
 
 
-def ued_tilt_series():
+def ued_tilt_series(verbose=False):
     """
     Perform a MicroED automated imaging sequence.
 
@@ -37,6 +37,9 @@ def ued_tilt_series():
      (to compensate for lateral movement of the image during titling), and running a tilt series.
 
     Results are automatically saved to file at a location of the users choosing.
+
+    :param verbose: bool:
+        Print out extra information. Useful for debugging.
     """
     microscope = None
     try:
@@ -119,15 +122,13 @@ def ued_tilt_series():
         # Compute the image shifts required to keep the currently centered section of the specimen centered at all
         #  alpha tilt angles.
         shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas,
-                               camera_name=acquisition_properties.camera_name)
-
-        print("alphas: " + str(acquisition_properties.alphas))
-        print("Shifts: " + str(shifts))
+                               camera_name=acquisition_properties.camera_name, verbose=verbose)
 
         # microscope.set_projection_mode("Diffraction")  # Switch to diffraction mode
 
         # Go ahead and actually perform the tilt series, saving the results to file.
-        perform_tilt_series(microscope=microscope, acquisition_properties=acquisition_properties, shifts=shifts)
+        perform_tilt_series(microscope=microscope, acquisition_properties=acquisition_properties, shifts=shifts,
+                            verbose=verbose)
 
         # The acquisition is now complete, inform the user.
         title, message = get_end_message(out_file=out_file)
@@ -138,11 +139,12 @@ def ued_tilt_series():
         display_message(title=title, message=message, microscope=microscope, position="centered")
 
     except KeyboardInterrupt:
-        warnings.warn("Keyboard interrupt detected, returning the microscope to a safe state and exiting.")
+        warnings.warn("Keyboard interrupt detected...")
         exit_script(microscope=microscope, status=1)
 
     except Exception as e:
-        raise e
+        print(e)
+        exit_script(microscope=microscope, status=1)
 
 
 if __name__ == "__main__":
