@@ -109,11 +109,12 @@ class Acquisition:
             0: Success. Value updated successfully.
             1: No changes made.
         """
+        key = str(key)
         if key in self.__metadata.keys() or force:
-            self.__metadata[str(key)] = value
+            self.__metadata[key] = value
             return 0
         else:
-            print("Error: Unable to update metadata, key '" + str(key) + "' not found in metadata dictionary.")
+            print("Error: Unable to update metadata, key '" + key + "' not found in metadata dictionary.")
             return 1
 
     def add_metadata_parameter(self, key, value):
