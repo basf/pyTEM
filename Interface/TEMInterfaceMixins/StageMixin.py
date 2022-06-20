@@ -362,6 +362,13 @@ class StageMixin:
         self._update_stage_position()  # Encase something external caused the stage to move.
         self.set_stage_position(beta=beta, speed=speed, movement_type="go")
 
+    def reset_stage_position(self):
+        """
+        Reset (zero) the stage position.
+        :return: None.
+        """
+        self.set_stage_position(x=0, y=0, z=0, alpha=0, beta=0)
+
     def print_stage_position(self):
         """
         Print out the current stage position (current x, y, z, alpha, and beta values).
@@ -407,17 +414,51 @@ class StageMixin:
         """
         stage_type = self._tem.Stage.Holder
         if stage_type == 0:
-            print("hoInvalid (0): The ‘invalid’ holder. No holder has been selected yet or the current selection has "
-                  "become invalid.")
+            print("hoNone (0): Holder is removed.")
         elif stage_type == 1:
             print("hoSingleTilt (1): Single tilt holder.")
         elif stage_type == 2:
             print("hoDoubleTilt (2): Double tilt holder.")
-        elif stage_type == 3:
-            print("hoNone (3): Holder is removed.")
         elif stage_type == 4:
-            print("hoPolara (4): Non-removable Polara holder.")
+            print("hoInvalid (4): The ‘invalid’ holder. No holder has been selected yet or the current selection has "
+                  "become invalid.")
         elif stage_type == 5:
-            print("hoDualAxis (5): Dual-axis tomography holder.")
+            print("hoPolara (5): Non-removable Polara holder.")
+        elif stage_type == 6:
+            print("hoDualAxis (6): Dual-axis tomography holder.")
         else:
             raise Exception("Stage type - " + str(stage_type) + " - not recognized.")
+
+    def get_stage_limits(self, axis):
+        """
+        Get stage limits along a certain axis.
+
+        :param axis: str:
+            The axis of which to need the stage limits. One of, 'x', 'y', 'z', 'alpha', and 'beta'.
+        :return: float, float: min, max:
+            The minimum and maximum allowable stage values along axis, in microns / degrees.
+        """
+        axis = axis.lower()
+
+        if axis == 'x':
+            stage_axis_data = self._tem.Stage.AxisData(1)
+            return 1e6 * stage_axis_data.MinPos, 1e6 * stage_axis_data.MaxPos  # m -> um
+
+        elif axis == 'y':
+            stage_axis_data = self._tem.Stage.AxisData(2)
+            return 1e6 * stage_axis_data.MinPos, 1e6 * stage_axis_data.MaxPos  # m -> um
+
+        elif axis == 'z':
+            stage_axis_data = self._tem.Stage.AxisData(4)
+            return 1e6 * stage_axis_data.MinPos, 1e6 * stage_axis_data.MaxPos  # m -> um
+
+        elif axis in {'alpha', 'a'}:
+            stage_axis_data = self._tem.Stage.AxisData(8)
+            return math.degrees(stage_axis_data.MinPos), math.degrees(stage_axis_data.MaxPos)
+
+        elif axis in {'beta', 'b'}:
+            stage_axis_data = self._tem.Stage.AxisData(8)
+            return math.degrees(stage_axis_data.MinPos), math.degrees(stage_axis_data.MaxPos)
+
+        else:
+            raise Exception("Error: axis '" + str(axis) + "' not recognized!")

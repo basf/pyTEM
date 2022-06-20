@@ -148,20 +148,19 @@ class VacuumMixin:
         Print out the current vacuum status, along with a 'helpful' description.
         :return: None
         """
-        # TODO: The instrument is returning 5 (vsElse) when we suspect the vacuum system is "ready".
         vacuum_status = self._tem.Vacuum.Status
-        if vacuum_status == 0:
-            print("vsUnknown (0): Status of vacuum system is unknown.")
-        elif vacuum_status == 1:
-            print("vsOff (1): Vacuum system is off.")
+        if vacuum_status == 1:
+            print("vsUnknown (1): Status of vacuum system is unknown.")
         elif vacuum_status == 2:
-            print("vsCameraAir (2): Camera (only) is aired.")
+            print("vsOff (2): Vacuum system is off.")
         elif vacuum_status == 3:
-            print("vsBusy (3): Vacuum system is busy, that is: on its way to ‘Ready’, ‘CameraAir’, etc.")
+            print("vsCameraAir (3): Camera (only) is aired.")
         elif vacuum_status == 4:
-            print("vsReady (4): Vacuum system is ready.")
+            print("vsBusy (4): Vacuum system is busy, that is: on its way to ‘Ready’, ‘CameraAir’, etc.")
         elif vacuum_status == 5:
-            print("vsElse (5): Vacuum is in any other state (gun air, all air etc.), and will not come back to ready "
+            print("vsReady (5): Vacuum system is ready.")
+        elif vacuum_status == 6:
+            print("vsElse (6): Vacuum is in any other state (gun air, all air etc.), and will not come back to ready "
                   "without any further action of the user.")
         else:
             raise Exception("Vacuum Status '" + str(vacuum_status) + "' not recognized.")
