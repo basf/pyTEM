@@ -63,7 +63,8 @@ def get_eucentric_height_message():
     title = "At this time, portable electronic devices must be switched into ‘airplane’ mode."
     message = "Please, using the alpha wobble and z-axis buttons on the microscope control panel, manually set the " \
               "microscope to the eucentric height. That is, please find and select the z-shift where tilting the " \
-              "specimen leads to a minimal lateral movement of the image."
+              "specimen leads to a minimal lateral movement of the image." \
+              "\n\nRe-center the particle if necessary."
     return title, message
 
 
