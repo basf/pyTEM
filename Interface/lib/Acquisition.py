@@ -92,12 +92,54 @@ class Acquisition:
         """
         return self.__metadata
 
+    def update_metadata_parameter(self, key, value, force=False):
+        """
+        Update an existing metadata parameter.
+
+        :param key: str:
+            Metadata dictionary key.
+            Key must exist otherwise no changes will be made (can be overridden with the force parameter).
+        :param value:
+            The corresponding value to store in the metadata dictionary.
+        :param force: bool (optional; default is False)
+            If True, the key value pair will be force added, even if the provided key doesn't currently exist with the
+             metadata dictionary.
+
+        :return: int:
+            0: Success. Value updated successfully.
+            1: No changes made.
+        """
+        if key in self.__metadata.keys() or force:
+            self.__metadata[str(key)] = value
+            return 0
+        else:
+            print("Error: Unable to update metadata, key '" + str(key) + "' not found in metadata dictionary.")
+            return 1
+
+    def add_metadata_parameter(self, key, value):
+        """
+        Add a new parameter to the metadata dictionary.
+
+        :param key: str:
+            Metadata dictionary key.
+            Key must exist otherwise no changes will be made (can be overridden with the force parameter).
+        :param value:
+            The corresponding value to store in the metadata dictionary.
+
+        :return: int:
+            0: Success. Key value pair added successfully.
+            1: No changes made.
+        """
+        return self.update_metadata_parameter(key=key, value=value, force=True)
+
     def save_as_tif(self, out_file):
         """
         Save the acquisition as a tif image.
+
         :param out_file: str or path:
             Out file path (where you want to save the file).
             Optionally, you can include the .tif extension, otherwise it will be added automatically.
+
         :return: None.
         """
         out_file = str(out_file)  # Encase we received a path.
