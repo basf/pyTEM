@@ -1,3 +1,7 @@
+# Disclaimer
+
+TODO. Also make a pop-up box with the disclaimer
+
 # About
 
 The ```tem-scripting-package``` provides a Python wrapper for the scripting interface of Thermo Fisher Scientific and FEI microscopes. The ```tem-scripting-package``` provides a single microscope interface, bolted directly ontop of a COM interface.
