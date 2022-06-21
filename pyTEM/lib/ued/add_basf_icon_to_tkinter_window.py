@@ -14,6 +14,6 @@ def add_basf_icon_to_tkinter_window(root):
     :return: None.
     """
     try:
-        root.iconbitmap(pathlib.Path().resolve() / "ico" / "BASF.ico")
+        root.iconbitmap(pathlib.Path().resolve() / "lib" / "ued" / "ico" / "BASF.ico")
     except TclError:
-        root.iconbitmap(pathlib.Path().resolve().parent.resolve() / "ico" / "BASF.ico")
+        root.iconbitmap(pathlib.Path().resolve().parent.resolve() / "lib" / "ued" / "ico" / "BASF.ico")
