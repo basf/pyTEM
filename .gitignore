@@ -4,3 +4,7 @@
 /Testing_Interface/Image_Shift_Calibration/Calibration_Data/
 /Testing_Interface/Image_Shift_Calibration/~$Image Shift Calibration.xlsx
 /Testing_Interface/test_images/
+
+# Distribution/packaging
+/build/
+/pyTEM.egg-info/
