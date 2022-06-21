@@ -6,7 +6,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(
-    name='TEMInterface',
+    name='pyTEM',
     version='0.1.0',
     description='Automated transmission electron microscopy experiments in pure Python',
     long_description=long_description,
