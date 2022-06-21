@@ -10,15 +10,15 @@ from tkinter import ttk
 from tkinter import filedialog
 from datetime import date
 
-from uED.lib.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
-from uED.lib.exit_script import exit_script
+from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
+from pyTEM.lib.ued.exit_script import exit_script
 
 
 def get_tilt_range(microscope):
     """
     Prompt the user for the microED alpha tilt range.
 
-    :param microscope: TEMInterface (or None):
+    :param microscope: pyTEM (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
@@ -97,7 +97,7 @@ def get_camera_parameters(microscope):
     """
     Get the camera parameters required for the acquisition series.
 
-    :param microscope: TEMInterface (or None):
+    :param microscope: pyTEM (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
@@ -174,7 +174,7 @@ def get_out_file(microscope):
     """
     Get the out file, this is where we will store the results of the microED sequence.
 
-    :param microscope: TEMInterface (or None):
+    :param microscope: pyTEM (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 

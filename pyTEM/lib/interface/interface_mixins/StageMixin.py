@@ -8,7 +8,7 @@ import copy
 import warnings
 import comtypes.client as cc
 
-from TEMInterface.lib.StagePosition import StagePosition
+from pyTEM.lib.interface.StagePosition import StagePosition
 
 
 class StageMixin:
@@ -16,7 +16,7 @@ class StageMixin:
     Microscope stage controls, including those for getting and setting the stage position. Also, helpful stage status
      print functions.
 
-    This mixin was developed in support of TEMInterface.TEMInterface, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
     """
     _tem: type(cc.CreateObject("TEMScripting.Instrument"))
 
@@ -30,10 +30,10 @@ class StageMixin:
     def set_stage_position(self, stage_position_obj=None, x=None, y=None, z=None, alpha=None, beta=None,
                            speed=1.0, movement_type="go"):
         """
-        Update the microscope stage position using an TEMInterface.lib.StagePosition object.
+        Update the microscope stage position using an pyTEM.lib.StagePosition object.
 
         Optionally, the stage can be updated with individual x, y, z, alpha, and beta values. However, these values will
-         only be used if no TEMInterface.lib.StagePosition object is provided.
+         only be used if no pyTEM.lib.StagePosition object is provided.
 
         To avoid ambiguity and type errors, please call using keyword arguments of the form kwarg=value.
 

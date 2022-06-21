@@ -16,7 +16,7 @@ setup(
     keywords=['transmission electron microscopy', 'TEM', 'microscopy', 'electron microscopy',
               'micro-crystal electron diffraction', 'uED'],
     license='MIT',
-    packages=['TEMInterface', 'uED'],
+    packages=['pyTEM'],
     python_requires='>=3.6',
     install_requires=['numpy',
                       'pandas',

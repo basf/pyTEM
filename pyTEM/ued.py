@@ -16,14 +16,14 @@ package_directory = pathlib.Path().resolve().parent.resolve()
 sys.path.append(str(package_directory))
 
 try:
-    from uED.lib.exit_script import exit_script
-    from uED.lib.AcquisitionProperties import AcquisitionProperties
-    from TEMInterface.TEMInterface import TEMInterface
-    from uED.lib.messages import get_welcome_message, get_initialization_message, display_message, \
+    from pyTEM.lib.ued.exit_script import exit_script
+    from pyTEM.lib.ued.AcquisitionProperties import AcquisitionProperties
+    from pyTEM.interface import TEMInterface
+    from pyTEM.lib.ued.messages import get_welcome_message, get_initialization_message, display_message, \
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
-    from uED.lib.obtain_shifts import obtain_shifts
-    from uED.lib.perform_tilt_series import perform_tilt_series
-    from uED.lib.user_inputs import get_tilt_range, get_camera_parameters, get_out_file
+    from pyTEM.lib.ued.obtain_shifts import obtain_shifts
+    from pyTEM.lib.ued.perform_tilt_series import perform_tilt_series
+    from pyTEM.lib.ued.user_inputs import get_tilt_range, get_camera_parameters, get_out_file
 
 except Exception as ImportException:
     raise ImportException

@@ -10,7 +10,7 @@ class ModeMixin:
     """
     Microscope mode controls, including those for projection and illumination.
 
-    This mixin was developed in support of TEMInterface.TEMInterface, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
     """
     _tem: type(cc.CreateObject("TEMScripting.Instrument"))
 

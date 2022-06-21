@@ -6,14 +6,14 @@
 import math
 import comtypes.client as cc
 
-from TEMInterface.lib.pascal_to_log import pascal_to_log
+from pyTEM.lib.interface.pascal_to_log import pascal_to_log
 
 
 class VacuumMixin:
     """
     Microscope vacuum system valve controls and pressure reports.
 
-    This mixin was developed in support of TEMInterface.TEMInterface, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
     """
     _tem: type(cc.CreateObject("TEMScripting.Instrument"))
 

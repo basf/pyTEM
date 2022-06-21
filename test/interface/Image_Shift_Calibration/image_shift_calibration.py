@@ -1,11 +1,10 @@
 # Use come test images to either validate the existing shift matrix or obtain the correct one
 
-import os
 import pathlib
 
 import matplotlib  # import matplotlib for the GUI backend HyperSpy needs
 
-from Testing_Interface.hyperspy_test import compute_microscope_shift, convert_images
+from Testing_Interface import convert_images
 
 matplotlib.rcParams["backend"] = "Agg"
 

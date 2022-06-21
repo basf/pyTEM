@@ -13,7 +13,7 @@ import time
 import tifffile
 import json
 
-from TEMInterface.Earlier_Versions.TemPackage import TEM
+from pyTEM.Earlier_Versions.TemPackage import TEM
 
 
 scope = TEM()

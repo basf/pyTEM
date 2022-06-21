@@ -10,7 +10,7 @@ import warnings
 def exit_script(microscope, status):
     """
     Return the microscope to a safe state and exit the MicroED script.
-    :param microscope: TEMInterface (or None):
+    :param microscope: pyTEM (or None):
         The microscope interface.
     :param status: int:
         Exit status, one of:

@@ -14,18 +14,18 @@ package_directory = pathlib.Path().resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
     # Library imports
-    from TEMInterface.lib.pascal_to_log import pascal_to_log
-    from TEMInterface.lib.StagePosition import StagePosition
+    from pyTEM.lib.interface.pascal_to_log import pascal_to_log
+    from pyTEM.lib.interface.StagePosition import StagePosition
 
     # Mixin imports
-    from TEMInterface.TEMInterfaceMixins.ModeMixin import ModeMixin
-    from TEMInterface.TEMInterfaceMixins.StageMixin import StageMixin
-    from TEMInterface.TEMInterfaceMixins.MagnificationMixin import MagnificationMixin
-    from TEMInterface.TEMInterfaceMixins.VacuumMixin import VacuumMixin
-    from TEMInterface.TEMInterfaceMixins.BeamBlankerMixin import BeamBlankerMixin
-    from TEMInterface.TEMInterfaceMixins.ImageShiftMixin import ImageShiftMixin
-    from TEMInterface.TEMInterfaceMixins.BeamShiftMixin import BeamShiftMixin
-    from TEMInterface.TEMInterfaceMixins.AcquisitionMixin import AcquisitionMixin
+    from pyTEM.lib.interface.interface_mixins import ModeMixin
+    from pyTEM.lib.interface.interface_mixins.StageMixin import StageMixin
+    from pyTEM.lib.interface.interface_mixins import MagnificationMixin
+    from pyTEM.lib.interface.interface_mixins.VacuumMixin import VacuumMixin
+    from pyTEM.lib.interface.interface_mixins.BeamBlankerMixin import BeamBlankerMixin
+    from pyTEM.lib.interface.interface_mixins.ImageShiftMixin import ImageShiftMixin
+    from pyTEM.lib.interface.interface_mixins import BeamShiftMixin
+    from pyTEM.lib.interface.interface_mixins import AcquisitionMixin
 
 except Exception as e:
     raise e
@@ -67,7 +67,7 @@ class TEMInterface(ModeMixin,  # Microscope mode controls, including those for p
             This matrix is based on the image shift matrix.
 
     Private Attributes:
-        None.  Note: TEMInterface attributes required by another mixin cannot be made private otherwise the mixins
+        None.  Note: pyTEM attributes required by another mixin cannot be made private otherwise the mixins
                         will not be able to access them through the COM interface.
     """
 

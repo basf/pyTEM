@@ -1,9 +1,9 @@
 """
-Some manual testing of the TEMInterface stage stuff - getting and setting the stage position, etc.
+Some manual testing of the pyTEM stage stuff - getting and setting the stage position, etc.
 """
 import sys
 sys.path.append('T:/Michael L/pyTEM')
-from TEMInterface.TEMInterface import TEMInterface
+from pyTEM.interface import TEMInterface
 talos = TEMInterface()
 
 print("Getting initial stage position...")

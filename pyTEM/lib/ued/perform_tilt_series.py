@@ -14,8 +14,8 @@ def perform_tilt_series(microscope, acquisition_properties, shifts, verbose):
     """
     Actually perform a tilt series and save the returns to file.
 
-    :param microscope: TEMInterface:
-        A TEMInterface interface to the microscope.
+    :param microscope: pyTEM:
+        A pyTEM interface to the microscope.
     :param acquisition_properties: AcquisitionProperties:
         The acquisition properties.
     :param shifts: np.array of float tuples:
@@ -84,13 +84,13 @@ if __name__ == "__main__":
     import pathlib
     import sys
 
-    from uED.lib.AcquisitionProperties import AcquisitionProperties
+    from pyTEM.lib.ued.AcquisitionProperties import AcquisitionProperties
 
     package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve()
     sys.path.append(str(package_directory))
 
     try:
-        from TEMInterface.TEMInterface import TEMInterface
+        from pyTEM.interface import TEMInterface
 
         scope = TEMInterface()
     except BaseException as e:

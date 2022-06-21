@@ -6,8 +6,8 @@
 import tkinter as tk
 from tkinter import ttk
 
-from uED.lib.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
-from uED.lib.exit_script import exit_script
+from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
+from pyTEM.lib.ued.exit_script import exit_script
 
 
 def get_welcome_message():
@@ -111,7 +111,7 @@ def display_message(title, message, microscope, position="centered"):
     :param title: str:
         Message box title.
 
-    :param microscope: TEMInterface (or None):
+    :param microscope: pyTEM (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
