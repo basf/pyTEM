@@ -24,7 +24,7 @@ try:
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
     from pyTEM.lib.ued.obtain_shifts import obtain_shifts
     from pyTEM.lib.ued.perform_tilt_series import perform_tilt_series
-    from pyTEM.lib.ued.user_inputs import get_tilt_range, get_camera_parameters, get_out_file
+    from pyTEM.lib.ued.user_inputs import get_tilt_range, get_camera_parameters, get_out_file, use_shift_correction
 
 except Exception as ImportException:
     raise ImportException
@@ -110,7 +110,8 @@ def ued(verbose=False):
         num_alpha = int((stop_alpha - start_alpha) / step_alpha + 1)
         alpha_arr = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
 
-        # TODO: Ask if the user would like to use automated shift correction or not.
+        # Fnd out if the user wants to use the automated image alignment functionality or proceed without
+        apply_shift_correction = use_shift_correction(microscope=microscope)
 
         # Confirm the user is happy, remove the screen, and start the procedure
         title, message = get_start_message()
@@ -122,10 +123,13 @@ def ued(verbose=False):
         acquisition_properties = AcquisitionProperties(camera_name=camera_name, alpha_arr=alpha_arr, out_file=out_file,
                                                        integration_time=integration_time, sampling=sampling)
 
-        # Compute the image shifts required to keep the currently centered section of the specimen centered at all
-        #  alpha tilt angles.
-        shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas,
-                               camera_name=acquisition_properties.camera_name, verbose=verbose)
+        if apply_shift_correction:
+            # Compute the image shifts required to keep the currently centered section of the specimen centered at all
+            #  alpha tilt angles.
+            shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas,
+                                   camera_name=acquisition_properties.camera_name, verbose=verbose)
+        else:
+            shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)  # All zero.
 
         # microscope.set_projection_mode("Diffraction")  # Switch to diffraction mode
 

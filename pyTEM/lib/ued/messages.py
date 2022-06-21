@@ -68,6 +68,20 @@ def get_eucentric_height_message():
     return title, message
 
 
+def automated_alignment_message():
+    """
+    :return: str: A message explaining the automated image alignment functionality.
+    """
+    title = "If you have any questions, please don’t hesitate to ask one of our crew members. " \
+            "We wish you all an enjoyable flight."
+    message = "This MicroED script supports automated image alignment functionality. The required image shifts will " \
+              "be computed from a preparatory tilt sequence using the hyperspy Python library (phase correlation) " \
+              "and then applied during the main acquisition sequence. While automated image alignment can be useful, " \
+              "it increases sample exposure and experiment run-time (although not significantly)." \
+              "\n\nTo continue without image alignment functionality, please uncheck the checkbox below."
+    return title, message
+
+
 def get_start_message():
     """
     :return: str: A start message.
@@ -111,7 +125,7 @@ def display_message(title, message, microscope, position="centered"):
     :param title: str:
         Message box title.
 
-    :param microscope: pyTEM (or None):
+    :param microscope: Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 

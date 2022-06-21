@@ -12,13 +12,14 @@ from datetime import date
 
 from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 from pyTEM.lib.ued.exit_script import exit_script
+from pyTEM.lib.ued.messages import automated_alignment_message
 
 
 def get_tilt_range(microscope):
     """
     Prompt the user for the microED alpha tilt range.
 
-    :param microscope: pyTEM (or None):
+    :param microscope: Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
@@ -97,7 +98,7 @@ def get_camera_parameters(microscope):
     """
     Get the camera parameters required for the acquisition series.
 
-    :param microscope: pyTEM (or None):
+    :param microscope: Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
@@ -174,7 +175,7 @@ def get_out_file(microscope):
     """
     Get the out file, this is where we will store the results of the microED sequence.
 
-    :param microscope: pyTEM (or None):
+    :param microscope: Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
@@ -195,8 +196,9 @@ def get_out_file(microscope):
     message.grid(column=0, row=0, sticky='w', padx=5, pady=5)
 
     # Create 'select directory' and 'exit' buttons
-    continue_button = ttk.Button(root, text="Select Directory", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=0, row=1, padx=5, pady=5)
+    select_directory_button = ttk.Button(root, text="Select Directory", command=lambda: root.destroy(),
+                                         style="big.TButton")
+    select_directory_button.grid(column=0, row=1, padx=5, pady=5)
     exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                              style="big.TButton")
     exit_button.grid(column=0, row=2, padx=5, pady=5)
@@ -253,3 +255,57 @@ def get_out_file(microscope):
     # Build and return the complete path
     out_path = out_dir + str(file_name.get()) + ".tif"
     return out_path
+
+
+def use_shift_correction(microscope):
+    """
+    The MicroED script supports automated image alignment using the hyperspy library (phase correlation image shift
+     detection functionality). However, it is possible the user may want to proceed without enabling this functionality.
+
+    :param microscope: Interface (or None):
+        The microscope interface, needed to return the microscope to a safe state if the user exits the script
+         through the quit button on the message box.
+
+    :return: bool:
+        True: Use automatic alignment.
+        False: Proceed without automated image alignment.
+    """
+
+    # First we will create a pop-up warning the user they are about to have to select an out directory.
+    root = tk.Tk()
+    style = ttk.Style()
+    window_width = 650
+
+    title, message = automated_alignment_message()
+
+    root.title(title)
+    add_basf_icon_to_tkinter_window(root)
+
+    # Display the automated alignment message, informing the user of the automated image alignment functionality
+    message_label = ttk.Label(root, text=message, wraplength=window_width, font=(None, 15), justify='center')
+    message_label.grid(column=0, row=0, sticky='w', padx=5, pady=5)
+
+    # Create a checkbutton that the user can use to
+    use_automated_alignment = tk.BooleanVar()
+    use_automated_alignment.set(True)
+    use_automated_alignment_button = ttk.Checkbutton(root, text="Proceed with Automated Image Alignment",
+                                                     variable=use_automated_alignment, style="big.TCheckbutton")
+    use_automated_alignment_button.grid(column=0, row=1, padx=5, pady=5)
+
+    # Create a 'Continue' button that the user can click to proceed with automated image alignment
+    continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, row=2, padx=5, pady=5)
+
+    # Create an 'exit' button that the user can use to exit the script.
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=0, row=3, padx=5, pady=5)
+
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+    style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
+
+    root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+
+    root.mainloop()
+
+    return use_automated_alignment.get()
