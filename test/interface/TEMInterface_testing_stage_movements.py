@@ -3,8 +3,8 @@ Some manual testing of the pyTEM stage stuff - getting and setting the stage pos
 """
 import sys
 sys.path.append('T:/Michael L/pyTEM')
-from pyTEM.interface import TEMInterface
-talos = TEMInterface()
+from pyTEM.Interface import Interface
+talos = Interface()
 
 print("Getting initial stage position...")
 stage_position = talos.get_stage_position()

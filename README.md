@@ -47,8 +47,8 @@ TODO
 # Quick-start Example
 
 ```
-from Interface.TEMInterface import TEMInterface
-my_tem = TEMInterface()
+from Interface.Interface import Interface
+my_tem = Interface()
 
 # Get the current magnification
 magnification = my_tem.get_magnification()

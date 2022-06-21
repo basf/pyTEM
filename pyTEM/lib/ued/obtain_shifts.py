@@ -228,9 +228,9 @@ if __name__ == "__main__":
     sys.path.append(str(package_directory))
 
     try:
-        from pyTEM.interface import TEMInterface
+        from pyTEM.Interface import Interface
 
-        scope = TEMInterface()
+        scope = Interface()
     except BaseException as e:
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None

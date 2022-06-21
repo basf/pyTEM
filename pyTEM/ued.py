@@ -16,9 +16,10 @@ package_directory = pathlib.Path().resolve().parent.resolve()
 sys.path.append(str(package_directory))
 
 try:
+    from pyTEM.Interface import Interface
+
     from pyTEM.lib.ued.exit_script import exit_script
     from pyTEM.lib.ued.AcquisitionProperties import AcquisitionProperties
-    from pyTEM.interface import TEMInterface
     from pyTEM.lib.ued.messages import get_welcome_message, get_initialization_message, display_message, \
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
     from pyTEM.lib.ued.obtain_shifts import obtain_shifts
@@ -29,7 +30,7 @@ except Exception as ImportException:
     raise ImportException
 
 
-def ued_tilt_series(verbose=False):
+def ued(verbose=False):
     """
     Perform a MicroED automated imaging sequence.
 
@@ -50,7 +51,7 @@ def ued_tilt_series(verbose=False):
         # Connect to the microscope and Initialize for MicroED
         title, message = get_initialization_message()
         display_message(title=title, message=message, microscope=microscope, position="centered")
-        microscope = TEMInterface()
+        microscope = Interface()
         microscope.insert_screen()
         microscope.open_column_valve()  # Might not work if the column isn't under vacuum
         if microscope.get_column_valve_position() == "Closed":
@@ -109,6 +110,8 @@ def ued_tilt_series(verbose=False):
         num_alpha = int((stop_alpha - start_alpha) / step_alpha + 1)
         alpha_arr = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
 
+        # TODO: Ask if the user would like to use automated shift correction or not.
+
         # Confirm the user is happy, remove the screen, and start the procedure
         title, message = get_start_message()
         display_message(title=title, message=message, microscope=microscope, position="centered")
@@ -148,4 +151,4 @@ def ued_tilt_series(verbose=False):
 
 
 if __name__ == "__main__":
-    ued_tilt_series()
+    ued()

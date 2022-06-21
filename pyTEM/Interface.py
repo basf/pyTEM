@@ -13,33 +13,33 @@ import comtypes.client as cc
 package_directory = pathlib.Path().resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
-    # Library imports
+    # Mixins
+    from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
+    from pyTEM.lib.interface.mixins.StageMixin import StageMixin
+    from pyTEM.lib.interface.mixins.MagnificationMixin import MagnificationMixin
+    from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
+    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
+    from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
+    from pyTEM.lib.interface.mixins.BeamShiftMixin import BeamShiftMixin
+    from pyTEM.lib.interface.mixins.AcquisitionMixin import AcquisitionMixin
+
+    # Other library imports
     from pyTEM.lib.interface.pascal_to_log import pascal_to_log
     from pyTEM.lib.interface.StagePosition import StagePosition
-
-    # Mixin imports
-    from pyTEM.lib.interface.interface_mixins import ModeMixin
-    from pyTEM.lib.interface.interface_mixins.StageMixin import StageMixin
-    from pyTEM.lib.interface.interface_mixins import MagnificationMixin
-    from pyTEM.lib.interface.interface_mixins.VacuumMixin import VacuumMixin
-    from pyTEM.lib.interface.interface_mixins.BeamBlankerMixin import BeamBlankerMixin
-    from pyTEM.lib.interface.interface_mixins.ImageShiftMixin import ImageShiftMixin
-    from pyTEM.lib.interface.interface_mixins import BeamShiftMixin
-    from pyTEM.lib.interface.interface_mixins import AcquisitionMixin
 
 except Exception as e:
     raise e
 
 
-class TEMInterface(ModeMixin,  # Microscope mode controls, including those for projection and illuminations
-                   StageMixin,  # Stage controls
-                   MagnificationMixin,  # Magnification controls
-                   VacuumMixin,  # Vacuum system controls and pressure readouts
-                   BeamBlankerMixin,  # Blank/unblank the beam
-                   ImageShiftMixin,  # Image shift controls
-                   BeamShiftMixin,  # Beam Shift controls
-                   AcquisitionMixin  # Microscope acquisition controls, including those for taking images.
-                   ):
+class Interface(ModeMixin,  # Microscope mode controls, including those for projection and illuminations
+                StageMixin,  # Stage controls
+                MagnificationMixin,  # Magnification controls
+                VacuumMixin,  # Vacuum system controls and pressure readouts
+                BeamBlankerMixin,  # Blank/unblank the beam
+                ImageShiftMixin,  # Image shift controls
+                BeamShiftMixin,  # Beam Shift controls
+                AcquisitionMixin  # Microscope acquisition controls, including those for taking images.
+                ):
     """
     An interface for the Thermo-Fisher TEM microscopes.
 
