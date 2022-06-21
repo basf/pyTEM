@@ -8,11 +8,13 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='TEMInterface',
     version='0.1.0',
-    description='A Python wrapper for the Thermo Fisher Scientific microscope scripting interface',
+    description='Automated transmission electron microscopy experiments in pure Python',
     long_description=long_description,
     url='https://github.com/mrl280/tem-scripting-package/',
     author='BASF TEM Laboratory',
-    author_email='philipp.mueller @ basf.com',
+    author_email='philipp.mueller@basf.com',
+    keywords=['transmission electron microscopy', 'TEM', 'microscopy', 'electron microscopy',
+              'micro-crystal electron diffraction', 'uED'],
     license='MIT',
     packages=['TEMInterface', 'uED'],
     python_requires='>=3.6',
@@ -24,5 +26,6 @@ setup(
                       'opencv-python',
                       'comtypes',
                       'matplotlib',
+                      'setuptools'
                       ],
 )
