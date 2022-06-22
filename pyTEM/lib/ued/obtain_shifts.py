@@ -9,10 +9,14 @@ import warnings
 import numpy as np
 import pandas as pd
 
-import hyperspy.api as hs
 from scipy.signal import find_peaks
 
-# TODO: Still requires testing
+import matplotlib  # import matplotlib for the GUI backend HyperSpy needs
+matplotlib.rcParams["backend"] = "Agg"
+try:
+    import hyperspy.api as hs
+except ImportError as e:
+    raise e
 
 
 def obtain_shifts(microscope, alphas, camera_name, verbose=False):
