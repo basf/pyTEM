@@ -8,7 +8,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name='pyTEM',
     version='0.1.0',
-    description='Automated transmission electron microscopy experiments in pure Python',
+    description='Control and Automation of Transmission Electron Microscopes',
     long_description=long_description,
     url='https://github.com/mrl280/tem-scripting-package/',
     author='BASF TEM Laboratory',
