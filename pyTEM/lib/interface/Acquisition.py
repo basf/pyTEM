@@ -28,7 +28,7 @@ def _build_metadata_dictionary(tm_acquisition_object):
                                            int(tm_acquisition_object.Metadata[4].ValueAsString)],
                                           [int(tm_acquisition_object.Metadata[5].ValueAsString),
                                            int(tm_acquisition_object.Metadata[6].ValueAsString)]]),
-            'ExposureTime':             int(tm_acquisition_object.Metadata[8].ValueAsString),
+            'ExposureTime':             float(tm_acquisition_object.Metadata[8].ValueAsString),
             'DarkGainCorrectionType':   tm_acquisition_object.Metadata[9].ValueAsString,
             'ShuttersType':             tm_acquisition_object.Metadata[10].ValueAsString,
             'ShuttersPosition':         tm_acquisition_object.Metadata[11].ValueAsString,
@@ -149,4 +149,5 @@ class Acquisition:
         if out_file[-4:] != ".tif":
             out_file = out_file + ".tif"
 
+        # TODO: Adjust how pixel size metadata is being saved so imagej knows the image size.
         tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata())
