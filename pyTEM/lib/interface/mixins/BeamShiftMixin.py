@@ -2,8 +2,8 @@
  Author:  Michael Luciuk
  Date:    Summer 2022
 """
-import warnings
 
+import warnings
 import numpy as np
 import comtypes.client as cc
 
