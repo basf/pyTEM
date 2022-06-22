@@ -9,13 +9,14 @@ import warnings
 
 import comtypes.client as cc
 
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve()
+# Add the pyTEM package directory to path
+package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 
 try:
     from pyTEM.lib.interface.Acquisition import Acquisition
-except Exception as e:
-    raise e
+except Exception as ImportException:
+    raise ImportException
 
 
 class AcquisitionMixin:
@@ -24,7 +25,11 @@ class AcquisitionMixin:
 
     This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
     """
-    _tem_advanced: type(cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument"))
+    try:
+        # Unresolved attribute warning suppression
+        _tem_advanced: type(cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument"))
+    except OSError:
+        pass
 
     def acquisition(self, camera_name, sampling=None, exposure_time=None, readout_area=None):
         """
@@ -187,19 +192,23 @@ class AcquisitionMixinTesting(AcquisitionMixin):
     """ Testing """
 
     def __init__(self):
-        self._tem_advanced = cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument")
+        try:
+            self._tem_advanced = cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e
 
 
 if __name__ == "__main__":
 
-    out_dir = package_directory / "Testing_Interface" / "test_images"
+    out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
     print("out_dir: " + str(out_dir))
 
     acq_mixin_tester = AcquisitionMixinTesting()
     available_cameras = acq_mixin_tester.get_available_cameras()
     acq_mixin_tester.print_camera_capabilities(available_cameras[0])
 
-    print("Performing an acquisition...")
+    print("\nPerforming an acquisition...")
     test_acq = acq_mixin_tester.acquisition(camera_name="BM-Ceta", sampling='1k', exposure_time=2, readout_area=None)
 
     out_file_ = out_dir / "test_image.tif"

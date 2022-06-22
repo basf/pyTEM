@@ -8,7 +8,7 @@ import copy
 import warnings
 import comtypes.client as cc
 
-from pyTEM.lib.interface.StagePosition import StagePosition
+from pyTEM.lib.interface.StagePosition import StagePosition  # Requires the pyTEM package directory on path
 
 
 class StageMixin:

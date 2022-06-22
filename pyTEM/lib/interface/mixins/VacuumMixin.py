@@ -6,7 +6,7 @@
 import math
 import comtypes.client as cc
 
-from pyTEM.lib.interface.pascal_to_log import pascal_to_log
+from pyTEM.lib.interface.pascal_to_log import pascal_to_log  # Requires the pyTEM package directory on path
 
 
 class VacuumMixin:
