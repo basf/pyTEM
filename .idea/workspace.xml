@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3aa05636-08d0-49e1-9b49-ad439f6d9633" name="Changes" comment="Updated README after combining both the interface and the ued script into a single pyTEM package">
+    <list default="true" id="3aa05636-08d0-49e1-9b49-ad439f6d9633" name="Changes" comment="importing matplotlib for the GUI backend HyperSpy needs">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -294,7 +295,28 @@
       <option name="project" value="LOCAL" />
       <updated>1655893347410</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="adding .idea/workspace.xml to gitignore">
+      <created>1655894085505</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1655894085505</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Removing opencv as a project requirement">
+      <created>1655894360623</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1655894360623</updated>
+    </task>
+    <task id="LOCAL-00020" summary="importing matplotlib for the GUI backend HyperSpy needs">
+      <created>1655894430119</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1655894430119</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -329,6 +351,9 @@
     <MESSAGE value="Adding pyTEM to path" />
     <MESSAGE value="Version 0.1.0" />
     <MESSAGE value="Updated README after combining both the interface and the ued script into a single pyTEM package" />
-    <option name="LAST_COMMIT_MESSAGE" value="Updated README after combining both the interface and the ued script into a single pyTEM package" />
+    <MESSAGE value="adding .idea/workspace.xml to gitignore" />
+    <MESSAGE value="Removing opencv as a project requirement" />
+    <MESSAGE value="importing matplotlib for the GUI backend HyperSpy needs" />
+    <option name="LAST_COMMIT_MESSAGE" value="importing matplotlib for the GUI backend HyperSpy needs" />
   </component>
 </project>
