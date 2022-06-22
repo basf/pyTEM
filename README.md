@@ -1,7 +1,7 @@
 # Disclaimer
 
-```pyTEM``` was developed for use on the BASF SE transmission electron microscopy (TEM) laboratory's Talos F200i TEM. 
- The authors provide no guarantees that the software will function as intended, either in part or in whole, on any 
+```pyTEM``` was developed for use on the BASF SE TEM laboratory's Talos F200i transmission electron microscope. 
+ The authors provide no guarantee that the software will function as intended, either in part or in whole, on any 
  other microscope installation.
 
 ```pyTEM``` is available under the MIT license [here](/LICENSE).
@@ -15,7 +15,7 @@ Most ```pyTEM``` modules will require the Thermo Fisher Scientific / FEI scripti
  your installation, ```pyTEM``` will likely need to be run on a microscope control computer with the prerequisite 
  Thermo Fisher Scientific / FEI scripting interface installed and properly configured.
 
-A list of available modules can be found below.
+A list of available modules can be found [below](#modules).
 
 # Modules
 
@@ -81,7 +81,7 @@ ued(verbose=True)
  initial development was performed by RISE (Research Internships in Science and Engineering) Interns from North America. 
  More on the RISE program here: https://www.daad.de/rise/en/.
 
-### *[Meagan Jennings](https://github.com/MaeJennings) (Sept - Dec 2019)*
+### *[Meagan Jennings](https://github.com/MaeJennings) (Sept - Dec 2021)*
 
 #### Hometown: 
 Baltimore, Maryland, USA
@@ -89,10 +89,9 @@ Baltimore, Maryland, USA
 #### Contributions:
 
 - Figured out how to interface with and control the microscope from a pure Python environment.
-- developed ```TEMPackage```, the predecessor to ```pyTEM```'s ```Interface``` module. TODO: Link to file
-- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```ued``` module. TODO: Link to file
-- Wrote the original *TEM Scripting Guide*. TODO: Link to file
-
+- developed ```TEMPackage```, the predecessor to ```pyTEM```'s ```Interface``` module. View the project as it existed at the time of Meagan's final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
+- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```ued``` module. View [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
+- Wrote the original TEM Scripting Guide, which can be found in [docs](/docs).
 
 ### *[Michael Luciuk](https://github.com/mrl280) (May - Aug 2022)*
 
@@ -104,11 +103,12 @@ Saskatoon, Saskatchewan, Canada
 - Refactored the original ```TEMPackage``` and ```microED_Tilt_Series``` into the ```Interface``` and ```ued```
  ```pyTEM``` modules we know and love today.
 
+You can view the ```pyTEM``` project as it existed at the time of Michael's final commit [here](https://github.com/mrl280/pyTEM). # TODO: Update after Michael leaves
   
 # Installation
 
 Because ```pyTEM``` is often required on microscope control machines which lack internet connectivity, wheel files 
- are provided in dist (TODO Link). Download the wheel file for the desired package version, transfer the wheel file to 
+ are provided in [dist](/dist). Download the wheel file for the desired package version, transfer the wheel file to 
  the microscope control computer, and install with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
 
 If you need to build your own custom wheel file:
@@ -124,7 +124,7 @@ If you need to build your own custom wheel file:
  have any questions about the ```pyTEM``` project or would like to contribute, please contact Philipp Müller at
  [philipp.mueller@basf.com](mailto:philipp.mueller@basf.com).
 
-Issues can be reported here: TODO.
+Issues can be reported [here](https://github.com/mrl280/pyTEM/issues)
 
 # serailEM
 
