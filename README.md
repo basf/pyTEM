@@ -4,7 +4,7 @@
  The authors provide no guarantees that the software will function as intended, either in part or in whole, on any 
  other microscope installation.
 
-```pyTEM``` is available under the MIT license. TODO: link
+```pyTEM``` is available under the MIT license [here](/LICENSE).
 
 # About
 
