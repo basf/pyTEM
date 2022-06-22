@@ -3,7 +3,7 @@
  Date:    Summer 2022
 
 This is BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows fast,
- high resolution 3D structure determination of small chemical compounds biological macromolecules!
+ high resolution 3D structure determination of small chemical compounds and biological macromolecules!
 """
 
 import warnings
@@ -12,7 +12,8 @@ import sys
 
 import numpy as np
 
-package_directory = pathlib.Path().resolve().parent.resolve()
+# Add the pyTEM package directory to path
+package_directory = pathlib.Path().resolve()
 sys.path.append(str(package_directory))
 
 try:
