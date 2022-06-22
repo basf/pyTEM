@@ -94,22 +94,24 @@ def obtain_shifts(microscope, alphas, camera_name, verbose=False):
         negative_shifts = np.flip(negative_shifts, axis=0)
         shifts = np.concatenate((negative_shifts, positive_shifts))
 
-    x_peaks, _ = find_peaks(shifts[:, 0])
-    y_peaks, _ = find_peaks(shifts[:, 1])
+    # Put the obtained shifts in a dataframe for easy viewing
+    df = pd.DataFrame({'alpha': alphas, 'x-shift': shifts[:, 0], 'y-shift': shifts[:, 1]})
+
+    x_peaks, _ = find_peaks(df['x-shift'])
+    y_peaks, _ = find_peaks(df['y-shift'])
     if verbose:
         print("\nAnalysing peaks to assess the quality of the results...")
         print("Number of x-peaks: " + str(x_peaks))
         print("Number of y-peaks: " + str(y_peaks))
-    if x_peaks > 4 or y_peaks > 4:
+    if x_peaks > 2 or y_peaks > 2:
         # Then we were probably unsuccessful, warn the user
         warnings.warn("Based on the number of peaks, it is unlikely that the automated shift determination was "
                       "successful. Please ensure the specimen is at the eucentric height and try again (you may need "
-                      "to reduce the number of images per batch).")
+                      "to reduce the number of images per batch). Obtained shifts:")
+        print(df.to_string())  # Required to see the whole dataframe
         raise Exception("obtain_shifts(): Automated shift alignment failed, unsafe to proceed.")
 
     if verbose:
-        # Put the obtained shifts in a dataframe for easy viewing
-        df = pd.DataFrame({'alpha': alphas, 'x-shift': shifts[:, 0], 'y-shift': shifts[:, 1]})
         print("\nObtained shifts:")
         print(df.to_string())  # Required to see the whole dataframe
 
