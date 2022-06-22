@@ -12,7 +12,11 @@ class ModeMixin:
 
     This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
     """
-    _tem: type(cc.CreateObject("TEMScripting.Instrument"))
+    try:
+        # Unresolved attribute warning suppression
+        _tem: type(cc.CreateObject("TEMScripting.Instrument"))
+    except OSError:
+        pass
 
     def get_mode(self):
         """

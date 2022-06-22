@@ -15,7 +15,11 @@ class VacuumMixin:
 
     This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
     """
-    _tem: type(cc.CreateObject("TEMScripting.Instrument"))
+    try:
+        # Unresolved attribute warning suppression
+        _tem: type(cc.CreateObject("TEMScripting.Instrument"))
+    except OSError:
+        pass
 
     def _pull_vacuum_info(self):
         """

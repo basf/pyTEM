@@ -4,8 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3aa05636-08d0-49e1-9b49-ad439f6d9633" name="Changes" comment="Not sure what this is about">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    <list default="true" id="3aa05636-08d0-49e1-9b49-ad439f6d9633" name="Changes" comment="Adding black line before imports - just to be consistent with the rest of the project">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/Interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/Interface.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamBlankerMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamBlankerMixin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamShiftMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamShiftMixin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ImageShiftMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ImageShiftMixin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/MagnificationMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/MagnificationMixin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ModeMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ModeMixin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/StageMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/StageMixin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/VacuumMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/VacuumMixin.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,6 +30,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitToolBoxStore">
+    <option name="projectConfigVersion" value="5" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -30,14 +41,14 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\LuciukMR\PycharmProjects\pyTEM\test\ued" />
@@ -47,7 +58,49 @@
       <recent name="C:\Users\LuciukMR\PycharmProjects\pyTEM\pyTEM\lib\interface" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.ued">
+  <component name="RunManager" selected="Python.Interface">
+    <configuration name="AcquisitionMixin" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyTEM" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pyTEM/lib/interface/mixins" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pyTEM/lib/interface/mixins/AcquisitionMixin.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Interface" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pyTEM" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pyTEM" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pyTEM/Interface.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="add_basf_icon_to_tkinter_window" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pyTEM" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -61,27 +114,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pyTEM/lib/ued/add_basf_icon_to_tkinter_window.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="epoch_to_datetime" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pyTEM" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Testing_Interface" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\LuciukMR\PycharmProjects\pyTEM\test\interface\epoch_to_datetime.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -134,10 +166,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.Interface" />
+        <item itemvalue="Python.AcquisitionMixin" />
         <item itemvalue="Python.ued" />
         <item itemvalue="Python.add_basf_icon_to_tkinter_window" />
         <item itemvalue="Python.synchronizing_threads" />
-        <item itemvalue="Python.epoch_to_datetime" />
       </list>
     </recent_temporary>
   </component>
@@ -206,7 +239,28 @@
       <option name="project" value="LOCAL" />
       <updated>1655809322716</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Adding a note to remind myself that we need a disclaimer in the docs and as a popup when you connect to the microscope.">
+      <created>1655811726618</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1655811726618</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Updating library path">
+      <created>1655882621720</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1655882621720</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Adding black line before imports - just to be consistent with the rest of the project">
+      <created>1655882661842</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1655882661842</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -232,6 +286,9 @@
     <MESSAGE value="Fixing path, required because of project refactoring" />
     <MESSAGE value="Use of the automated image shift functionality is now optional." />
     <MESSAGE value="Not sure what this is about" />
-    <option name="LAST_COMMIT_MESSAGE" value="Not sure what this is about" />
+    <MESSAGE value="Adding a note to remind myself that we need a disclaimer in the docs and as a popup when you connect to the microscope." />
+    <MESSAGE value="Updating library path" />
+    <MESSAGE value="Adding black line before imports - just to be consistent with the rest of the project" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adding black line before imports - just to be consistent with the rest of the project" />
   </component>
 </project>

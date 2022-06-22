@@ -10,8 +10,10 @@ import sys
 import numpy as np
 import comtypes.client as cc
 
-package_directory = pathlib.Path().resolve().parent.resolve()
+# Add the pyTEM package directory to path
+package_directory = pathlib.Path().resolve()
 sys.path.append(str(package_directory))
+
 try:
     # Mixins
     from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
@@ -27,8 +29,8 @@ try:
     from pyTEM.lib.interface.pascal_to_log import pascal_to_log
     from pyTEM.lib.interface.StagePosition import StagePosition
 
-except Exception as e:
-    raise e
+except Exception as ImportException:
+    raise ImportException
 
 
 class Interface(ModeMixin,  # Microscope mode controls, including those for projection and illuminations
@@ -72,9 +74,12 @@ class Interface(ModeMixin,  # Microscope mode controls, including those for proj
     """
 
     def __init__(self):
-        self._tem = cc.CreateObject("TEMScripting.Instrument")
-
-        self._tem_advanced = cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument")
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+            self._tem_advanced = cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument")
+        except OSError as e:
+            print("Unable to connect to microscope.")
+            raise e
 
         scope_position = self._tem.Stage.Position  # ThermoFisher StagePosition object
 
@@ -119,3 +124,7 @@ class Interface(ModeMixin,  # Microscope mode controls, including those for proj
 
     def get_projection_submode(self):
         return ModeMixin.get_projection_submode(self)
+
+
+if __name__ == "__main__":
+    scope = Interface()
