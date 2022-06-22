@@ -1,6 +1,13 @@
 """
  Author:  Michael Luciuk
  Date:    Summer 2022
+
+This is BASF's in-house TEM scripting interface. Bolted directly on top of a COM interface, this is just a Python
+ wrapper for the scripting interface of Thermo Fisher Scientific and FEI microscopes.
+
+This is not a complete interface in that it does not provide access to all the functionality of the underlying Thermo
+ Fisher Scientific and FEI scripting interface. However, it provides access to all basic microscope functions as well
+ as all those required by other pyTEM automation scripts.
 """
 
 import math
