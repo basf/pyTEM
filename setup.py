@@ -23,7 +23,6 @@ setup(
                       'hyperspy',
                       'scipy',
                       'tifffile',
-                      'opencv-python',
                       'comtypes',
                       'matplotlib',
                       'setuptools'
