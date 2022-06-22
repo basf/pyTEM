@@ -4,16 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3aa05636-08d0-49e1-9b49-ad439f6d9633" name="Changes" comment="Adding black line before imports - just to be consistent with the rest of the project">
+    <list default="true" id="3aa05636-08d0-49e1-9b49-ad439f6d9633" name="Changes" comment="Updated README after combining both the interface and the ued script into a single pyTEM package">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/Interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/Interface.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamBlankerMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamBlankerMixin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamShiftMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/BeamShiftMixin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ImageShiftMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ImageShiftMixin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/MagnificationMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/MagnificationMixin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ModeMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/ModeMixin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/StageMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/StageMixin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/VacuumMixin.py" beforeDir="false" afterPath="$PROJECT_DIR$/pyTEM/lib/interface/mixins/VacuumMixin.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -260,7 +252,49 @@
       <option name="project" value="LOCAL" />
       <updated>1655882661842</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Wrapping all the type declarations in try except blocks so that we can import the mixins even if we can't make a COM connections.">
+      <created>1655883316385</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1655883316385</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Changing exposure time to be a float">
+      <created>1655883989390</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1655883989390</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Docstring update">
+      <created>1655884012988</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1655884012988</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Adding pyTEM to path">
+      <created>1655884050042</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1655884050042</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Version 0.1.0">
+      <created>1655893215816</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1655893215816</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Updated README after combining both the interface and the ued script into a single pyTEM package">
+      <created>1655893347410</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1655893347410</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -289,6 +323,12 @@
     <MESSAGE value="Adding a note to remind myself that we need a disclaimer in the docs and as a popup when you connect to the microscope." />
     <MESSAGE value="Updating library path" />
     <MESSAGE value="Adding black line before imports - just to be consistent with the rest of the project" />
-    <option name="LAST_COMMIT_MESSAGE" value="Adding black line before imports - just to be consistent with the rest of the project" />
+    <MESSAGE value="Wrapping all the type declarations in try except blocks so that we can import the mixins even if we can't make a COM connections." />
+    <MESSAGE value="Changing exposure time to be a float" />
+    <MESSAGE value="Docstring update" />
+    <MESSAGE value="Adding pyTEM to path" />
+    <MESSAGE value="Version 0.1.0" />
+    <MESSAGE value="Updated README after combining both the interface and the ued script into a single pyTEM package" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updated README after combining both the interface and the ued script into a single pyTEM package" />
   </component>
 </project>

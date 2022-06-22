@@ -1,3 +1,4 @@
+# Test and calibration data
 /test/interface/data/
 /test/interface/TEMInferace Testing Log.xlsx
 /Testing_Interface/~$TEMInferace Testing Log.xlsx
@@ -8,3 +9,5 @@
 # Distribution/packaging
 /build/
 /pyTEM.egg-info/
+
+.idea/workspace.xml
