@@ -3,8 +3,8 @@
  Date:    Summer 2022
 """
 
+import warnings
 import numpy as np
-
 from datetime import datetime
 from tifffile import tifffile
 
@@ -74,8 +74,37 @@ class Acquisition:
     """
 
     def __init__(self, tm_acquisition_object):
-        self.__image = np.asarray(tm_acquisition_object.AsSafeArray)
-        self.__metadata = _build_metadata_dictionary(tm_acquisition_object=tm_acquisition_object)
+        """
+        :param tm_acquisition_object: A Thermo Fisher Acquisition object.
+        """
+        try:
+            self.__image = np.asarray(tm_acquisition_object.AsSafeArray)
+            self.__metadata = _build_metadata_dictionary(tm_acquisition_object=tm_acquisition_object)
+        except AttributeError:
+            self.__image = np.random.random((1024, 1024))  # A random 1k image.
+            self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+            warnings.warn("The Acquisition() constructor received an invalid Thermo Fisher Acquisition object. The "
+                          "returned Acquisition object contains a random 1k image with no metadata.")
+        except BaseException as e:
+            raise e
+
+    def _set_image(self, image):
+        """
+        Set the image attribute. This method is probably only helpful for testing.
+        :param image: 2D numpy.ndarray:
+            The new image.
+        :return: None.
+        """
+        self.__image = image
+
+    def _set_metadata(self, metadata):
+        """
+        Set the metadata attribute. This method is probably only helpful for testing.
+        :param metadata: dict:
+            The new metadata.
+        :return: None.
+        """
+        self.__metadata = metadata
 
     def get_image(self):
         """
@@ -149,5 +178,34 @@ class Acquisition:
         if out_file[-4:] != ".tif":
             out_file = out_file + ".tif"
 
-        # TODO: Adjust how pixel size metadata is being saved so imagej knows the image size.
-        tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata())
+        pixel_size_x_in_cm = 100 * self.get_metadata()['PixelSize'][0]  # m -> cm
+        pixel_size_y_in_cm = 100 * self.get_metadata()['PixelSize'][1]  # m -> cm
+
+        tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(),
+                         resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'))
+
+
+if __name__ == "__main__":
+    import pathlib
+    import hyperspy.api as hs
+
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
+                / "interface" / "test_images"
+
+    acq = Acquisition(None)
+    acq.update_metadata_parameter(key='PixelSize', value=(6.79e-9, 6.79e-9))
+    print(acq.get_metadata())
+
+    # print(out_dir)
+    out_file_ = out_dir / "random_image1.tif"
+    print("Saving image as: " + str(out_file_))
+    acq.save_as_tif(out_file=out_file_)
+
+    # Load back in the file and look at the metadata
+    print("Reading back in " + str(out_file_))
+    ref_image = hs.load(out_file_)
+
+    original_metadata = ref_image.original_metadata
+    print(original_metadata)
+    print(type(original_metadata))
+    print(original_metadata['ResolutionUnit'])
