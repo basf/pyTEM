@@ -9,13 +9,15 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from datetime import date
+from typing import Union, Tuple
 
+from pyTEM.Interface import Interface
 from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 from pyTEM.lib.ued.exit_script import exit_script
 from pyTEM.lib.ued.messages import automated_alignment_message
 
 
-def get_tilt_range(microscope):
+def get_tilt_range(microscope: Union[Interface, None]) -> Tuple[float, float, float]:
     """
     Prompt the user for the microED alpha tilt range.
 
@@ -94,11 +96,11 @@ def get_tilt_range(microscope):
     return float(start.get()), float(stop.get()), float(step.get())
 
 
-def get_camera_parameters(microscope):
+def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, float, str]:
     """
     Get the camera parameters required for the acquisition series.
 
-    :param microscope: Interface (or None):
+    :param microscope: pyTEM Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
@@ -171,11 +173,11 @@ def get_camera_parameters(microscope):
     return str(camera.get()), float(integration_time.get()), str(binning.get())[0:2]
 
 
-def get_out_file(microscope):
+def get_out_file(microscope: Union[Interface, None]) -> str:
     """
     Get the out file, this is where we will store the results of the microED sequence.
 
-    :param microscope: Interface (or None):
+    :param microscope: pyTEM Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
@@ -257,12 +259,12 @@ def get_out_file(microscope):
     return out_path
 
 
-def use_shift_correction(microscope):
+def use_shift_correction(microscope: Union[Interface, None]) -> bool:
     """
     The MicroED script supports automated image alignment using the hyperspy library (phase correlation image shift
      detection functionality). However, it is possible the user may want to proceed without enabling this functionality.
 
-    :param microscope: Interface (or None):
+    :param microscope: pyTEM Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 

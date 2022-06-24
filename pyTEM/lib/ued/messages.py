@@ -5,12 +5,14 @@
 
 import tkinter as tk
 from tkinter import ttk
+from typing import Tuple, Union
 
+from pyTEM.Interface import Interface
 from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 from pyTEM.lib.ued.exit_script import exit_script
 
 
-def get_welcome_message():
+def get_welcome_message() -> Tuple[str, str]:
     """
     :return: str: A welcome message.
     """
@@ -24,7 +26,7 @@ def get_welcome_message():
     return title, message
 
 
-def get_initialization_message():
+def get_initialization_message() -> Tuple[str, str]:
     """
     :return: str: Initialization message.
     """
@@ -43,7 +45,7 @@ def get_initialization_message():
     return title, message
 
 
-def get_alignment_message():
+def get_alignment_message() -> Tuple[str, str]:
     """
     :return: str: An initialization message.
     """
@@ -56,7 +58,7 @@ def get_alignment_message():
     return title, message
 
 
-def get_eucentric_height_message():
+def get_eucentric_height_message() -> Tuple[str, str]:
     """
     :return: str: An eucentric height message.
     """
@@ -68,7 +70,7 @@ def get_eucentric_height_message():
     return title, message
 
 
-def automated_alignment_message():
+def automated_alignment_message() -> Tuple[str, str]:
     """
     :return: str: A message explaining the automated image alignment functionality.
     """
@@ -82,7 +84,7 @@ def automated_alignment_message():
     return title, message
 
 
-def get_start_message():
+def get_start_message() -> Tuple[str, str]:
     """
     :return: str: A start message.
     """
@@ -94,7 +96,7 @@ def get_start_message():
     return title, message
 
 
-def get_end_message(out_file):
+def get_end_message(out_file) -> Tuple[str, str]:
     """
     :param: out_file: str:
         The out file path.
@@ -106,7 +108,7 @@ def get_end_message(out_file):
     return title, message
 
 
-def get_good_bye_message():
+def get_good_bye_message() -> Tuple[str, str]:
     """
     :return: str: A good bye message.
     """
@@ -116,7 +118,7 @@ def get_good_bye_message():
     return title, message
 
 
-def display_message(title, message, microscope, position="centered"):
+def display_message(title: str, message: str, microscope: Union[Interface, None], position="centered") -> None:
     """
     Display a simple message box with 'continue' and 'exit' buttons at the bottom.
 
@@ -125,7 +127,7 @@ def display_message(title, message, microscope, position="centered"):
     :param title: str:
         Message box title.
 
-    :param microscope: Interface (or None):
+    :param microscope: pyTEM Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 

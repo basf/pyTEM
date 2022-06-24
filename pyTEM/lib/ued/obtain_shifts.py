@@ -5,21 +5,31 @@
 
 import math
 import warnings
+import pathlib
+import sys
 
 import numpy as np
 import pandas as pd
-
+from numpy.typing import ArrayLike
 from scipy.signal import find_peaks
 
-import matplotlib  # import matplotlib for the GUI backend HyperSpy needs
-matplotlib.rcParams["backend"] = "Agg"
+# Add the pyTEM package directory to path
+package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve()
+sys.path.append(str(package_directory))
 try:
+    from pyTEM.Interface import Interface
+except Exception as ImportException:
+    raise ImportException
+
+try:
+    import matplotlib  # import matplotlib for the GUI backend HyperSpy needs
+    matplotlib.rcParams["backend"] = "Agg"
     import hyperspy.api as hs
-except ImportError as e:
-    raise e
+except Exception as ImportException:
+    raise ImportException
 
 
-def obtain_shifts(microscope, alphas, camera_name, verbose=False):
+def obtain_shifts(microscope: Interface, alphas: ArrayLike[float], camera_name: str, verbose: bool = False) -> np.array:
     """
     Automatically obtain the image shifts required to keep the currently centered section of the specimen centered at
      all alpha tilt angles.
@@ -118,7 +128,8 @@ def obtain_shifts(microscope, alphas, camera_name, verbose=False):
     return shifts
 
 
-def _complete_one_sign(microscope, camera_name, this_signs_alphas, max_images_per_batch=10, verbose=False):
+def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alphas: ArrayLike[float],
+                       max_images_per_batch: int = 10, verbose: bool = False) -> np.array:
     """
     Because we want the user to center the specimen at 0 degrees (to reduce the overall shift), we need to separately
      compute:
@@ -227,17 +238,10 @@ def _complete_one_sign(microscope, camera_name, this_signs_alphas, max_images_pe
 
 if __name__ == "__main__":
 
-    import pathlib
-    import sys
-
-    package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve()
-    sys.path.append(str(package_directory))
-
     try:
-        from pyTEM.Interface import Interface
-
         scope = Interface()
     except BaseException as e:
+        print(e)
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 

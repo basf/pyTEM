@@ -5,9 +5,11 @@
 
 import sys
 import warnings
+from typing import Union
+from pyTEM.Interface import Interface
 
 
-def exit_script(microscope, status):
+def exit_script(microscope: Union[Interface, None], status: int) -> None:
     """
     Return the microscope to a safe state and exit the MicroED script.
     :param microscope: pyTEM (or None):

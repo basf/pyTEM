@@ -7,6 +7,7 @@ import threading
 import pathlib
 import time
 import sys
+from typing import Union
 
 import numpy as np
 
@@ -63,7 +64,7 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
 
         tilting_thread.join()
 
-        image_stack.append(acq.get_image())
+        image_stack.append(acq)
 
     if verbose:
         print("Saving image stack to file as: " + acquisition_properties.out_file)
@@ -106,6 +107,7 @@ if __name__ == "__main__":
     try:
         scope = Interface()
     except BaseException as e:
+        print(e)
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 

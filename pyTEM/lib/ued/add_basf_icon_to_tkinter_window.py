@@ -2,11 +2,13 @@
  Author:  Michael Luciuk
  Date:    Summer 2022
 """
+
 import pathlib
+import tkinter as tk
 from tkinter import TclError
 
 
-def add_basf_icon_to_tkinter_window(root):
+def add_basf_icon_to_tkinter_window(root: tk.Tk()) -> None:
     """
     Add the BASF ico to root.
     :param root: tkinter window:
