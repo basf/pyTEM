@@ -11,6 +11,8 @@ import comtypes.client as cc
 from pyTEM.lib.interface.StagePosition import StagePosition  # Requires the pyTEM package directory on path
 
 
+# TODO: Compute min and max stage movement speeds along x, y and z
+
 class StageMixin:
     """
     Microscope stage controls, including those for getting and setting the stage position. Also, helpful stage status
@@ -60,9 +62,11 @@ class StageMixin:
         :param speed: float (optional; default is 1.0):
             The fraction of the standard speed setting with which to move the stage.
             Some examples:
-                1.0: Move with 100% of the standard microscope speed (maximum speed).
+                1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
+                 15 deg / s).
                 0.6: Move with 60% of the standard microscope speed.
-                0.01: move with 1% of the standard microscope speed (minimum speed).
+                0.00032: move with 0.032% of the standard microscope speed (minimum speed; for tilting this is about
+                 0.02 deg / s).
         :param movement_type: string (optional; default is "go"):
             The TEM supports two movement types:
                 "go": the instrument stage will move directly from the old position to the new position.
@@ -74,14 +78,14 @@ class StageMixin:
         :return: None.
         """
         if speed > 1.0:
-            print("Microscope speed cannot exceed 1.0 (100% of the standard microscope speed), "
+            print("Microscope speed cannot exceed 1.0 (100% of the standard microscope speed; about 15 deg / s), "
                   "moving the stage with speed 1.0...")
             speed = 1.0
 
-        if speed < 0.01:
-            print("Microscope speed must exceed 0.01 (1% of the standard microscope speed), "
-                  "moving the stage with speed 0.1...")
-            speed = 0.1
+        if speed < 0.00032:
+            print("Microscope speed must exceed 0.00032 (0.032% of the standard microscope speed; about 0.02 deg / s), "
+                  "moving the stage with speed 0.00032...")
+            speed = 0.00032
 
         movement_type = str(movement_type).lower()
         if movement_type not in {"go", "move"}:
@@ -235,11 +239,13 @@ class StageMixin:
             The new stage position along the x-axis, in micrometres.
 
         :param speed: float (optional; default is 1.0):
-            The fraction of the standard speed setting with which to move.
-            Examples:
-                1.0: Move with 100% of the standard microscope speed (maximum speed).
+            The fraction of the standard speed setting with which to move the stage.
+            Some examples:
+                1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
+                 15 deg / s).
                 0.6: Move with 60% of the standard microscope speed.
-                0.01: move with 1% of the standard microscope speed (minimum speed).
+                0.00032: move with 0.032% of the standard microscope speed (minimum speed; for tilting this is about
+                 0.02 deg / s).
         :param movement_type: string (optional; default is "go"):
             The TEM has supports two movement types:
                 "go": the instrument stage will move directly from the old position to the new position.
@@ -265,11 +271,13 @@ class StageMixin:
             The new stage position along the y-axis, in micrometres.
 
         :param speed: float (optional; default is 1.0):
-            The fraction of the standard speed setting with which to move.
-            Examples:
-                1.0: Move with 100% of the standard microscope speed (maximum speed).
+            The fraction of the standard speed setting with which to move the stage.
+            Some examples:
+                1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
+                 15 deg / s).
                 0.6: Move with 60% of the standard microscope speed.
-                0.01: move with 1% of the standard microscope speed (minimum speed).
+                0.00032: move with 0.032% of the standard microscope speed (minimum speed; for tilting this is about
+                 0.02 deg / s).
         :param movement_type: string (optional; default is "go"):
             The TEM has supports two movement types:
                 "go": the instrument stage will move directly from the old position to the new position.
@@ -295,11 +303,13 @@ class StageMixin:
             The new stage position along the z-axis, in micrometres.
 
         :param speed: float (optional; default is 1.0):
-            The fraction of the standard speed setting with which to move.
-            Examples:
-                1.0: Move with 100% of the standard microscope speed (maximum speed).
+            The fraction of the standard speed setting with which to move the stage.
+            Some examples:
+                1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
+                 15 deg / s).
                 0.6: Move with 60% of the standard microscope speed.
-                0.01: move with 1% of the standard microscope speed (minimum speed).
+                0.00032: move with 0.032% of the standard microscope speed (minimum speed; for tilting this is about
+                 0.02 deg / s).
         :param movement_type: string (optional; default is "go"):
             The TEM has supports two movement types:
                 "go": the instrument stage will move directly from the old position to the new position.
@@ -325,11 +335,13 @@ class StageMixin:
             The new stage tilt along the alpha-axis, in degrees.
 
         :param speed: float (optional; default is 1.0):
-            The fraction of the standard speed setting with which to move.
-            Examples:
-                1.0: Move with 100% of the standard microscope speed (maximum speed).
+            The fraction of the standard speed setting with which to move the stage.
+            Some examples:
+                1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
+                 15 deg / s).
                 0.6: Move with 60% of the standard microscope speed.
-                0.01: move with 1% of the standard microscope speed (minimum speed).
+                0.00032: move with 0.032% of the standard microscope speed (minimum speed; for tilting this is about
+                 0.02 deg / s).
         :param movement_type: string (optional; default is "go"):
             The TEM has supports two movement types:
                 "go": the instrument stage will move directly from the old position to the new position.
@@ -355,11 +367,13 @@ class StageMixin:
             The new stage tilt along the beta-axis, in degrees.
 
         :param speed: float (optional; default is 1.0):
-            The fraction of the standard speed setting with which to move.
-            Examples:
-                1.0: Move with 100% of the standard microscope speed (maximum speed).
+            The fraction of the standard speed setting with which to move the stage.
+            Some examples:
+                1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
+                 15 deg / s).
                 0.6: Move with 60% of the standard microscope speed.
-                0.01: move with 1% of the standard microscope speed (minimum speed).
+                0.00032: move with 0.032% of the standard microscope speed (minimum speed; for tilting this is about
+                 0.02 deg / s).
 
         :return: None.
         """
