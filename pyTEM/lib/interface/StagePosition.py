@@ -92,3 +92,16 @@ class StagePosition:
          utilization of this method will not affect the microscope.
         """
         self.__beta = new_beta
+
+    def __str__(self):
+        return "-- Current Stage Position -- " \
+               "\nx=" + str(self.get_x()) + " \u03BCm" \
+               "\ny=" + str(self.get_y()) + " \u03BCm" \
+               "\nz=" + str(self.get_z()) + " \u03BCm" \
+               "\n\u03B1=" + str(self.get_alpha()) + " deg" \
+               "\n\u03B2=" + str(self.get_beta()) + " deg"
+
+
+if __name__ == "__main__":
+    stage_pos = StagePosition(x=100.3, y=-234.2, z=15.0, alpha=45, beta=0.0)
+    print(stage_pos)
