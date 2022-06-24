@@ -1,7 +1,12 @@
+"""
+ Author:  Michael Luciuk
+ Date:    Summer 2022
+"""
+
 import math
 
 
-def pascal_to_log(pressure_in_pascals):
+def pascal_to_log(pressure_in_pascals: float) -> float:
     """
     Convert pressures from pascals into log units. Log units are defined in such a way that a realistic range of
      pressures (for that vacuum element) goes from 0 to 100. The advantage of the log units is simplicity and high

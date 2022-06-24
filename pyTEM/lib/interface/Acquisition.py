@@ -3,17 +3,21 @@
  Date:    Summer 2022
 """
 
+import pathlib
 import warnings
-import numpy as np
 import mrcfile
-from datetime import datetime
-from tifffile import tifffile
 
+import numpy as np
 import hyperspy.api as hs
 from hyperspy.misc.utils import DictionaryTreeBrowser
+from typing import Union, Dict, Any
+from datetime import datetime
+
+from numpy.typing import ArrayLike
+from tifffile import tifffile
 
 
-def _build_metadata_dictionary(tm_acquisition_object):
+def _build_metadata_dictionary(tm_acquisition_object) -> Dict[str, Union[str, int, float]]:
     """
     Build a metadata dictionary from a Thermo Fisher Acquisition object.
 
@@ -21,6 +25,7 @@ def _build_metadata_dictionary(tm_acquisition_object):
 
     :return: dictionary:
         A python dictionary with all the metadata.
+        Value restrictions (str, int, float) are to ensure types are JSON serializable.
     """
     # The microscope timestamps acquisitions with an epoch in microseconds.
     epoch = int(float(tm_acquisition_object.Metadata[23].ValueAsString) / 1e6)  # Covert to epoch in seconds
@@ -78,7 +83,7 @@ class Acquisition:
         __metadata:   dictionary:      All the image metadata (describes and gives information about the __image).
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args: Union[str, pathlib.Path, Any]):
         """
         :param args[0]:
             Either:
@@ -98,7 +103,7 @@ class Acquisition:
             return
 
         try:
-            if isinstance(args[0], str) or isinstance(args[0], pathlib.PurePath):
+            if isinstance(args[0], str) or isinstance(args[0], pathlib.Path):
                 # Try to load from file
 
                 if mrcfile.validate(args[0]):
@@ -137,7 +142,7 @@ class Acquisition:
             warnings.warn("The Acquisition() constructor received an invalid input.")
             raise e
 
-    def _set_image(self, image):
+    def _set_image(self, image: ArrayLike) -> None:
         """
         Set the image attribute. This method is probably only helpful for testing.
         :param image: 2D numpy.ndarray:
@@ -146,7 +151,7 @@ class Acquisition:
         """
         self.__image = image
 
-    def _set_metadata(self, metadata):
+    def _set_metadata(self, metadata: Dict[str, Union[str, int, float]]) -> None:
         """
         Set the metadata attribute. This method is probably only helpful for testing.
         :param metadata: dict:
@@ -155,14 +160,14 @@ class Acquisition:
         """
         self.__metadata = metadata
 
-    def get_image(self):
+    def get_image(self) -> np.ndarray:
         """
         :return: image: numpy.ndarray:
             The image, as a 2D numpy array.
         """
         return self.__image
 
-    def get_metadata(self):
+    def get_metadata(self) -> Dict[str, Union[str, int, float, ArrayLike]]:
         """
         :return: metadata: dictionary:
             A dictionary containing the image metadata (describes and gives information about the image itself).
@@ -170,7 +175,7 @@ class Acquisition:
         """
         return self.__metadata
 
-    def update_metadata_parameter(self, key, value, force=False):
+    def update_metadata_parameter(self, key: str, value: Union[str, int, float, ArrayLike], force: bool = False) -> int:
         """
         Update an existing metadata parameter.
 
@@ -178,7 +183,7 @@ class Acquisition:
             Metadata dictionary key.
             Key must exist otherwise no changes will be made (can be overridden with the force parameter).
         :param value:
-            The corresponding value to store in the metadata dictionary.
+            The corresponding value to store in the metadata dictionary. Must be JSON serializable.
         :param force: bool (optional; default is False)
             If True, the key value pair will be force added, even if the provided key doesn't currently exist with the
              metadata dictionary.
@@ -195,7 +200,7 @@ class Acquisition:
             print("Unable to update metadata, key '" + key + "' not found in metadata dictionary.")
             return 1
 
-    def add_metadata_parameter(self, key, value):
+    def add_metadata_parameter(self, key: str, value: Union[str, int, float, ArrayLike]) -> int:
         """
         Add a new parameter to the metadata dictionary.
 
@@ -203,7 +208,7 @@ class Acquisition:
             Metadata dictionary key.
             Key must exist otherwise no changes will be made (can be overridden with the force parameter).
         :param value:
-            The corresponding value to store in the metadata dictionary.
+            The corresponding value to store in the metadata dictionary. Must be JSON serializable.
 
         :return: int:
             0: Success. Key value pair added successfully.
@@ -211,7 +216,7 @@ class Acquisition:
         """
         return self.update_metadata_parameter(key=key, value=value, force=True)
 
-    def save_as_tif(self, out_file):
+    def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
         Save the acquisition as a TIFF file.
 
@@ -233,17 +238,18 @@ class Acquisition:
             #  denominator."
             # If the required TIFF XResolution and YResolution tags already exist, then go ahead and use them.
             # Notice we are computing the inverse here and will invert back when we save.
-            pixel_size_x_in_cm = self.get_metadata()['XResolution'][1] / self.get_metadata()['XResolution'][0]
-            pixel_size_y_in_cm = self.get_metadata()['YResolution'][1] / self.get_metadata()['YResolution'][0]
+            pixel_size_x_in_cm = float(self.get_metadata()['XResolution'][1] / self.get_metadata()['XResolution'][0])
+            pixel_size_y_in_cm = float(self.get_metadata()['YResolution'][1] / self.get_metadata()['YResolution'][0])
         except KeyError:
             # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object
-            pixel_size_x_in_cm = 100 * self.get_metadata()['PixelSize'][0]  # m -> cm
-            pixel_size_y_in_cm = 100 * self.get_metadata()['PixelSize'][1]  # m -> cm
+            pixel_size_x_in_cm = float(100 * self.get_metadata()['PixelSize'][0])  # m -> cm
+            pixel_size_y_in_cm = float(100 * self.get_metadata()['PixelSize'][1])  # m -> cm
 
+        self.save_as_mrc('CENTIMETER')
         tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(),
                          resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'))
 
-    def save_as_mrc(self, out_file):
+    def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
         """
         Save the acquisition as an MRC file.
 
@@ -266,7 +272,6 @@ class Acquisition:
 
 
 if __name__ == "__main__":
-    import pathlib
 
     out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
                 / "interface" / "test_images"

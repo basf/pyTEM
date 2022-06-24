@@ -16,44 +16,44 @@ class StagePosition:
         __beta:   float:  The current stage tilt along the beta direction, in degrees.
     """
 
-    def __init__(self, x, y, z, alpha, beta):
+    def __init__(self, x: float, y: float, z: float, alpha: float, beta: float):
         self.__x = x
         self.__y = y
         self.__z = z
         self.__alpha = alpha
         self.__beta = beta
 
-    def get_x(self):
+    def get_x(self) -> float:
         """
         :return: float: The current stage position along the x-axis, in micrometres.
         """
         return self.__x
 
-    def get_y(self):
+    def get_y(self) -> float:
         """
         :return: float: The current stage position along the y-axis, in micrometres.
         """
         return self.__y
 
-    def get_z(self):
+    def get_z(self) -> float:
         """
         :return: float: The current stage position along the z-axis, in micrometres.
         """
         return self.__z
 
-    def get_alpha(self):
+    def get_alpha(self) -> float:
         """
         :return: float: The current stage tilt along the alpha direction, in degrees.
         """
         return self.__alpha
 
-    def get_beta(self):
+    def get_beta(self) -> float:
         """
         :return: float: The current stage tilt along the beta direction, in degrees.
         """
         return self.__beta
 
-    def set_x(self, new_x):
+    def set_x(self, new_x: float) -> None:
         """
         Update the current stage position along the x-axis, in micrometres.
         Notice that since this does nothing to update the microscope's internal (Thermo-Fisher's) StagePosition object,
@@ -61,7 +61,7 @@ class StagePosition:
         """
         self.__x = new_x
 
-    def set_y(self, new_y):
+    def set_y(self, new_y: float) -> None:
         """
         Update the current stage position along the y-axis, in micrometres.
         Notice that since this does nothing to update the microscope's internal (Thermo-Fisher's) StagePosition object,
@@ -69,7 +69,7 @@ class StagePosition:
         """
         self.__y = new_y
 
-    def set_z(self, new_z):
+    def set_z(self, new_z: float) -> None:
         """
         Update the current stage position along the z-axis, in micrometres.
         Notice that since this does nothing to update the microscope's internal (Thermo-Fisher's) StagePosition object,
@@ -77,7 +77,7 @@ class StagePosition:
         """
         self.__z = new_z
 
-    def set_alpha(self, new_alpha):
+    def set_alpha(self, new_alpha: float) -> None:
         """
         Update the current stage tilt along the alpha direction, in degrees.
         Notice that since this does nothing to update the microscope's internal (Thermo-Fisher's) StagePosition object,
@@ -85,7 +85,7 @@ class StagePosition:
         """
         self.__alpha = new_alpha
 
-    def set_beta(self, new_beta):
+    def set_beta(self, new_beta: float) -> None:
         """
         Update the current stage tilt along the beta direction, in degrees.
         Notice that since this does nothing to update the microscope's internal (Thermo-Fisher's) StagePosition object,
