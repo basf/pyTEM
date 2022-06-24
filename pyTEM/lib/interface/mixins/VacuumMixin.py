@@ -33,7 +33,7 @@ class VacuumMixin:
         #  the actual pressures measured with them.
         gauges = self._tem.Vacuum.Gauges
         gauge_names = ['IGPa (accelerator)', 'IGPco (column)', 'PIRco (detector)',
-                       'PPm (sample airlock)', 'IGPf (electron gun)']
+                       'PPm (airlock)', 'IGPf (electron gun)']
 
         # Build a dictionary with the gauge name, pressure in Pascals, and pressure in log units.
         pressure_dictionary = dict()
