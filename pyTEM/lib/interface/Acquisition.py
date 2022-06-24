@@ -8,6 +8,9 @@ import numpy as np
 from datetime import datetime
 from tifffile import tifffile
 
+import hyperspy.api as hs
+from hyperspy.misc.utils import DictionaryTreeBrowser
+
 
 def _build_metadata_dictionary(tm_acquisition_object):
     """
@@ -73,20 +76,46 @@ class Acquisition:
         __metadata:   dictionary:      All the image metadata (describes and gives information about the __image).
     """
 
-    def __init__(self, tm_acquisition_object):
+    def __init__(self, *args):
         """
-        :param tm_acquisition_object: A Thermo Fisher Acquisition object.
+        :param args[0]:
+            Either:
+                A string or path object, in which case the Acquisition() object will be initialized from file.
+                A Thermo Fisher Acquisition object: in which case we will initialize from that.
         """
+        if len(args) <= 0 or len(args) >= 2:
+            # We were expecting only one input argument.
+            raise TypeError("Acquisition() expected 1 argument, but got " + str(len(args)))
+
         try:
-            self.__image = np.asarray(tm_acquisition_object.AsSafeArray)
-            self.__metadata = _build_metadata_dictionary(tm_acquisition_object=tm_acquisition_object)
+            if isinstance(args[0], str) or isinstance(args[0], pathlib.PurePath):
+                # Try to load from file.
+                image = hs.load(args[0])
+                self.__image = image.data
+                self.__metadata = dict(image.original_metadata)
+
+                # If the file is one that was generated from an Acquisition object, then a bunch of metadata will be in
+                #  the ImageDescription field as a string, and we need to turn it back into a dictionary.
+                if 'ImageDescription' in self.__metadata.keys():
+                    self.__metadata['ImageDescription'] = eval(self.__metadata['ImageDescription'])
+
+                # Make sure that we convert all hyperspy DictionaryTreeBrowser objects to normal dictionaries because
+                #  DictionaryTreeBrowser objects are not JSON serializable
+                # TODO: Do this recursively so we catch any that might be nested further down
+                for key in self.get_metadata().keys():
+                    if isinstance(self.get_metadata()[key], DictionaryTreeBrowser):
+                        self.get_metadata()[key] = dict(self.get_metadata()[key])
+
+            else:
+                # Try to load from a Thermo Fisher Acquisition object.
+                self.__image = np.asarray(args[0].AsSafeArray)
+                self.__metadata = _build_metadata_dictionary(tm_acquisition_object=args[0])
+
         except AttributeError:
             self.__image = np.random.random((1024, 1024))  # A random 1k image.
             self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
-            warnings.warn("The Acquisition() constructor received an invalid Thermo Fisher Acquisition object. The "
+            warnings.warn("The Acquisition() constructor received an invalid input. The "
                           "returned Acquisition object contains a random 1k image with no metadata.")
-        except BaseException as e:
-            raise e
 
     def _set_image(self, image):
         """
@@ -143,7 +172,7 @@ class Acquisition:
             self.__metadata[key] = value
             return 0
         else:
-            print("Error: Unable to update metadata, key '" + key + "' not found in metadata dictionary.")
+            print("Unable to update metadata, key '" + key + "' not found in metadata dictionary.")
             return 1
 
     def add_metadata_parameter(self, key, value):
@@ -178,8 +207,18 @@ class Acquisition:
         if out_file[-4:] != ".tif":
             out_file = out_file + ".tif"
 
-        pixel_size_x_in_cm = 100 * self.get_metadata()['PixelSize'][0]  # m -> cm
-        pixel_size_y_in_cm = 100 * self.get_metadata()['PixelSize'][1]  # m -> cm
+        try:
+            # The TIFF types of the XResolution and YResolution tags are RATIONAL (5) which is defined in the TIFF
+            #  specification as "two LONGs: the first represents the numerator of a fraction; the second, the
+            #  denominator."
+            # If the required TIFF XResolution and YResolution tags already exist, then go ahead and use them.
+            # Notice we are computing the inverse here and will invert back when we save.
+            pixel_size_x_in_cm = self.get_metadata()['XResolution'][1] / self.get_metadata()['XResolution'][0]
+            pixel_size_y_in_cm = self.get_metadata()['YResolution'][1] / self.get_metadata()['YResolution'][0]
+        except KeyError:
+            # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object
+            pixel_size_x_in_cm = 100 * self.get_metadata()['PixelSize'][0]  # m -> cm
+            pixel_size_y_in_cm = 100 * self.get_metadata()['PixelSize'][1]  # m -> cm
 
         tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(),
                          resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'))
@@ -187,25 +226,36 @@ class Acquisition:
 
 if __name__ == "__main__":
     import pathlib
-    import hyperspy.api as hs
 
     out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
                 / "interface" / "test_images"
+    out_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
 
-    acq = Acquisition(None)
-    acq.update_metadata_parameter(key='PixelSize', value=(6.79e-9, 6.79e-9))
+    # acq = Acquisition(None)
+    acq = Acquisition(out_file_)
     print(acq.get_metadata())
 
-    # print(out_dir)
-    out_file_ = out_dir / "random_image1.tif"
-    print("Saving image as: " + str(out_file_))
-    acq.save_as_tif(out_file=out_file_)
+    acq.save_as_tif(out_dir / "tiltseries-resave.tif")
+    # acq = Acquisition(out_dir / "test_image.tif")
 
-    # Load back in the file and look at the metadata
-    print("Reading back in " + str(out_file_))
-    ref_image = hs.load(out_file_)
 
-    original_metadata = ref_image.original_metadata
-    print(original_metadata)
-    print(type(original_metadata))
-    print(original_metadata['ResolutionUnit'])
+    # acq.update_metadata_parameter(key='PixelSize', value=(6.79e-9, 6.79e-9))
+    # print(acq.get_metadata())
+    #
+    # image_ = hs.load(out_file_)
+    # print(dir(image_))
+    # print(image_.original_metadata)
+    # print(type(image_.original_metadata))
+
+    # # print(out_dir)
+    # out_file_ = out_dir / "random_image1.tif"
+    # print("Saving image as: " + str(out_file_))
+    # acq.save_as_tif(out_file=out_file_)
+
+    # # Load back in the file and look at the metadata
+    # print("Reading back in " + str(out_dir / "random_image1.tif"))
+    # ref_image = hs.load(out_dir / "random_image1.tif")
+    #
+    # original_metadata = ref_image.original_metadata
+    # print(original_metadata)
+    # print(original_metadata['ResolutionUnit'])
