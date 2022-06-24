@@ -31,7 +31,7 @@ except Exception as ImportException:
     raise ImportException
 
 
-def ued(verbose=False):
+def ued(verbose: bool = False) -> None:
     """
     Perform a MicroED automated imaging sequence.
 

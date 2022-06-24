@@ -103,33 +103,44 @@ class Interface(ModeMixin,  # Microscope mode controls, including those for proj
         self._beam_shift_matrix = np.asarray([[1.010973981, 0.54071542],
                                               [0.54071542, -1.010973981]])
 
-    def normalize(self):
+    def normalize(self) -> None:
         """
         Normalizes all lenses.
         :return: None.
         """
         self._tem.NormalizeAll()
 
-    def make_safe(self):
+    def make_safe(self) -> None:
         """
         Return the microscope to a safe state.
-        :return: None
+        :return: None.
         """
         self.close_column_valve()
         self.blank_beam()
         self.insert_screen()
 
+    def prepare_for_holder_removal(self) -> None:
+        """
+        Prepare the TEM for holder removal.
+        :return: None.
+        """
+        self.close_column_valve()
+        self.reset_stage_position()
+        # TODO: Retract camera
+        raise NotImplementedError("prepare_for_holder_removal() not fully implemented, please retract the camera "
+                                  "before removing the holder.")
+
     """
     When multiple of the same methods exist across mixins, override to ensure we get the one we want.
     """
 
-    def get_mode(self):
+    def get_mode(self) -> str:
         return ModeMixin.get_mode(self)
 
-    def get_projection_mode(self):
+    def get_projection_mode(self) -> str:
         return ModeMixin.get_projection_mode(self)
 
-    def get_projection_submode(self):
+    def get_projection_submode(self) -> str:
         return ModeMixin.get_projection_submode(self)
 
 
