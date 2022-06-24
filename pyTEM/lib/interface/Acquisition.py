@@ -5,6 +5,7 @@
 
 import warnings
 import numpy as np
+import mrcfile
 from datetime import datetime
 from tifffile import tifffile
 
@@ -63,7 +64,8 @@ def _build_metadata_dictionary(tm_acquisition_object):
 
 class Acquisition:
     """
-    A simplified, forward facing Acquisition class.
+    A simplified, forward facing Acquisition class. This class holds, and allows the user to interact
+     with, the results of a single acquisition.
 
     Public Attributes:
         None
@@ -87,35 +89,53 @@ class Acquisition:
             # We were expecting only one input argument.
             raise TypeError("Acquisition() expected 1 argument, but got " + str(len(args)))
 
+        if args[0] is None:
+            # Just return a random image, this is helpful for testing.
+            self.__image = np.random.random((1024, 1024))  # A random 1k image.
+            self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+            warnings.warn("The Acquisition() constructor received None. The returned Acquisition object contains a "
+                          "random 1k image with no metadata.")
+            return
+
         try:
             if isinstance(args[0], str) or isinstance(args[0], pathlib.PurePath):
-                # Try to load from file.
-                image = hs.load(args[0])
-                self.__image = image.data
-                self.__metadata = dict(image.original_metadata)
+                # Try to load from file
 
-                # If the file is one that was generated from an Acquisition object, then a bunch of metadata will be in
-                #  the ImageDescription field as a string, and we need to turn it back into a dictionary.
-                if 'ImageDescription' in self.__metadata.keys():
-                    self.__metadata['ImageDescription'] = eval(self.__metadata['ImageDescription'])
+                if mrcfile.validate(args[0]):
+                    # Then it is an MRC file, open with mrcfile
+                    with mrcfile.open(args[0]) as mrc:
+                        self.__image = mrc.data
+                        # TODO: Figure out how to read in metadata from MRC file header
+                        warnings.warn("We haven't learned how to read MRC file headers yet, so the returned "
+                                      "Acquisition object has no metadata!")
+                        self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
 
-                # Make sure that we convert all hyperspy DictionaryTreeBrowser objects to normal dictionaries because
-                #  DictionaryTreeBrowser objects are not JSON serializable
-                # TODO: Do this recursively so we catch any that might be nested further down
-                for key in self.get_metadata().keys():
-                    if isinstance(self.get_metadata()[key], DictionaryTreeBrowser):
-                        self.get_metadata()[key] = dict(self.get_metadata()[key])
+                else:
+                    # Let's see if it is something hyperspy can load
+                    image = hs.load(args[0])
+                    self.__image = image.data
+                    self.__metadata = dict(image.original_metadata)
+
+                    # If the file was generated from an Acquisition object, then a bunch of metadata will be in
+                    #  the ImageDescription field as a string, and we need to turn it back into a dictionary.
+                    if 'ImageDescription' in self.__metadata.keys():
+                        self.__metadata['ImageDescription'] = eval(self.__metadata['ImageDescription'])
+
+                    # Make sure that we convert all hyperspy DictionaryTreeBrowser objects to normal dictionaries
+                    #  because DictionaryTreeBrowser objects are not JSON serializable
+                    # TODO: Do this recursively so we catch any that might be nested further down
+                    for key in self.get_metadata().keys():
+                        if isinstance(self.get_metadata()[key], DictionaryTreeBrowser):
+                            self.get_metadata()[key] = dict(self.get_metadata()[key])
 
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
                 self.__image = np.asarray(args[0].AsSafeArray)
                 self.__metadata = _build_metadata_dictionary(tm_acquisition_object=args[0])
 
-        except AttributeError:
-            self.__image = np.random.random((1024, 1024))  # A random 1k image.
-            self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
-            warnings.warn("The Acquisition() constructor received an invalid input. The "
-                          "returned Acquisition object contains a random 1k image with no metadata.")
+        except BaseException as e:
+            warnings.warn("The Acquisition() constructor received an invalid input.")
+            raise e
 
     def _set_image(self, image):
         """
@@ -193,7 +213,7 @@ class Acquisition:
 
     def save_as_tif(self, out_file):
         """
-        Save the acquisition as a tif image.
+        Save the acquisition as a TIFF file.
 
         :param out_file: str or path:
             Out file path (where you want to save the file).
@@ -223,6 +243,27 @@ class Acquisition:
         tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(),
                          resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'))
 
+    def save_as_mrc(self, out_file):
+        """
+        Save the acquisition as an MRC file.
+
+        This method only writes the image array to file, it doesn't mess around with the header.
+
+        :param out_file: str or path:
+            Out file path (where you want to save the file).
+            Optionally, you can include the .mrc extension, otherwise it will be added automatically.
+
+        :return: None.
+        """
+        out_file = str(out_file)  # Encase we received a path.
+
+        # In case we are missing the .tif extension, add it on.
+        if out_file[-4:] != ".mrc":
+            out_file = out_file + ".mrc"
+
+        with mrcfile.new(out_file, overwrite=True) as mrc:
+            mrc.set_data(np.float32(self.get_image()))
+
 
 if __name__ == "__main__":
     import pathlib
@@ -231,13 +272,15 @@ if __name__ == "__main__":
                 / "interface" / "test_images"
     out_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
 
-    # acq = Acquisition(None)
-    acq = Acquisition(out_file_)
+    acq = Acquisition(None)
+    # acq = Acquisition(out_file_)
     print(acq.get_metadata())
 
-    acq.save_as_tif(out_dir / "tiltseries-resave.tif")
+    # acq.save_as_tif(out_dir / "tiltseries-resave.tif")
+    acq.save_as_mrc(out_dir / "random_image1.mrc")
     # acq = Acquisition(out_dir / "test_image.tif")
 
+    print(mrcfile.validate(out_dir / "random_image1.mrc"))
 
     # acq.update_metadata_parameter(key='PixelSize', value=(6.79e-9, 6.79e-9))
     # print(acq.get_metadata())
