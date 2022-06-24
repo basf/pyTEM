@@ -20,7 +20,7 @@ try:
     from pyTEM.Interface import Interface
 
     from pyTEM.lib.ued.exit_script import exit_script
-    from pyTEM.lib.ued.AcquisitionProperties import AcquisitionProperties
+    from pyTEM.lib.ued.AcquisitionSeriesProperties import AcquisitionSeriesProperties
     from pyTEM.lib.ued.messages import get_welcome_message, get_initialization_message, display_message, \
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
     from pyTEM.lib.ued.obtain_shifts import obtain_shifts
@@ -119,10 +119,10 @@ def ued(verbose=False):
         display_message(title=title, message=message, microscope=microscope, position="centered")
         microscope.remove_screen()
 
-        # Store all the acquisition properties in a AcquisitionProperties object, this just makes it easier and safer
-        #  to pass around
-        acquisition_properties = AcquisitionProperties(camera_name=camera_name, alpha_arr=alpha_arr, out_file=out_file,
-                                                       integration_time=integration_time, sampling=sampling)
+        # Store all the acquisition properties in a AcquisitionSeriesProperties object, this just makes it easier and
+        #  safer to pass around
+        acquisition_properties = AcquisitionSeriesProperties(camera_name=camera_name, alpha_arr=alpha_arr, out_file=out_file,
+                                                             integration_time=integration_time, sampling=sampling)
 
         if apply_shift_correction:
             # Compute the image shifts required to keep the currently centered section of the specimen centered at all
