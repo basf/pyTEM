@@ -29,7 +29,7 @@ def obtain_shifts(microscope, alphas, camera_name, verbose=False):
         Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
         Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
 
-    :param microscope: pyTEM:
+    :param microscope: pyTEM.Interface:
         A pyTEM interface to the microscope.
     :param alphas: np.array:
         An array of tilt angles at which to compute shifts.
@@ -127,7 +127,7 @@ def _complete_one_sign(microscope, camera_name, this_signs_alphas, max_images_pe
 
     This function computes the shifts for just one sign, and by calling it twice we are able to compute all the shifts.
 
-    :param microscope: pyTEM:
+    :param microscope: pyTEM.Interface:
         A pyTEM interface to the microscope.
     :param camera_name: str:
         The name of the camera to be used for shift calculation - probably the same camera you are using for the tilt
