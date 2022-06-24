@@ -3,6 +3,9 @@
  Date:    Summer 2022
 """
 
+import pathlib
+from typing import Union
+
 from pyTEM.lib.interface.Acquisition import Acquisition
 
 
@@ -25,7 +28,7 @@ class AcquisitionSeries:
     def __init__(self):
         self.__acquisitions = []
 
-    def append(self, acq):
+    def append(self, acq: Acquisition) -> None:
         """
         Added a new acquisition to the series.
         :param acq: Acquisition:
@@ -38,14 +41,14 @@ class AcquisitionSeries:
             raise Exception("Error: Unable to append to AcquisitionSeries, the provided argument is not of type "
                             "Acquisition.")
 
-    def series_length(self):
+    def series_length(self) -> int:
         """
         :return: int:
             The number of acquisitions in the series.
         """
         return len(self.__acquisitions)
 
-    def get_acquisition(self, idx):
+    def get_acquisition(self, idx: int) -> Acquisition:
         """
         :param idx: int:
             The index of the acquisition you want.
@@ -54,7 +57,7 @@ class AcquisitionSeries:
         """
         return self.__acquisitions[idx]
 
-    def set_acquisition(self, acq, idx):
+    def set_acquisition(self, acq: Acquisition, idx: int) -> None:
         """
         :param acq: Acquisition:
             The acquisition to set.
@@ -64,7 +67,7 @@ class AcquisitionSeries:
         """
         self.__acquisitions[idx] = acq
 
-    def save_as_tif(self, out_file):
+    def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
         Save the acquisition as a TIFF file.
 
@@ -76,7 +79,7 @@ class AcquisitionSeries:
         """
         raise NotImplementedError  # TODO
 
-    def save_as_mrc(self, out_file):
+    def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
         """
         Save the acquisition series as an MRC file.
 
