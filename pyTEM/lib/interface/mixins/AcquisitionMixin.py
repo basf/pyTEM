@@ -9,13 +9,11 @@ import warnings
 from typing import List, Tuple
 
 import comtypes.client as cc
-
-# Add the pyTEM package directory to path
 import numpy as np
 
+# Add the pyTEM package directory to path
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
-
 try:
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.interface.Acquisition import Acquisition
@@ -35,7 +33,7 @@ class AcquisitionMixin:
     except OSError:
         pass
 
-    def acquisition_series(self, camera_name: str, num: int, sampling: str = None, exposure_time: int = None,
+    def acquisition_series(self, camera_name: str, num: int, sampling: str = None, exposure_time: float = None,
                            readout_area: int = None) -> AcquisitionSeries:
         """
         Perform (and return) the results of an acquisition series.
@@ -72,7 +70,7 @@ class AcquisitionMixin:
 
         return acq_series
 
-    def acquisition(self, camera_name: str, sampling: str = None, exposure_time: int = None,
+    def acquisition(self, camera_name: str, sampling: str = None, exposure_time: float = None,
                     readout_area: int = None) -> Acquisition:
         """
         Perform (and return) the results of a single acquisition.

@@ -28,7 +28,7 @@ class AcquisitionSeriesProperties:
         None.
     """
 
-    def __init__(self, camera_name: str, alpha_arr: ArrayLike, integration_time: int = 3, sampling: str = '1k',
+    def __init__(self, camera_name: str, alpha_arr: ArrayLike, integration_time: float = 3, sampling: str = '1k',
                  out_file: str = None):
         """
         :param camera_name: str:
