@@ -6,14 +6,18 @@
 import pathlib
 import sys
 import warnings
+from typing import List, Tuple
 
 import comtypes.client as cc
 
 # Add the pyTEM package directory to path
+import numpy as np
+
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 
 try:
+    from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.interface.Acquisition import Acquisition
 except Exception as ImportException:
     raise ImportException
@@ -31,7 +35,45 @@ class AcquisitionMixin:
     except OSError:
         pass
 
-    def acquisition(self, camera_name, sampling=None, exposure_time=None, readout_area=None):
+    def acquisition_series(self, camera_name: str, num: int, sampling: str = None, exposure_time: int = None,
+                           readout_area: int = None) -> AcquisitionSeries:
+        """
+        Perform (and return) the results of an acquisition series.
+
+        # TODO: This method remains untested.
+
+        :param camera_name: str:
+            The name of the camera you want use. For a list of available cameras, please use the
+             get_available_cameras() method.
+        :param num: int:
+            The number of acquisitions to perform.
+        :param sampling: str:
+            One of:
+            - '4k' for 4k images (4096 x 4096; sampling=1)
+            - '2k' for 2k images (2048 x 2048; sampling=2)
+            - '1k' for 1k images (1024 x 1024; sampling=3)
+            - '0.5k' for 05.k images (512 x 512; sampling=8)
+        :param exposure_time: float:
+            Exposure time is in seconds. Please expose responsibly.
+        :param readout_area: int:
+             Sets the area to be read from the camera sensor; the area is defined around the center of the sensor,
+             horizontally as well as vertically. Basically this will chop the image (like extra binning). One of:
+            - 0: full-size
+            - 1: half-size
+            - 2: quarter-size
+
+        :return: AcquisitionSeries:
+            An acquisition series.
+        """
+        acq_series = AcquisitionSeries()
+        for i in range(num):
+            acq_series.append(acq=self.acquisition(camera_name=camera_name, sampling=sampling,
+                                                   exposure_time=exposure_time, readout_area=readout_area))
+
+        return acq_series
+
+    def acquisition(self, camera_name: str, sampling: str = None, exposure_time: int = None,
+                    readout_area: int = None) -> Acquisition:
         """
         Perform (and return) the results of a single acquisition.
 
@@ -65,8 +107,8 @@ class AcquisitionMixin:
         except ValueError:
             warnings.warn("Unable to perform acquisition because the requested camera (" + str(camera_name) + ") could "
                           "not be selected. Please use the get_available_cameras() method to confirm that the "
-                          "requested camera is actually available. Returning None.")
-            return None
+                          "requested camera is actually available. Returning an empty Acquisition object.")
+            return Acquisition(None)
 
         camera_settings = acquisition.CameraSettings
 
@@ -94,12 +136,12 @@ class AcquisitionMixin:
                 warnings.warn("Unable to perform acquisition because the requested exposure time (" +
                               str(exposure_time) + ") is not in the supported range of "
                               + str(min_supported_exposure_time) + " to " + str(max_supported_exposure_time)
-                              + " seconds. Returning None.")
-                return None
+                              + " seconds. Returning an empty Acquisition object.")
+                return Acquisition(None)
 
         return Acquisition(acquisition.Acquire())
 
-    def print_camera_capabilities(self, camera_name):
+    def print_camera_capabilities(self, camera_name: str) -> None:
         """
         Print out the capabilities of the requested camera.
 
@@ -152,7 +194,7 @@ class AcquisitionMixin:
         print("\nCamera Supports Recording:")
         print(capabilities.SupportsRecording)
 
-    def get_available_cameras(self):
+    def get_available_cameras(self) -> List[str]:
         """
         Get a list of the available cameras.
         :return: list of strings:
@@ -162,14 +204,15 @@ class AcquisitionMixin:
         supported_cameras = acquisition.SupportedCameras
         return [c.name for c in supported_cameras]
 
-    def get_exposure_time_range(self, camera_name):
+    def get_exposure_time_range(self, camera_name: str) -> Tuple[float, float]:
         """
         Get the supported exposure time range, in seconds.
 
         :param camera_name: str:
             The name of the camera of which you want to get the supported exposure time range. For a list of available
               cameras, please use the get_available_cameras() method.
-        :return:
+        :return: float, float:
+            The maximum and minimum supported exposure times.
         """
         acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
         supported_cameras = acquisition.SupportedCameras
@@ -181,7 +224,7 @@ class AcquisitionMixin:
             warnings.warn("Unable to perform acquisition because the requested camera (" + str(camera_name) + ") could "
                           "not be selected. Please use the get_available_cameras() method to confirm that the "
                           "requested camera is actually available. Returning None.")
-            return None
+            return np.nan, np.nan
 
         exposure_time_range = acquisition.CameraSettings.Capabilities.ExposureTimeRange
 
@@ -200,7 +243,6 @@ class AcquisitionMixinTesting(AcquisitionMixin):
 
 
 if __name__ == "__main__":
-
     out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
     print("out_dir: " + str(out_dir))
 
@@ -213,4 +255,4 @@ if __name__ == "__main__":
 
     out_file_ = out_dir / "test_image.tif"
     print("Saving the image as " + str(out_file_))
-    test_acq.save_as_tif(out_file=out_file_)
+    # test_acq.save_as_tif(out_file=out_file_)
