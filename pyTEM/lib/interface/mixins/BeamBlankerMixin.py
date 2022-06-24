@@ -18,7 +18,7 @@ class BeamBlankerMixin:
     except OSError:
         pass
 
-    def beam_is_blank(self):
+    def beam_is_blank(self) -> None:
         """
         Check if the beam is blanked.
         :return: Beam status: bool:
@@ -27,7 +27,7 @@ class BeamBlankerMixin:
         """
         return self._tem.Illumination.BeamBlanked
 
-    def blank_beam(self):
+    def blank_beam(self) -> None:
         """
         Blank the beam.
         :return: None.
@@ -39,7 +39,7 @@ class BeamBlankerMixin:
         # Go ahead and blank the beam
         self._tem.Illumination.BeamBlanked = True
 
-    def unblank_beam(self):
+    def unblank_beam(self) -> None:
         """
         Unblank the beam.
         :return: None.

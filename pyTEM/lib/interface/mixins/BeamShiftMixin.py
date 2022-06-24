@@ -7,6 +7,8 @@ import warnings
 import numpy as np
 import comtypes.client as cc
 
+from numpy.typing import ArrayLike
+
 # TODO: Still requires testing
 
 
@@ -27,21 +29,21 @@ class BeamShiftMixin:
     #  this is negligible for most applications.
     # _beam_shift_vector: type(np.empty(shape=(2, 1)))
 
-    def get_projection_submode(self):
+    def get_projection_submode(self) -> str:
         """
         :return: str:
             The current projection sub-mode.
         """
         return self._tem.Projection.SubModeString
 
-    def get_beam_shift_matrix(self):
+    def get_beam_shift_matrix(self) -> np.ndarray:
         """
         :return: numpy.ndarray
             The new 2x2 matrix used to translate between the stage-plane and the beam-plane
         """
         return self._beam_shift_matrix
 
-    def _set_beam_shift_matrix(self, a):
+    def _set_beam_shift_matrix(self, a: ArrayLike) -> None:
         """
         Update the beam shift matrix.
         :param a: numpy.ndarray:
@@ -50,7 +52,7 @@ class BeamShiftMixin:
         """
         self._stage_position = a
 
-    def get_beam_shift(self):
+    def get_beam_shift(self) -> np.array:
         """
         :return: [x, y]: 2-element numpy.array:
             The x and y values of the beam shift, in micrometres.
@@ -67,7 +69,7 @@ class BeamShiftMixin:
         temp = 1e6 * np.matmul(self.get_beam_shift_matrix(), np.asarray([beam_shift.X, beam_shift.Y]))
         return np.asarray([temp[0], - temp[1]])
 
-    def set_beam_shift(self, x=0, y=0):
+    def set_beam_shift(self, x: float = None, y: float = None) -> None:
         """
         Move the beam shift to the provided x and y values.
 

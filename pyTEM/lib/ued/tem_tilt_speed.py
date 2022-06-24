@@ -6,7 +6,7 @@
 import warnings
 
 
-def tem_tilt_speed(speed_deg_per_s):
+def tem_tilt_speed(speed_deg_per_s: float) -> float:
     """
     Convert from tilt speed in degrees per second to the TEM fractional tilt speed required by
      Interface.set_stage_position().

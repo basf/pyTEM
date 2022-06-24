@@ -21,7 +21,7 @@ class MagnificationMixin:
     except OSError:
         pass
 
-    def get_mode(self):
+    def get_mode(self) -> str:
         """
         :return: str:
             The current microscope mode, one of:
@@ -37,7 +37,7 @@ class MagnificationMixin:
         else:
             raise Exception("Error: Microscope mode unknown.")
 
-    def get_projection_mode(self):
+    def get_projection_mode(self) -> str:
         """
         :return: str:
             The current projection mode, either "Diffraction" or "Imaging".
@@ -51,7 +51,7 @@ class MagnificationMixin:
         else:
             raise Exception("Error: Projection mode unknown.")
 
-    def get_magnification(self):
+    def get_magnification(self) -> float:
         """
         :return: float:
             The current magnification value.
@@ -74,7 +74,7 @@ class MagnificationMixin:
         else:
             raise Exception("Projection mode (" + str(self._tem.Projection.Mode) + ") not recognized.")
 
-    def set_stem_magnification(self, new_magnification):
+    def set_stem_magnification(self, new_magnification: float) -> None:
         """
         Update the STEM microscope magnification.
 
@@ -101,7 +101,7 @@ class MagnificationMixin:
         else:
             raise Exception("Error: Current microscope mode unknown.")
 
-    def set_tem_magnification(self, new_magnification_index):
+    def set_tem_magnification(self, new_magnification_index: int) -> None:
         """
         Update the TEM microscope magnification.
 
@@ -135,18 +135,18 @@ class MagnificationMixin:
         else:
             raise Exception("Error: Current microscope mode unknown.")
 
-    def shift_tem_magnification(self, magnification_shift):
+    def shift_tem_magnification(self, magnification_shift: float) -> None:
         """
         Shift the TEM magnification up or down by the provided magnification_shift. This is equivalent to turning the
          magnification nob by magnification_shift notches clockwise (negative values of magnification_shift are
-         equivalent to counterclockwise nob rotations)
+         equivalent to counterclockwise nob rotations).
 
         :param magnification_shift: float
             An up/down shift from current magnification; Examples: 7, -2, 10
             Should the request shift exceed the magnification bounds (1 to 44), magnification will default to the
             nearest bound.
 
-        :return: None
+        :return: None.
         """
         if self.get_mode() == "STEM":
             print("The microscope is currently in STEM mode. To adjust the magnification in STEM mode, please use "
@@ -172,7 +172,7 @@ class MagnificationMixin:
         else:
             raise Exception("Error: Current microscope mode unknown.")
 
-    def get_magnification_index(self):
+    def get_magnification_index(self) -> int:
         """
         :return: int:
             The magnification index (this is what sets the magnification when the microscope is in TEM mode).
@@ -182,7 +182,7 @@ class MagnificationMixin:
 
         return self._tem.Projection.MagnificationIndex
 
-    def print_available_magnifications(self):
+    def print_available_magnifications(self) -> None:
         """
         Print a list of available magnifications (when in TEM Imaging mode, magnification indices are also printed out).
 

@@ -6,6 +6,8 @@
 import math
 import copy
 import warnings
+from typing import Tuple, Union, Any
+
 import comtypes.client as cc
 
 from pyTEM.lib.interface.StagePosition import StagePosition  # Requires the pyTEM package directory on path
@@ -26,15 +28,16 @@ class StageMixin:
     except OSError:
         pass
 
-    def get_stage_position(self):
+    def get_stage_position(self) -> StagePosition:
         """
         :return: StagePosition:
             A deep copy of current stage position. Modifying the returned object will not affect the microscope.
         """
         return copy.deepcopy(self._stage_position)
 
-    def set_stage_position(self, stage_position_obj=None, x=None, y=None, z=None, alpha=None, beta=None,
-                           speed=1.0, movement_type="go"):
+    def set_stage_position(self, stage_position_obj: StagePosition = None,
+                           x: float = None, y: float = None, z: float = None, alpha: float = None, beta: float = None,
+                           speed: float = 1.0, movement_type: str = "go"):
         """
         Update the microscope stage position using an pyTEM.lib.StagePosition object.
 
@@ -214,7 +217,7 @@ class StageMixin:
 
         self._update_stage_position()  # Update the forward facing stage object
 
-    def _update_stage_position(self):
+    def _update_stage_position(self) -> None:
         """
         Update the internal stage position object. This is required whenever the stage is moved.
         :return: None.
@@ -226,14 +229,14 @@ class StageMixin:
                                              alpha=math.degrees(scope_position.A),  # rad -> deg
                                              beta=math.degrees(scope_position.B))  # rad -> deg
 
-    def get_stage_position_x(self):
+    def get_stage_position_x(self) -> float:
         """
         :return: float: The current stage position along the x-axis, in micrometres.
         """
         self._update_stage_position()  # Encase something external caused the stage to move.
         return self._stage_position.get_x()
 
-    def set_stage_position_x(self, x, speed=1.0, movement_type="go"):
+    def set_stage_position_x(self, x: float, speed: float = 1.0, movement_type: str = "go") -> None:
         """
         :param x: float:
             The new stage position along the x-axis, in micrometres.
@@ -258,14 +261,14 @@ class StageMixin:
         """
         self.set_stage_position(x=x, speed=speed, movement_type=movement_type)
 
-    def get_stage_position_y(self):
+    def get_stage_position_y(self) -> float:
         """
         :return: float: The current stage position along the y-axis, in micrometres.
         """
         self._update_stage_position()  # Encase something external caused the stage to move.
         return self._stage_position.get_y()
 
-    def set_stage_position_y(self, y, speed=1.0, movement_type="go"):
+    def set_stage_position_y(self, y: float, speed: float = 1.0, movement_type: str = "go"):
         """
         :param y: float:
             The new stage position along the y-axis, in micrometres.
@@ -290,14 +293,14 @@ class StageMixin:
         """
         self.set_stage_position(y=y, speed=speed, movement_type=movement_type)
 
-    def get_stage_position_z(self):
+    def get_stage_position_z(self) -> float:
         """
         :return: float: The current stage position along the z-axis, in micrometres.
         """
         self._update_stage_position()  # Encase something external caused the stage to move.
         return self._stage_position.get_z()
 
-    def set_stage_position_z(self, z, speed=1.0, movement_type="go"):
+    def set_stage_position_z(self, z: float, speed: float = 1.0, movement_type: str = "go"):
         """
         :param z: float:
             The new stage position along the z-axis, in micrometres.
@@ -322,14 +325,14 @@ class StageMixin:
         """
         self.set_stage_position(z=z, speed=speed, movement_type=movement_type)
 
-    def get_stage_position_alpha(self):
+    def get_stage_position_alpha(self) -> float:
         """
         :return: float: The current stage tilt along the alpha direction, in degrees.
         """
         self._update_stage_position()  # Encase something external caused the stage to move.
         return self._stage_position.get_alpha()
 
-    def set_stage_position_alpha(self, alpha, speed=1.0, movement_type="go"):
+    def set_stage_position_alpha(self, alpha: float, speed: float = 1.0, movement_type: str = "go"):
         """
         :param alpha: float:
             The new stage tilt along the alpha-axis, in degrees.
@@ -354,14 +357,14 @@ class StageMixin:
         """
         self.set_stage_position(alpha=alpha, speed=speed, movement_type=movement_type)
 
-    def get_stage_position_beta(self):
+    def get_stage_position_beta(self) -> float:
         """
         :return: float: The current stage tilt along the alpha direction, in degrees.
         """
         self._update_stage_position()  # Encase something external caused the stage to move.
         return self._stage_position.get_beta()
 
-    def set_stage_position_beta(self, beta, speed=1.0):
+    def set_stage_position_beta(self, beta: float, speed: float = 1.0):
         """
         :param beta: float:
             The new stage tilt along the beta-axis, in degrees.
@@ -380,14 +383,14 @@ class StageMixin:
         self._update_stage_position()  # Encase something external caused the stage to move.
         self.set_stage_position(beta=beta, speed=speed, movement_type="go")
 
-    def reset_stage_position(self):
+    def reset_stage_position(self) -> None:
         """
         Reset (zero) the stage position.
         :return: None.
         """
         self.set_stage_position(x=0, y=0, z=0, alpha=0, beta=0)
 
-    def print_stage_position(self):
+    def print_stage_position(self) -> None:
         """
         Print out the current stage position (current x, y, z, alpha, and beta values).
         :return: None.
@@ -403,7 +406,7 @@ class StageMixin:
         print("{:<15} {:<20}".format('\u03B1', stage_position.get_alpha()))
         print("{:<15} {:<20}".format('\u03B2', stage_position.get_beta()) + "\n")
 
-    def print_stage_status(self):
+    def print_stage_status(self) -> None:
         """
         Print out the current stage status, along with a 'helpful' description.
         :return: None
@@ -425,7 +428,7 @@ class StageMixin:
         else:
             raise Exception("Error: Stage status - " + str(stage_status) + " - not recognized.")
 
-    def print_stage_holder_type(self):
+    def print_stage_holder_type(self) -> None:
         """
         Print out the current stage holder type, along with a 'helpful' description.
         :return: None.
@@ -447,7 +450,7 @@ class StageMixin:
         else:
             raise Exception("Stage type - " + str(stage_type) + " - not recognized.")
 
-    def get_stage_limits(self, axis):
+    def get_stage_limits(self, axis) -> Tuple[float, float]:
         """
         Get stage limits along a certain axis.
 

@@ -18,7 +18,7 @@ class ModeMixin:
     except OSError:
         pass
 
-    def get_mode(self):
+    def get_mode(self) -> str:
         """
         :return: str:
             The current microscope mode, one of:
@@ -34,7 +34,7 @@ class ModeMixin:
         else:
             raise Exception("Error: Microscope mode unknown.")
 
-    def set_mode(self, new_mode):
+    def set_mode(self, new_mode: str) -> None:
         """
         Change the operational mode of the microscope.
 
@@ -59,7 +59,7 @@ class ModeMixin:
         else:
             print("The requested mode (" + new_mode + ") isn't recognized.. no changes made.")
 
-    def get_projection_mode(self):
+    def get_projection_mode(self) -> str:
         """
         :return: str:
             The current projection mode, either "Diffraction" or "Imaging".
@@ -73,7 +73,7 @@ class ModeMixin:
         else:
             raise Exception("Error: Projection mode unknown.")
 
-    def set_projection_mode(self, new_projection_mode):
+    def set_projection_mode(self, new_projection_mode: str) -> None:
         """
         :param new_projection_mode: str:
             The new projection mode, one of:
@@ -108,7 +108,7 @@ class ModeMixin:
         else:
             print("The requested projection mode (" + new_projection_mode + ") isn't recognized.. no changes made.")
 
-    def get_projection_submode(self):
+    def get_projection_submode(self) -> str:
         """
         :return: str:
             The current projection sub-mode.
@@ -152,7 +152,7 @@ class ModeMixin:
         else:
             raise Exception("Error: Projection mode '" + str(self._tem.Illumination.Mode) + "' not recognized.")
 
-    def set_illumination_mode(self, new_mode):
+    def set_illumination_mode(self, new_mode: str) -> None:
         """
         Change the illumination mode of the microscope.
         Note: (Nearly) no effect for low magnifications (LM).
@@ -178,7 +178,7 @@ class ModeMixin:
         else:
             print("The requested illumination mode (" + new_mode + ") isn't recognized.. no changes made.")
 
-    def get_screen_position(self):
+    def get_screen_position(self) -> str:
         """
         :return: str: The position of the FluCam's fluorescent screen, one of:
             - 'Removed' (required to take images)
@@ -193,7 +193,7 @@ class ModeMixin:
         else:
             raise Exception("Error: Current screen position (" + str(self._tem.Camera.MainScreen) + ") not recognized.")
 
-    def insert_screen(self):
+    def insert_screen(self) -> None:
         """
         Insert the FluCam's fluorescent screen.
         This is required to use the FluCam to view the live image.
@@ -205,7 +205,7 @@ class ModeMixin:
 
         self._tem.Camera.MainScreen = 3  # Insert the screen
 
-    def remove_screen(self):
+    def remove_screen(self) -> None:
         """
         Remove the FluCam's fluorescent screen.
         This is required to take images.

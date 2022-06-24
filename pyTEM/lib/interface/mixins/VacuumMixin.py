@@ -4,6 +4,8 @@
 """
 
 import math
+from typing import Dict, List, Union
+
 import comtypes.client as cc
 
 from pyTEM.lib.interface.pascal_to_log import pascal_to_log  # Requires the pyTEM package directory on path
@@ -21,7 +23,7 @@ class VacuumMixin:
     except OSError:
         pass
 
-    def _pull_vacuum_info(self):
+    def _pull_vacuum_info(self) -> Dict[int, List[Union[str, float]]]:
         """
         Pull vacuum info from the microscope and, from this info, build and return a dictionary (keyed by integers)
          containing 3-element lists with gauge names, pressures in Pascals, and pressures in log units.
@@ -42,7 +44,7 @@ class VacuumMixin:
 
         return pressure_dictionary
 
-    def print_vacuum_info(self):
+    def print_vacuum_info(self) -> None:
         """
         Print out the vacuum info in a table-like format:
             Gauge     Pressure [Pa]     Pressure [Log]
@@ -56,7 +58,7 @@ class VacuumMixin:
             name, pressure_in_pascals, pressure_in_log = value
             print("{:<25} {:<20} {:<20}".format(name, '{:0.3e}'.format(pressure_in_pascals), round(pressure_in_log, 3)))
 
-    def get_accelerator_vacuum(self, units="log"):
+    def get_accelerator_vacuum(self, units: str = "log") -> float:
         """
         Obtain the vacuum level up on the outside of the gun.
         :param units: string:
@@ -75,7 +77,7 @@ class VacuumMixin:
             print("Error getting accelerator vacuum: units '" + units + "' not recognized.")
             return math.nan
 
-    def get_column_vacuum(self, units="log"):
+    def get_column_vacuum(self, units: str = "log") -> float:
         """
         Obtain the vacuum the main section of the microscope with the sample, lenses, etc.
         :param units: string:
@@ -94,7 +96,7 @@ class VacuumMixin:
             print("Error getting column vacuum: units '" + units + "' not recognized.")
             return math.nan
 
-    def column_under_vacuum(self):
+    def column_under_vacuum(self) -> bool:
         """
         This function checks to make sure the column is under vacuum.
 
@@ -112,7 +114,7 @@ class VacuumMixin:
         else:
             return False  # Unsafe
 
-    def get_column_valve_position(self):
+    def get_column_valve_position(self) -> str:
         """
         :return: str:
             The current column value position, either "Open" or "Closed".
@@ -123,7 +125,7 @@ class VacuumMixin:
         else:
             return "Closed"
 
-    def close_column_valve(self):
+    def close_column_valve(self) -> None:
         """
         Close the column value.
         :return: None.
@@ -134,7 +136,7 @@ class VacuumMixin:
 
         self._tem.Vacuum.ColumnValvesOpen = False
 
-    def open_column_valve(self):
+    def open_column_valve(self) -> None:
         """
         Open the column valve (if it is safe to do so).
         :return: None
@@ -147,7 +149,7 @@ class VacuumMixin:
             print("The column value cannot be safely opened because the column isn't under sufficient vacuum. "
                   "Please check the TEM.")
 
-    def print_vacuum_status(self):
+    def print_vacuum_status(self) -> None:
         """
         Print out the current vacuum status, along with a 'helpful' description.
         :return: None
