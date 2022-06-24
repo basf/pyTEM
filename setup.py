@@ -25,6 +25,7 @@ setup(
                       'tifffile',
                       'comtypes',
                       'matplotlib',
-                      'setuptools'
+                      'setuptools',
+                      'mrcfile',
                       ],
 )
