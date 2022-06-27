@@ -7,7 +7,6 @@ import threading
 import pathlib
 import time
 import sys
-from typing import Union
 
 import numpy as np
 
