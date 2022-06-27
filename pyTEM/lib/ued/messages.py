@@ -118,7 +118,7 @@ def get_good_bye_message() -> Tuple[str, str]:
     return title, message
 
 
-def display_message(title: str, message: str, microscope: Union[Interface, None], position="centered") -> None:
+def display_message(title: str, message: str, microscope: Union[Interface, None], position: str = "centered") -> None:
     """
     Display a simple message box with 'continue' and 'exit' buttons at the bottom.
 
