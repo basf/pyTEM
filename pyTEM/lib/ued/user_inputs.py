@@ -86,7 +86,7 @@ class GetTiltRange:
         window_width = 500
         window_height = 235
 
-        root.title("Some title")  # TODO
+        root.title("Please ensure your seat back is straight up and your tray table is stowed.")
 
         add_basf_icon_to_tkinter_window(root)
 
@@ -150,7 +150,8 @@ class GetTiltRange:
         window_width = 500
         window_height = 275
 
-        root.title("Some title")  # TODO
+        root.title("Fasten your seat belt by placing the metal fitting into the buckle, and adjust the strap so it "
+                   "fits low and tight around your hips.")
 
         add_basf_icon_to_tkinter_window(root)
 
@@ -225,7 +226,7 @@ class GetTiltRange:
         style = ttk.Style()
         window_width = 500
 
-        root.title("Please ensure your seat back is straight up and your tray table is stowed.")  # TODO.
+        root.title("At this time, portable electronic devices must be switched into ‘airplane’ mode.")  # TODO.
 
         add_basf_icon_to_tkinter_window(root)
 

@@ -16,8 +16,8 @@ def get_welcome_message() -> Tuple[str, str]:
     """
     :return: str: A welcome message.
     """
-    title = "Good morning ladies and gentlemen. On behalf of TEM Air, it's my pleasure to welcome you aboard flight " \
-            "uED-4567."
+    title = "Good afternoon ladies and gentlemen. This is the pre-boarding announcement for TEM Air flight M300 with " \
+            "service to Ludwigshafen am Rhein."
     message = "Welcome to BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging " \
               "script. MicroED allows fast, high resolution 3D structure determination of small chemical " \
               "compounds biological macromolecules! You can exit the script any time using the exit buttons on the " \
@@ -28,10 +28,10 @@ def get_welcome_message() -> Tuple[str, str]:
 
 def get_initialization_message() -> Tuple[str, str]:
     """
-    :return: str: Initialization message.
+    :return: str: Initialization/connection message.
     """
-    title = "In order to expedite the boarding process, please be seated as quickly as possible after stowing your " \
-            "carry-on items."
+    title = "We are now inviting those passengers with small children, and any passengers requiring special " \
+            "assistance, to begin boarding at this time."
     message = "In order to initialize the microscope for MicroED, we are now going to: " \
               "\n - Connect to the microscope." \
               "\n - Insert the Flucam screen." \
@@ -47,10 +47,9 @@ def get_initialization_message() -> Tuple[str, str]:
 
 def get_alignment_message() -> Tuple[str, str]:
     """
-    :return: str: An initialization message.
+    :return: str: An alignment message.
     """
-    title = "Fasten your seat belt by placing the metal fitting into the buckle, and adjust the strap so it fits " \
-            "low and tight around your hips."
+    title = "We will now begin general boarding for TEM Air flight M300 with service to Ludwigshafen am Rhein."
     message = "Using the microscope control panel, please select a magnification in the SA range and center the " \
               "microscope on the particle of interest. " \
               "\n\nPlease do not adjust the stage tilt nor the image shift. " \
@@ -62,7 +61,8 @@ def get_eucentric_height_message() -> Tuple[str, str]:
     """
     :return: str: An eucentric height message.
     """
-    title = "At this time, portable electronic devices must be switched into ‘airplane’ mode."
+    title = "In order to expedite the boarding process, please be seated as quickly as possible after stowing your " \
+            "carry-on items."
     message = "Please, using the alpha wobble and z-axis buttons on the microscope control panel, manually set the " \
               "microscope to the eucentric height. That is, please find and select the z-shift where tilting the " \
               "specimen leads to a minimal lateral movement of the image." \
@@ -102,7 +102,8 @@ def get_end_message(out_file) -> Tuple[str, str]:
         The out file path.
     :return: str: An end message.
     """
-    title = "Ladies and gentlemen, we have begun our descent."
+    title = "Ladies and gentlemen, we have begun our descent into Ludwigshafen, where the weather is a balmy " \
+            "30 degrees centigrade."
     message = "We have now completed the MicroED tilt acquisition series!" \
               "\n\nYour images can be found in " + str(out_file)
     return title, message
@@ -114,7 +115,7 @@ def get_good_bye_message() -> Tuple[str, str]:
     """
     title = "Thank you for flying with Air TEM, we hope to see you again soon!"
     message = "Thank you for using BASF's in house MicroED automated imaging script. Please report any issues on " \
-              "GitHub: https://github.com/mrl280/tem-scripting-package"
+              "GitHub: https://github.com/mrl280/pyTEM/issues."
     return title, message
 
 
