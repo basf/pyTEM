@@ -9,6 +9,27 @@ from typing import Union
 from pyTEM.lib.interface.Acquisition import Acquisition
 
 
+class AcquisitionSeriesIterator:
+    """
+    Iterator for the AcquisitionSeries class.
+    """
+
+    def __init__(self, acquisition_series):
+        self.__acquisition_series = acquisition_series
+        self.__index = 0
+
+    def __next__(self) -> Acquisition:
+        """
+        :return: Acquisition:
+            The next acquisition in the acquisition series.
+        """
+        if self.__index < self.__acquisition_series.length():
+            self.__index += 1
+            return self.__acquisition_series.get_acquisition(idx=self.__index - 1)
+
+        raise StopIteration  # End of Iteration
+
+
 class AcquisitionSeries:
     """
     Hold a series of Acquisition objects.
@@ -41,7 +62,7 @@ class AcquisitionSeries:
             raise Exception("Error: Unable to append to AcquisitionSeries, the provided argument is not of type "
                             "Acquisition.")
 
-    def series_length(self) -> int:
+    def length(self) -> int:
         """
         :return: int:
             The number of acquisitions in the series.
@@ -90,3 +111,22 @@ class AcquisitionSeries:
         :return: None.
         """
         raise NotImplementedError  # TODO
+
+    def __iter__(self):
+        return AcquisitionSeriesIterator(self)
+
+
+if __name__ == "__main__":
+    acq_series = AcquisitionSeries()
+    acq_series.append(Acquisition(None))
+    acq_series.append(Acquisition(None))
+    acq_series.append(Acquisition(None))
+    print(acq_series)
+    print(acq_series.length())
+
+    print(acq_series.get_acquisition(idx=0).get_metadata())
+
+    print("\nTesting iteration:")
+    for i, acq in enumerate(acq_series):
+        print(i)
+        print(acq)
