@@ -109,15 +109,15 @@ You can view the ```pyTEM``` project as it existed at the time of Michael's fina
 
 Because ```pyTEM``` is often required on microscope control machines which lack internet connectivity, pyTEM is not 
  listed on the Python Package Index (PyPI), nor anywhere else. Rather, we provide a wheel file in [dist](/dist) and 
- [offline install instructions](#Offline install instructions).
+ [offline install instructions](#offline-install-instructions).
 
 ### Offline install instructions
 ##### On a system with internet access:
-1. Download [requirements.txt]()
+1. Download [requirements.txt](./requirements.txt)
 2. Download the required dependencies with pip ```pip download -d ./pytem_dependencies -r requirements.txt```
 3. Download the ```pyTEM``` wheel file from [dist](/dist).
 
-Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder, and the ```pyTEM``` wheel file to the offline machine.
+Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel file to the offline machine.
 
 ##### On the offline system:
 1. Install the required dependencies with pip: 
@@ -125,7 +125,7 @@ Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder, and
 2. Install ```pyTEM``` itself with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
 
 
-### If you need to build your own custom ```pyTEM``` wheel file:
+### If you need to build your own custom ```pyTEM``` wheel:
 1. Install wheel with ```pip install wheel```, 
 2. Download the whole ```pyTEM``` project directory,
 3. Navigate to the pyTEM folder, 
