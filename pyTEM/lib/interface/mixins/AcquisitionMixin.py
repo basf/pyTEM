@@ -241,6 +241,9 @@ class AcquisitionMixinTesting(AcquisitionMixin):
 
 
 if __name__ == "__main__":
+
+    import time
+
     out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
     print("out_dir: " + str(out_dir))
 
@@ -249,7 +252,13 @@ if __name__ == "__main__":
     acq_mixin_tester.print_camera_capabilities(available_cameras[0])
 
     print("\nPerforming an acquisition...")
+    start_time = time.time()
     test_acq = acq_mixin_tester.acquisition(camera_name="BM-Ceta", sampling='1k', exposure_time=2, readout_area=None)
+    stop_time = time.time()
+
+    print("\nStarting acquisition at: " + str(start_time))
+    print("Stopping acquisition at: " + str(stop_time))
+    print("Total time spent acquiring: " + str(stop_time - start_time))
 
     out_file_ = out_dir / "test_image.tif"
     print("Saving the image as " + str(out_file_))
