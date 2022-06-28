@@ -6,14 +6,12 @@
 
 import numpy as np
 import math as ma
-import cv2 as cv
 import multiprocessing as mp
 import scipy.signal as sig
 import time
 import tifffile
-import json
 
-from pyTEM.Earlier_Versions.TemPackage import TEM
+from earlier_versions.TemPackage import TEM
 
 
 scope = TEM()
