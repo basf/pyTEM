@@ -28,6 +28,5 @@ setup(
                       'setuptools',
                       'mrcfile',
                       'pathlib',
-                      'Pillow',
                       ],
 )
