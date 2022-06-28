@@ -3,6 +3,7 @@
  Date:    Summer 2022
 """
 
+import os
 import threading
 import pathlib
 import time
@@ -57,17 +58,32 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
         tilting_thread.start()  # Start tilting
 
         # Take an image
+        start_time = time.time()
         acq = microscope.acquisition(camera_name=acquisition_properties.camera_name,
                                      sampling=acquisition_properties.sampling,
                                      exposure_time=acquisition_properties.integration_time)
+        stop_time = time.time()
 
         tilting_thread.join()
 
+        print("\nStarting acquisition at: " + str(start_time))
+        print("Stopping acquisition at: " + str(stop_time))
+        print("Total time spent acquiring: " + str(stop_time - start_time))
+
         image_stack.append(acq)
 
-    if verbose:
-        print("Saving image stack to file as: " + acquisition_properties.out_file)
-    image_stack.save_as_mrc(acquisition_properties.out_file)
+    # Save each image individually as a jpeg for easy viewing.
+    file_name_base, file_extension = os.path.splitext(acquisition_properties.out_file)
+    for i, image in image_stack:
+        out_file = file_name_base + "_" + str(i) + ".jpeg"
+        if verbose:
+            print("Saving image #" + str(i) + "to file as: " + out_file)
+        image.save_to_file(out_file=out_file, extension=".jpeg")
+
+    # Save the image stack to file.
+    # if verbose:
+    #     print("Saving image stack to file as: " + acquisition_properties.out_file)
+    # image_stack.save_as_mrc(acquisition_properties.out_file)
 
 
 class TiltingThread (threading.Thread):
