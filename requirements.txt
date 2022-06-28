@@ -7,3 +7,5 @@ setuptools~=60.2.0
 comtypes~=1.1.11
 matplotlib~=3.5.2
 mrcfile~=1.3.0
+pathlib~=1.0.1
+Pillow~=9.1.1
