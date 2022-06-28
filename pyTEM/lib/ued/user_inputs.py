@@ -335,7 +335,6 @@ def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, floa
 
         # Create widgets for user entry
         camera = tk.StringVar()
-        camera.set(camera_options[0])  # Default to the first option in the list
         camera_option_menu = ttk.OptionMenu(root, camera, camera_options[0], *camera_options)
         camera_option_menu.grid(column=1, row=1, padx=5, pady=5)
 
@@ -446,16 +445,18 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     file_name_entry_box.insert(0, "MicroED_" + str(date.today()))  # Default value
     file_name_entry_box.grid(column=1, row=1, padx=5, pady=5)
 
-    # Add label showing the file extension
-    stop_units_label = ttk.Label(root, text=".tif")  # TODO: Figure out which file extension makes the most sense
-    stop_units_label.grid(column=2, row=1, sticky="w", padx=5, pady=5)
+    # Add a dropdown menu to get the file extension
+    file_extension_options = ['.mrc', '.tif']
+    file_extension = tk.StringVar()
+    file_extension_menu = ttk.OptionMenu(root, file_extension, file_extension_options[0], *file_extension_options)
+    file_extension_menu.grid(column=2, row=1, sticky="w", padx=5, pady=5)
 
     # Create continue and exit buttons
     continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=0, columnspan=2, row=2, padx=5, pady=5)
+    continue_button.grid(column=0, columnspan=3, row=2, padx=5, pady=5)
     exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                              style="big.TButton")
-    exit_button.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
+    exit_button.grid(column=0, columnspan=3, row=3, padx=5, pady=5)
 
     style.configure('big.TButton', font=(None, 10), foreground="blue4")
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
@@ -463,7 +464,7 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     root.mainloop()
 
     # Build and return the complete path
-    out_path = out_dir + str(file_name.get()) + ".tif"
+    out_path = out_dir + str(file_name.get()) + str(file_extension.get())
     return out_path
 
 
@@ -557,19 +558,11 @@ if __name__ == "__main__":
     # print(arr)
 
     """ Test getting camera parameters"""
-    camera_name, integration_time, sampling = get_camera_parameters(microscope=None)
-    print("Camera name: " + camera_name)
-    print("Integration time: " + str(integration_time))
-    print("Sampling: " + sampling)
+    # camera_name, integration_time, sampling = get_camera_parameters(microscope=None)
+    # print("Camera name: " + camera_name)
+    # print("Integration time: " + str(integration_time))
+    # print("Sampling: " + sampling)
 
-    # get_out_file(None)
-    # # Get tilt range info
-    # start_alpha, stop_alpha, step_alpha = get_tilt_range(microscope=None)
-    # while True:
-    #     # Check to make sure that step_alpha has the right sign
-    #     if (start_alpha > stop_alpha and step_alpha < 0) or (start_alpha < stop_alpha and step_alpha > 0):
-    #         # Check to make sure the tilt range includes 0
-    #         if (start_alpha > 0 and stop_alpha < 0) or (start_alpha < 0 and stop_alpha > 0):
-    #             break  # Input is okay
-    #     else:
-    #         warnings.warn("Invalid tilt range, please try again!")
+    """ Test getting out file"""
+    out_file = get_out_file(None)
+    print(out_file)
