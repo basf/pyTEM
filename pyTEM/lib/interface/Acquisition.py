@@ -3,6 +3,7 @@
  Date:    Summer 2022
 """
 
+import os
 import pathlib
 import warnings
 import mrcfile
@@ -15,6 +16,8 @@ from datetime import datetime
 
 from numpy.typing import ArrayLike
 from tifffile import tifffile
+
+from pyTEM.lib.interface.RedirectStdStreams import RedirectStdStreams
 
 
 def _build_metadata_dictionary(tm_acquisition_object) -> Dict[str, Union[str, int, float]]:
@@ -70,7 +73,7 @@ def _build_metadata_dictionary(tm_acquisition_object) -> Dict[str, Union[str, in
 class Acquisition:
     """
     A simplified, forward facing Acquisition class. This class holds, and allows the user to interact
-     with, the results of a single acquisition.
+     with, the results of a single acquisition (single 2D image).
 
     Public Attributes:
         None
@@ -106,7 +109,13 @@ class Acquisition:
             if isinstance(args[0], str) or isinstance(args[0], pathlib.Path):
                 # Try to load from file
 
-                if mrcfile.validate(args[0]):
+                # Because mrcfile.validate() prints a lot of stuff that is not helpful in this context, temporarily
+                #  redirect stdout
+                devnull = open(os.devnull, 'w')
+                with RedirectStdStreams(stdout=devnull, stderr=devnull):
+                    mrc_file = mrcfile.validate(args[0])
+
+                if mrc_file:
                     # Then it is an MRC file, open with mrcfile
                     with mrcfile.open(args[0]) as mrc:
                         self.__image = mrc.data
@@ -141,6 +150,10 @@ class Acquisition:
         except BaseException as e:
             warnings.warn("The Acquisition() constructor received an invalid input.")
             raise e
+
+        if self.__image.ndim != 2:
+            raise Exception("The Acquisition class is only meant for single 2D images. For image stacks, please use "
+                            "the AcquisitionSeries class for image stacks.")
 
     def _set_image(self, image: ArrayLike) -> None:
         """
@@ -263,29 +276,63 @@ class Acquisition:
         """
         out_file = str(out_file)  # Encase we received a path.
 
-        # In case we are missing the .tif extension, add it on.
+        # In case we are missing the .mrc extension, add it on.
         if out_file[-4:] != ".mrc":
             out_file = out_file + ".mrc"
 
         with mrcfile.new(out_file, overwrite=True) as mrc:
             mrc.set_data(np.float32(self.get_image()))
+        warnings.warn("Acquisition metadata not stored in MRC images.")  # TODO: Save metadata in MRC file
+
+    def save_to_file(self, out_file: Union[str, pathlib.Path], extension: str=None) -> None:
+        """
+        Save the acquisition to file.
+
+        :param extension: str (optional; default is None):
+            The extension of the file that defines the file format.
+            Allowable string values are: {'hspy', 'hdf5', 'rpl', 'msa', 'unf', 'blo', 'emd', common image
+             extensions e.g. 'tiff', 'png', 'jpeg', etc., and 'mrc'}. If omitted, the extension is determined from the
+              following list in this order:
+                1. the filename
+                2. Signal.tmp_parameters.extension
+                3. 'hspy' (the default extension)
+        :param out_file: str or path:
+            Out file path (where you want to save the file), optionally including the file extension.
+
+        :return: None.
+        """
+        out_file = str(out_file)  # Encase we received a path.
+
+        if out_file[-4:] == ".tif" or extension == 'tif':
+            self.save_as_tif(out_file)
+
+        elif out_file[-4:] == ".mrc" or extension == 'mrc':
+            self.save_as_mrc(out_file)
+
+        else:
+            # Hope for the best
+            im = hs.signals.Signal2D(self.get_image())
+            im.save(filename=out_file, overwrite=True)
+            warnings.warn("Acquisition metadata not saved in " + str(out_file))
 
 
 if __name__ == "__main__":
 
     out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
                 / "interface" / "test_images"
-    out_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
+    # out_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
+    out_file_ = out_dir / "example.mrc"  # Should fail because it is a stack
+    acq = Acquisition(out_file_)
 
-    acq = Acquisition(None)
     # acq = Acquisition(out_file_)
-    print(acq.get_metadata())
+    # print(acq.get_metadata())
 
     # acq.save_as_tif(out_dir / "tiltseries-resave.tif")
-    acq.save_as_mrc(out_dir / "random_image1.mrc")
+    # print("Saving as " + str(out_dir / "random_image1.png"))
+    # acq.save_to_file(out_dir / "random_image1.png")
     # acq = Acquisition(out_dir / "test_image.tif")
 
-    print(mrcfile.validate(out_dir / "random_image1.mrc"))
+    # print(mrcfile.validate(out_dir / "random_image1.mrc"))
 
     # acq.update_metadata_parameter(key='PixelSize', value=(6.79e-9, 6.79e-9))
     # print(acq.get_metadata())
