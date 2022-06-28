@@ -127,6 +127,6 @@ if __name__ == "__main__":
     print(acq_series.get_acquisition(idx=0).get_metadata())
 
     print("\nTesting iteration:")
-    for i, acq in enumerate(acq_series):
+    for i, acq_ in enumerate(acq_series):
         print(i)
-        print(acq)
+        print(acq_)
