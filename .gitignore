@@ -9,6 +9,7 @@
 # Distribution/packaging
 /build/
 /pyTEM.egg-info/
+/pytem_dependencies/
 
 # Other
 .idea/workspace.xml
