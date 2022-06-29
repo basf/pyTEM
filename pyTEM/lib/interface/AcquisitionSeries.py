@@ -5,8 +5,14 @@
 
 import pathlib
 from typing import Union
+import sys
 
-from pyTEM.lib.interface.Acquisition import Acquisition
+package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
+sys.path.append(str(package_directory))
+try:
+    from pyTEM.lib.interface.Acquisition import Acquisition
+except Exception as ImportException:
+    raise ImportException
 
 
 class AcquisitionSeriesIterator:
@@ -98,7 +104,7 @@ class AcquisitionSeries:
 
         :return: None.
         """
-        raise NotImplementedError  # TODO
+        raise NotImplementedError  # TODO: (save images as 16-byte TIFF)
 
     def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
         """
@@ -110,7 +116,7 @@ class AcquisitionSeries:
 
         :return: None.
         """
-        raise NotImplementedError  # TODO
+        raise NotImplementedError  # TODO (Save images as 16-byte MRC)
 
     def __iter__(self):
         return AcquisitionSeriesIterator(self)

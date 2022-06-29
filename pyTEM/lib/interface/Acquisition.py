@@ -20,6 +20,8 @@ from tifffile import tifffile
 from pyTEM.lib.interface.RedirectStdStreams import RedirectStdStreams
 
 
+# TODO: Save images as 16-byte
+
 def _build_metadata_dictionary(tm_acquisition_object) -> Dict[str, Union[str, int, float]]:
     """
     Build a metadata dictionary from a Thermo Fisher Acquisition object.
@@ -144,6 +146,7 @@ class Acquisition:
 
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
+                # TODO: Flip and rotate
                 self.__image = np.asarray(args[0].AsSafeArray)
                 self.__metadata = _build_metadata_dictionary(tm_acquisition_object=args[0])
 
