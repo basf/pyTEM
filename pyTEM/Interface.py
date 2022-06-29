@@ -138,6 +138,9 @@ class Interface(ModeMixin,  # Microscope mode controls, including those for proj
                 # Then the stage has still not gone back, and we are out of tries, panik
                 raise Exception("Unable to reset the stage.")
 
+        self.set_image_shift(x=0, y=0)
+        self.set_beam_shift(x=0, y=0)
+
         # TODO: Retract camera
         raise NotImplementedError("prepare_for_holder_removal() not fully implemented, please retract the camera "
                                   "before removing the holder.")
