@@ -64,9 +64,9 @@ def get_eucentric_height_message() -> Tuple[str, str]:
     title = "In order to expedite the boarding process, please be seated as quickly as possible after stowing your " \
             "carry-on items."
     message = "Please, using the alpha wobble and z-axis buttons on the microscope control panel, manually set the " \
-              "microscope to the eucentric height. That is, please find and select the z-shift where tilting the " \
+              "microscope to the eucentric height. That is, please find and select the z-height where tilting the " \
               "specimen leads to a minimal lateral movement of the image." \
-              "\n\nRe-center the particle if necessary."
+              "\n\nOnce at eucentric height, re-center the particle if necessary."
     return title, message
 
 
