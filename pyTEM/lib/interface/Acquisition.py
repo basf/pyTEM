@@ -10,6 +10,7 @@ import mrcfile
 
 import numpy as np
 import hyperspy.api as hs
+from PIL import Image
 from hyperspy.misc.utils import DictionaryTreeBrowser
 from typing import Union, Dict, Any
 from datetime import datetime
@@ -232,6 +233,17 @@ class Acquisition:
         """
         return self.update_metadata_parameter(key=key, value=value, force=True)
 
+    def downsample(self):
+        """
+        Downsample the image by a factor of 2. Useful for saving space.
+
+        :return: None. Operation performed inplace.
+        """
+        width, height = np.shape(self.get_image())
+        image = Image.fromarray(self.get_image())
+        resized_image = image.resize((int(width / 2), int(height / 2)))
+        self.__image = np.array(resized_image)
+
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
         Save the acquisition as a TIFF file.
@@ -325,10 +337,17 @@ if __name__ == "__main__":
                 / "interface" / "test_images"
     # out_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
     out_file_ = out_dir / "example.mrc"  # Should fail because it is a stack
-    acq = Acquisition(out_file_)
-
     # acq = Acquisition(out_file_)
-    # print(acq.get_metadata())
+
+    acq = Acquisition(None)
+    print(acq.get_metadata())
+
+    im = acq.get_image()
+    print(np.shape(im))
+
+    acq.downsample()
+    im = acq.get_image()
+    print(np.shape(im))
 
     # acq.save_as_tif(out_dir / "tiltseries-resave.tif")
     # print("Saving as " + str(out_dir / "random_image1.png"))
