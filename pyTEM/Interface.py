@@ -125,7 +125,19 @@ class Interface(ModeMixin,  # Microscope mode controls, including those for proj
         :return: None.
         """
         self.close_column_valve()
-        self.reset_stage_position()
+
+        # Sometimes it takes a couple tries to fully reset the stage
+        num_tries = 3
+        for t in range(num_tries):
+            if self.stage_is_home():
+                break  # Then we are good
+            else:
+                self.reset_stage_position()  # Try to send it home
+
+            if t == num_tries - 1:
+                # Then the stage has still not gone back, and we are out of tries, panik
+                raise Exception("Unable to reset the stage.")
+
         # TODO: Retract camera
         raise NotImplementedError("prepare_for_holder_removal() not fully implemented, please retract the camera "
                                   "before removing the holder.")
