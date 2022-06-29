@@ -6,7 +6,7 @@
 import math
 import copy
 import warnings
-from typing import Tuple, Union, Any
+from typing import Tuple
 
 import comtypes.client as cc
 
@@ -386,9 +386,26 @@ class StageMixin:
     def reset_stage_position(self) -> None:
         """
         Reset (zero) the stage position.
+        Note: Sometimes this might not return the stage all the way to the home position, check with is_stage_home().
         :return: None.
         """
         self.set_stage_position(x=0, y=0, z=0, alpha=0, beta=0)
+
+    def stage_is_home(self, threshold: float = 0.1) -> bool:
+        """
+        Check to see if the stage is in the home position (x=0, y=0, z=0, alpha=0, beta=0).
+        :param threshold: float (optional; default value is 0.1)
+            We will check if the stage is home to within this threshold (this threshold applies to all axes).
+        :return: bool:
+            True: The stage is in the home position.
+            False: The stage is somewhere other than the home position.
+        """
+        if self.get_stage_position_x() < threshold and self.get_stage_position_y() < threshold and \
+                self.get_stage_position_z() < threshold and self.get_stage_position_alpha() < threshold and \
+                self.get_stage_position_beta() < threshold:
+            return True
+        else:
+            return False
 
     def print_stage_position(self) -> None:
         """
