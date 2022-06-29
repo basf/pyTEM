@@ -3,6 +3,7 @@
  Date:    Summer 2022
 """
 
+import time
 import pathlib
 import sys
 import warnings
@@ -12,7 +13,7 @@ import comtypes.client as cc
 import numpy as np
 
 # Add the pyTEM package directory to path
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
+package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
@@ -36,7 +37,7 @@ class AcquisitionMixin:
     def acquisition_series(self, camera_name: str, num: int, sampling: str = None, exposure_time: float = None,
                            readout_area: int = None) -> AcquisitionSeries:
         """
-        Perform (and return) the results of an acquisition series.
+        Perform (and return the results of) an acquisition series.
 
         # TODO: This method remains untested.
 
@@ -52,7 +53,7 @@ class AcquisitionMixin:
             - '1k' for 1k images (1024 x 1024; sampling=3)
             - '0.5k' for 05.k images (512 x 512; sampling=8)
         :param exposure_time: float:
-            Exposure time is in seconds. Please expose responsibly.
+            Exposure time for a single acquisition, in seconds. Please expose responsibly.
         :param readout_area: int:
              Sets the area to be read from the camera sensor; the area is defined around the center of the sensor,
              horizontally as well as vertically. Basically this will chop the image (like extra binning). One of:
@@ -65,15 +66,19 @@ class AcquisitionMixin:
         """
         acq_series = AcquisitionSeries()
         for i in range(num):
-            acq_series.append(acq=self.acquisition(camera_name=camera_name, sampling=sampling,
-                                                   exposure_time=exposure_time, readout_area=readout_area))
+            acq, (_, _) = self.acquisition(camera_name=camera_name, sampling=sampling,
+                                           exposure_time=exposure_time, readout_area=readout_area)
+            acq_series.append(acq=acq)
 
         return acq_series
 
     def acquisition(self, camera_name: str, sampling: str = None, exposure_time: float = None,
-                    readout_area: int = None) -> Acquisition:
+                    readout_area: int = None) -> Tuple[Acquisition, Tuple[float, float]]:
         """
-        Perform (and return) the results of a single acquisition.
+        Perform (and return the results of) a single acquisition.
+
+        Also, we return a tuple with the start and end epochs of the core acquisition. While this whole acquisition()
+         method may take longer, these core times are the closest we can get to the actual acquisition time.
 
         :param camera_name: str:
             The name of the camera you want use. For a list of available cameras, please use the
@@ -93,8 +98,9 @@ class AcquisitionMixin:
             - 1: half-size
             - 2: quarter-size
 
-        :return: Acquisition:
-            A single acquisition.
+        :return:
+            Acquisition: A single acquisition.
+            (float, float): The core acquisition start and end times.
         """
         acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
         supported_cameras = acquisition.SupportedCameras
@@ -105,8 +111,9 @@ class AcquisitionMixin:
         except ValueError:
             warnings.warn("Unable to perform acquisition because the requested camera (" + str(camera_name) + ") could "
                           "not be selected. Please use the get_available_cameras() method to confirm that the "
-                          "requested camera is actually available. Returning an empty Acquisition object.")
-            return Acquisition(None)
+                          "requested camera is actually available. Returning an empty Acquisition object. "
+                          "Returning an empty Acquisition object.")
+            return Acquisition(None), (np.nan, np.nan)
 
         camera_settings = acquisition.CameraSettings
 
@@ -135,9 +142,13 @@ class AcquisitionMixin:
                               str(exposure_time) + ") is not in the supported range of "
                               + str(min_supported_exposure_time) + " to " + str(max_supported_exposure_time)
                               + " seconds. Returning an empty Acquisition object.")
-                return Acquisition(None)
+                return Acquisition(None), (np.nan, np.nan)
 
-        return Acquisition(acquisition.Acquire())
+        core_acquisition_start_time = time.time()
+        acq = acquisition.Acquire()
+        core_acquisition_end_time = time.time()
+
+        return Acquisition(acq), (core_acquisition_start_time, core_acquisition_end_time)
 
     def print_camera_capabilities(self, camera_name: str) -> None:
         """
@@ -156,8 +167,8 @@ class AcquisitionMixin:
         try:
             acquisition.Camera = supported_cameras[[c.name for c in supported_cameras].index(str(camera_name))]
         except ValueError:
-            warnings.warn("Unable to perform acquisition because the requested camera (" + str(camera_name) + ") could "
-                          "not be selected. Please use the get_available_cameras() method to confirm that the "
+            warnings.warn("Unable to print camera capabilities because the requested camera (" + str(camera_name) +
+                          ") could not be selected. Please use the get_available_cameras() method to confirm that the "
                           "requested camera is actually available.")
             return None
 
@@ -219,9 +230,9 @@ class AcquisitionMixin:
         try:
             acquisition.Camera = supported_cameras[[c.name for c in supported_cameras].index(str(camera_name))]
         except ValueError:
-            warnings.warn("Unable to perform acquisition because the requested camera (" + str(camera_name) + ") could "
-                          "not be selected. Please use the get_available_cameras() method to confirm that the "
-                          "requested camera is actually available. Returning None.")
+            warnings.warn("Unable to get the exposure time range because the requested camera (" + str(camera_name) +
+                          ") could not be selected. Please use the get_available_cameras() method to confirm that the "
+                          "requested camera is actually available.")
             return np.nan, np.nan
 
         exposure_time_range = acquisition.CameraSettings.Capabilities.ExposureTimeRange
@@ -242,24 +253,35 @@ class AcquisitionMixinTesting(AcquisitionMixin):
 
 if __name__ == "__main__":
 
-    import time
-
-    out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
-    print("out_dir: " + str(out_dir))
+    requested_exposure_time = 0.5  # s
 
     acq_mixin_tester = AcquisitionMixinTesting()
     available_cameras = acq_mixin_tester.get_available_cameras()
     acq_mixin_tester.print_camera_capabilities(available_cameras[0])
 
     print("\nPerforming an acquisition...")
-    start_time = time.time()
-    test_acq = acq_mixin_tester.acquisition(camera_name="BM-Ceta", sampling='1k', exposure_time=2, readout_area=None)
-    stop_time = time.time()
+    overall_start_time = time.time()
+    test_acq, (core_acq_start, core_acq_end) = acq_mixin_tester.acquisition(camera_name="BM-Ceta", sampling='1k',
+                                                                            exposure_time=requested_exposure_time,
+                                                                            readout_area=None)
+    overall_stop_time = time.time()
 
-    print("\nStarting acquisition at: " + str(start_time))
-    print("Stopping acquisition at: " + str(stop_time))
-    print("Total time spent acquiring: " + str(stop_time - start_time))
+    print("\nRequested Exposure time: " + str(requested_exposure_time))
 
-    out_file_ = out_dir / "test_image.tif"
-    print("Saving the image as " + str(out_file_))
+    print("\nCore acquisition started at: " + str(core_acq_start))
+    print("Core acquisition returned at: " + str(core_acq_end))
+    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
+
+    print("\nOverall acquisition() method call started at: " + str(overall_start_time))
+    print("Overall acquisition() method returned at: " + str(overall_stop_time))
+    print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
+
+    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
+    print("Time between when the core acquisition finished and when acquisition() returned: "
+          + str(overall_stop_time - core_acq_end))
+
+    # out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
+    # print("out_dir: " + str(out_dir))
+    # out_file_ = out_dir / "test_image.tif"
+    # print("Saving the image as " + str(out_file_))
     # test_acq.save_as_tif(out_file=out_file_)
