@@ -141,9 +141,25 @@ class Interface(ModeMixin,  # Microscope mode controls, including those for proj
         self.set_image_shift(x=0, y=0)
         self.set_beam_shift(x=0, y=0)
 
+        # Set the magnification somewhere in the SA range
+        if self.get_mode() == "TEM":
+            self.set_tem_magnification(new_magnification_index=23)  # 8600.0 x Zoom
+        elif self.get_mode() == "STEM":
+            self.set_stem_magnification(new_magnification=8600.0)
+        else:
+            raise Exception("Error: Current microscope mode unknown.")
+
         # TODO: Retract camera
         raise NotImplementedError("prepare_for_holder_removal() not fully implemented, please retract the camera "
                                   "before removing the holder.")
+
+    def zero_shifts(self):
+        """
+        Zero the image and beam shifts.
+        :return: None.
+        """
+        self.set_beam_shift(x=0, y=0)
+        self.set_image_shift(x=0, y=0)
 
     """
     When multiple of the same methods exist across mixins, override to ensure we get the one we want.
