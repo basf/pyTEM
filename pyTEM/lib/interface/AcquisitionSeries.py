@@ -4,8 +4,12 @@
 """
 
 import pathlib
-from typing import Union
 import sys
+import warnings
+import mrcfile
+
+from typing import Union
+import numpy as np
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
@@ -125,7 +129,38 @@ class AcquisitionSeries:
 
         :return: None.
         """
-        raise NotImplementedError  # TODO (Save images as 16-byte MRC)
+        out_file = str(out_file)  # Encase we received a path.
+
+        if self.length() < 0:
+            raise Exception("AcquisitionSeries.save_as_mrc() requires at least one image exist in the series.")
+
+        # In case we are missing the .mrc extension, add it on.
+        if out_file[-4:] != ".mrc":
+            out_file = out_file + ".mrc"
+
+        # Stack all the images into a 3D array
+        # Use the first acquisition in the stack as a reference image to determine shape and type info.
+        ref_image = self.get_acquisition(idx=0).get_image()
+        image_shape = np.shape(ref_image)
+        image_stack = np.empty(shape=(self.length(), image_shape[0], image_shape[1]), dtype=np.int16)  # TODO
+        for i, acq in enumerate(self.__acquisitions):
+            if np.shape(acq.get_image()) == image_shape:
+                image_stack[i] = acq.get_image()
+            else:
+                warnings.warn("Acquisition at index " + str(i) + " omitted from " + out_file
+                              + " because the image is the wrong size.")
+
+        # Until we know how to build our own extended header, just use a stock one
+        # TODO: Figure out how to write metadata to MRC header
+        header_file = pathlib.Path(
+            __file__).parent.resolve().parent.resolve().parent.resolve() / "lib" / "interface" \
+                      / "stock_mrc_header" / "stock_mrc_header.npy"
+        extended_header = np.load(str(header_file))
+
+        with mrcfile.new(out_file, overwrite=True) as mrc:
+            mrc.set_data(image_stack)
+        mrc.set_extended_header(extended_header)
+        warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
 
     def __iter__(self):
         return AcquisitionSeriesIterator(self)
@@ -136,12 +171,16 @@ if __name__ == "__main__":
     acq_series.append(Acquisition(None))
     acq_series.append(Acquisition(None))
     acq_series.append(Acquisition(None))
-    print(acq_series)
-    print(acq_series.length())
+
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
+              / "interface" / "test_images"
+    out_file_ = out_dir / "mrc_test_stack.mrc"
 
     print(acq_series.get_acquisition(idx=0).get_metadata())
 
     print("\nTesting iteration:")
-    for i, acq_ in enumerate(acq_series):
-        print(i)
+    for c, acq_ in enumerate(acq_series):
+        print(c)
         print(acq_)
+
+    acq_series.save_as_mrc(out_file=out_file_)
