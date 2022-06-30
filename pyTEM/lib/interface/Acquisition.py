@@ -15,6 +15,8 @@ from hyperspy.misc.utils import DictionaryTreeBrowser
 from typing import Union, Dict, Any
 from datetime import datetime
 
+from matplotlib import pyplot as plt
+from matplotlib.colors import Colormap
 from numpy.typing import ArrayLike
 from tifffile import tifffile
 
@@ -192,6 +194,16 @@ class Acquisition:
         """
         return self.__metadata
 
+    def show_image(self, cmap: Union[str, Colormap] = "Greys_r") -> None:
+        """
+        Display the image.
+        :param cmap: str or Colormap (optional; default is 'Greys_r'):
+            The colour map to use.
+        :return: None. Image is shown in a pop-up window.
+        """
+        plt.imshow(self.__image, cmap=cmap)
+        plt.show()
+
     def update_metadata_parameter(self, key: str, value: Union[str, int, float, ArrayLike], force: bool = False) -> int:
         """
         Update an existing metadata parameter.
@@ -233,7 +245,7 @@ class Acquisition:
         """
         return self.update_metadata_parameter(key=key, value=value, force=True)
 
-    def downsample(self):
+    def downsample(self) -> None:
         """
         Downsample the image by a factor of 2. Useful for saving space.
 
@@ -299,7 +311,7 @@ class Acquisition:
             mrc.set_data(np.float32(self.get_image()))
         warnings.warn("Acquisition metadata not stored in MRC images.")  # TODO: Save metadata in MRC file
 
-    def save_to_file(self, out_file: Union[str, pathlib.Path], extension: str=None) -> None:
+    def save_to_file(self, out_file: Union[str, pathlib.Path], extension: str = None) -> None:
         """
         Save the acquisition to file.
 
@@ -343,11 +355,14 @@ if __name__ == "__main__":
     print(acq.get_metadata())
 
     img = acq.get_image()
-    print(np.shape(img))
+
+    acq.show_image()
 
     acq.downsample()
-    img = acq.get_image()
-    print(np.shape(img))
+    acq.show_image()
+
+    # img = acq.get_image()
+    # print(np.shape(img))
 
     # acq.save_as_tif(out_dir / "tiltseries-resave.tif")
     # print("Saving as " + str(out_dir / "random_image1.png"))
