@@ -10,11 +10,11 @@ import sys
 
 import numpy as np
 import pandas as pd
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 from scipy.signal import find_peaks
 
 # Add the pyTEM package directory to path
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve()
+package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
     from pyTEM.Interface import Interface
@@ -29,7 +29,7 @@ except Exception as ImportException:
     raise ImportException
 
 
-def obtain_shifts(microscope: Interface, alphas: ArrayLike[float], camera_name: str, verbose: bool = False) -> np.array:
+def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: str, verbose: bool = False) -> np.array:
     """
     Automatically obtain the image shifts required to keep the currently centered section of the specimen centered at
      all alpha tilt angles.
@@ -113,22 +113,22 @@ def obtain_shifts(microscope: Interface, alphas: ArrayLike[float], camera_name: 
         print("\nAnalysing peaks to assess the quality of the results...")
         print("Number of x-peaks: " + str(x_peaks))
         print("Number of y-peaks: " + str(y_peaks))
-    if x_peaks > 2 or y_peaks > 2:
+
+    if len(x_peaks) > 2 or len(y_peaks) > 2:
         # Then we were probably unsuccessful, warn the user
         warnings.warn("Based on the number of peaks, it is unlikely that the automated shift determination was "
                       "successful. Please ensure the specimen is at the eucentric height and try again (you may need "
                       "to reduce the number of images per batch). Obtained shifts:")
         print(df.to_string())  # Required to see the whole dataframe
         raise Exception("obtain_shifts(): Automated shift alignment failed, unsafe to proceed.")
-
-    if verbose:
+    elif verbose:
         print("\nObtained shifts:")
         print(df.to_string())  # Required to see the whole dataframe
 
     return shifts
 
 
-def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alphas: ArrayLike[float],
+def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alphas: NDArray[float],
                        max_images_per_batch: int = 10, verbose: bool = False) -> np.array:
     """
     Because we want the user to center the specimen at 0 degrees (to reduce the overall shift), we need to separately
@@ -182,7 +182,8 @@ def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alpha
         reference_image_shift = microscope.get_image_shift()
 
         # Take a reference image
-        reference_acq = microscope.acquisition(camera_name=camera_name, sampling=sampling, exposure_time=exposure_time)
+        reference_acq, (_, _) = microscope.acquisition(camera_name=camera_name, sampling=sampling,
+                                                       exposure_time=exposure_time)
         reference_image = reference_acq.get_image()
 
         # Preallocate
@@ -205,7 +206,8 @@ def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alpha
             if verbose:
                 print("Taking image at alpha=" + str(round(alpha, 2)))
             microscope.set_stage_position(alpha=alpha)  # Tilt the stage to the required alpha
-            acq = microscope.acquisition(camera_name=camera_name, sampling=sampling, exposure_time=exposure_time)
+            acq, (_, _) = microscope.acquisition(camera_name=camera_name, sampling=sampling,
+                                                 exposure_time=exposure_time)
             image_stack_arr[j + 1] = acq.get_image()
 
         # Use hyperspy (cross-correlation) to compute shifts for this batch's stack
@@ -245,7 +247,7 @@ if __name__ == "__main__":
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 
-    start_alpha = -35
+    start_alpha = -30
     stop_alpha = 30
     step_alpha = 1
 
