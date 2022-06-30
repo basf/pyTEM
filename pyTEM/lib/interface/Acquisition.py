@@ -105,6 +105,7 @@ class Acquisition:
         if args[0] is None:
             # Just return a random image, this is helpful for testing.
             self.__image = np.random.random((1024, 1024))  # A random 1k image.
+            self.__image = (65535 * self.__image).astype(np.int16)  # Covert to 16-bit
             self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
             warnings.warn("The Acquisition() constructor received None. The returned Acquisition object contains a "
                           "random 1k image with no metadata.")
@@ -149,8 +150,9 @@ class Acquisition:
 
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
-                # Notice that we will to flip and then rotate image to match what is shown on the FluCam
-                self.__image = np.rot90(np.flip(np.asarray(args[0].AsSafeArray), axis=1))
+                # Notice that we load as a 16-bit image.
+                # Notice that we will to flip and then rotate the image to match what is shown on the FluCam.
+                self.__image = np.rot90(np.flip(np.asarray(args[0].AsSafeArray, dtype=np.int16), axis=1))
                 self.__metadata = _build_metadata_dictionary(tm_acquisition_object=args[0])
 
         except BaseException as e:
@@ -281,11 +283,16 @@ class Acquisition:
             pixel_size_x_in_cm = float(self.get_metadata()['XResolution'][1] / self.get_metadata()['XResolution'][0])
             pixel_size_y_in_cm = float(self.get_metadata()['YResolution'][1] / self.get_metadata()['YResolution'][0])
         except KeyError:
-            # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object
-            pixel_size_x_in_cm = float(100 * self.get_metadata()['PixelSize'][0])  # m -> cm
-            pixel_size_y_in_cm = float(100 * self.get_metadata()['PixelSize'][1])  # m -> cm
+            try:
+                # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object
+                pixel_size_x_in_cm = float(100 * self.get_metadata()['PixelSize'][0])  # m -> cm
+                pixel_size_y_in_cm = float(100 * self.get_metadata()['PixelSize'][1])  # m -> cm
+            except KeyError:
+                # Give up
+                warnings.warn("save_as_tif() could not determine the pixel size.")
+                pixel_size_x_in_cm = 1
+                pixel_size_y_in_cm = 1
 
-        self.save_as_mrc('CENTIMETER')
         tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(),
                          resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'))
 
@@ -303,13 +310,20 @@ class Acquisition:
         """
         out_file = str(out_file)  # Encase we received a path.
 
+        # Until we know how to build our own extended header, just use a stock one
+        # TODO: Figure out how to write metadata to MRC header
+        header_file = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() / "lib" / "interface" \
+                      / "stock_mrc_header" / "stock_mrc_header.npy"
+        extended_header = np.load(str(header_file))
+
         # In case we are missing the .mrc extension, add it on.
         if out_file[-4:] != ".mrc":
             out_file = out_file + ".mrc"
 
         with mrcfile.new(out_file, overwrite=True) as mrc:
-            mrc.set_data(np.float32(self.get_image()))
-        warnings.warn("Acquisition metadata not stored in MRC images.")  # TODO: Save metadata in MRC file
+            mrc.set_data(self.get_image())
+            mrc.set_extended_header(extended_header)
+        warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
 
     def save_to_file(self, out_file: Union[str, pathlib.Path], extension: str = None) -> None:
         """
@@ -347,19 +361,17 @@ if __name__ == "__main__":
 
     out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
                 / "interface" / "test_images"
-    # out_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
-    out_file_ = out_dir / "example.mrc"  # Should fail because it is a stack
+    in_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
+    # in_file_ = out_dir / "cat.jpeg"
+    out_file_ = out_dir / "header_test.mrc"
     # acq = Acquisition(out_file_)
 
     acq = Acquisition(None)
     print(acq.get_metadata())
-
-    img = acq.get_image()
-
+    print(acq.get_image().dtype)
     acq.show_image()
 
-    acq.downsample()
-    acq.show_image()
+    acq.save_as_mrc(out_file=out_file_)
 
     # img = acq.get_image()
     # print(np.shape(img))
