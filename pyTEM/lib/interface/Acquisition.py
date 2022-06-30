@@ -147,8 +147,8 @@ class Acquisition:
 
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
-                # TODO: Flip and rotate
-                self.__image = np.asarray(args[0].AsSafeArray)
+                # Notice that we will to flip and then rotate image to match what is shown on the FluCam
+                self.__image = np.rot90(np.flip(np.asarray(args[0].AsSafeArray), axis=1))
                 self.__metadata = _build_metadata_dictionary(tm_acquisition_object=args[0])
 
         except BaseException as e:
@@ -342,12 +342,12 @@ if __name__ == "__main__":
     acq = Acquisition(None)
     print(acq.get_metadata())
 
-    im = acq.get_image()
-    print(np.shape(im))
+    img = acq.get_image()
+    print(np.shape(img))
 
     acq.downsample()
-    im = acq.get_image()
-    print(np.shape(im))
+    img = acq.get_image()
+    print(np.shape(img))
 
     # acq.save_as_tif(out_dir / "tiltseries-resave.tif")
     # print("Saving as " + str(out_dir / "random_image1.png"))
