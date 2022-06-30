@@ -13,9 +13,8 @@ import sys
 import numpy as np
 
 # Add the pyTEM package directory to path
-package_directory = pathlib.Path().resolve()
+package_directory = pathlib.Path().resolve().parent.resolve()
 sys.path.append(str(package_directory))
-
 try:
     from pyTEM.Interface import Interface
 
@@ -69,6 +68,8 @@ def ued(verbose: bool = False) -> None:
 
         # Have the user center the particle
         have_user_center_particle(microscope=microscope)
+
+        # TODO: Have the user align the SAD aperture
 
         # Have the user manually set eucentric height  # TODO: Automate eucentric height calibration
         title, message = get_eucentric_height_message()
