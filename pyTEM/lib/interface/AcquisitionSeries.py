@@ -90,9 +90,18 @@ class AcquisitionSeries:
             The acquisition to set.
         :param idx: int:
             Where you want to put the acquisition.
-        :return: None
+        :return: None.
         """
         self.__acquisitions[idx] = acq
+
+    def downsample(self) -> None:
+        """
+        Downsample all images in the stack by a factor of 2. Useful for saving space.
+
+        :return: None. Operation performed inplace.
+        """
+        for acq in self.__acquisitions:
+            acq.downsample()
 
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
