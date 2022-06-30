@@ -21,6 +21,9 @@ def exit_script(microscope: Union[Interface, None], status: int) -> None:
             -1: Failure
     """
     if microscope is not None:
-        warnings.warn("Returning the microscope to a safe state...")
+        warnings.warn("Returning the microscope to a safe state, zeroing the alpha tilt, "
+                      "and zeroing the image and beam shifts...")
         microscope.make_safe()
+        microscope.set_stage_position_alpha(alpha=0)
+        microscope.zero_shifts()
     sys.exit(status)
