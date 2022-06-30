@@ -23,7 +23,7 @@ try:
     from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
     from pyTEM.lib.ued.exit_script import exit_script
     from pyTEM.lib.ued.messages import automated_alignment_message, get_welcome_message, display_message, \
-    get_alignment_message
+        get_alignment_message
     from pyTEM.lib.ued.opposite_signs import opposite_signs
 except Exception as ImportException:
     raise ImportException
@@ -245,7 +245,7 @@ class GetTiltRange:
         step = tk.StringVar()
         step_entry_box = ttk.Entry(root, textvariable=step)
         step_entry_box.grid(column=1, row=1, padx=5, pady=5)
-        step_entry_box.insert(0, "0.1")
+        step_entry_box.insert(0, "0.3")
 
         # Add labels showing the units.
         step_units_label = ttk.Label(root, text="deg", font=(self.font, self.font_size))
