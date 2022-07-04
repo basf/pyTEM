@@ -87,7 +87,7 @@ def get_insert_and_align_sad_aperture_message() -> Tuple[str, str]:
     """
     :return: str: A message prompting the user to insert and align the selected area diffraction (SAD) aperture.
     """
-    title = "Our flight is ready for departure, we wish you all an enjoyable flight."
+    title = "Our flight is now ready for departure, we wish you all an enjoyable flight."
     message = "Please, using your microscope's UI and the microscope control panel, insert and align the selected " \
               "area diffraction (SAD) aperture." \
               "\n\nOnce the SAD aperture is inserted and centered, please click the continue button."
@@ -185,5 +185,5 @@ def display_message(title: str, message: str, microscope: Union[Interface, None]
 
 if __name__ == "__main__":
     """ Testing """
-    title_, message_ = get_alignment_message()
+    title_, message_ = get_insert_and_align_sad_aperture_message()
     display_message(title=title_, message=message_, microscope=None, position="out-of-the-way")
