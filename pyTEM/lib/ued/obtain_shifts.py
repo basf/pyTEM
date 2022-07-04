@@ -29,7 +29,8 @@ except Exception as ImportException:
     raise ImportException
 
 
-def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: str, verbose: bool = False) -> np.array:
+def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: str, exposure_time: float = 0.25,
+                  verbose: bool = False) -> np.array:
     """
     Automatically obtain the image shifts required to keep the currently centered section of the specimen centered at
      all alpha tilt angles.
@@ -46,7 +47,9 @@ def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: st
     :param camera_name: str:
         The name of the camera to be used in the image shift calculation - probably want to use the same camera you are
          using for the tilt series itself.
-     :param verbose: bool:
+    :param exposure_time: float: (optional; default is 0.25)
+        The exposure time, in seconds, to use for the shift calibration images.
+     :param verbose: bool (optional; default is False):
         Print out extra information. Useful for debugging.
 
     :return: np.array: shifts:
@@ -80,7 +83,8 @@ def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: st
     if verbose:
         print("\nComputing shifts at negative tilt angles using the following alphas: " + str(negative_alphas))
     negative_shifts = _complete_one_sign(microscope=microscope, this_signs_alphas=negative_alphas, verbose=verbose,
-                                         max_images_per_batch=max_images_per_batch, camera_name=camera_name)
+                                         max_images_per_batch=max_images_per_batch, camera_name=camera_name,
+                                         exposure_time=exposure_time)
 
     # Reset the image shift and tilt to 0 deg
     if verbose:
@@ -92,7 +96,8 @@ def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: st
     if verbose:
         print("\nComputing shifts at positive tilt angles using the following alphas: " + str(positive_alphas))
     positive_shifts = _complete_one_sign(microscope=microscope, this_signs_alphas=positive_alphas, verbose=verbose,
-                                         max_images_per_batch=max_images_per_batch, camera_name=camera_name)
+                                         max_images_per_batch=max_images_per_batch, camera_name=camera_name,
+                                         exposure_time=exposure_time)
 
     # One array of shifts will need to be flipped back (because it will have been built from a flipped array)
     if alphas[0] > 0:
@@ -128,7 +133,7 @@ def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: st
     return shifts
 
 
-def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alphas: NDArray[float],
+def _complete_one_sign(microscope: Interface, camera_name: str, exposure_time: float, this_signs_alphas: NDArray[float],
                        max_images_per_batch: int = 10, verbose: bool = False) -> np.array:
     """
     Because we want the user to center the specimen at 0 degrees (to reduce the overall shift), we need to separately
@@ -143,13 +148,15 @@ def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alpha
     :param camera_name: str:
         The name of the camera to be used for shift calculation - probably the same camera you are using for the tilt
          series itself.
+    :param exposure_time: float:
+        The exposure time, in seconds, to use for the shift determination images.
     :param this_signs_alphas: np.array:
         An array with either the positive alphas or the negative alphas.
     :param max_images_per_batch: int (optional; default is 10):
         # TODO: Adjust based on number of peaks in results.
         To make sure that the images don't deviate too far from the reference image, image shifts are computed in
          batches. This parameter controls the maximum number of images per batch.
-    :param verbose: bool:
+    :param verbose: bool (optional; default is False):
         Useful for debugging.
 
     :return: np.array of float tuples:
@@ -158,9 +165,9 @@ def _complete_one_sign(microscope: Interface, camera_name: str, this_signs_alpha
     """
     # Define acquisition parameters, these should be sufficient for alignment photos
     sampling = '1k'
-    exposure_time = 1
     if verbose:
-        print("\nAcquisition parameters: Sampling=" + str(sampling) + ", Exposure time=" + str(exposure_time))
+        print("\nAcquisition parameters for the shift determination images: Sampling=" + str(sampling)
+              + ", Exposure time=" + str(exposure_time))
 
     # Preallocate
     this_signs_image_shifts = np.full(shape=len(this_signs_alphas), dtype=(float, 2), fill_value=np.nan)
