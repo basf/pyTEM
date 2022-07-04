@@ -271,7 +271,7 @@ class Acquisition:
         data_type = self.image_dtype()
         width, height = np.shape(self.get_image())
         image = Image.fromarray(self.get_image())
-        resized_image = image.resize((int(width / 2), int(height / 2)))
+        resized_image = image.resize(size=(int(width / 2), int(height / 2)), resample=Image.BILINEAR)
         self.__image = np.array(resized_image, dtype=data_type)
 
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
