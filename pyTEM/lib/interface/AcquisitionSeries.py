@@ -8,12 +8,13 @@ import sys
 import warnings
 import mrcfile
 
-from typing import Union
+from typing import Union, Tuple
 import numpy as np
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
+    from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
     from pyTEM.lib.interface.Acquisition import Acquisition
 except Exception as ImportException:
     raise ImportException
@@ -42,7 +43,8 @@ class AcquisitionSeriesIterator:
 
 class AcquisitionSeries:
     """
-    Hold a series of Acquisition objects.
+    Hold a series of Acquisition objects. The image of each acquisition in the series must have the same shape
+     and datatype as that of the first acquisition in the series.
 
     Helpful for saving image stacks to file.
 
@@ -63,14 +65,22 @@ class AcquisitionSeries:
         """
         Added a new acquisition to the series.
         :param acq: Acquisition:
-            The acquisition to append.
+            The acquisition to append. The image of the acquisition must have the same shape and datatype as the rest
+             of those in the series.
         :return: None.
         """
-        if isinstance(acq, Acquisition):
+        if self.length() == 0 and isinstance(acq, Acquisition):
+            # This will be the first image in the series
             self.__acquisitions.append(acq)
+
+        # If it is not the first image, we have to check to make sure shape and datatype match
+        elif isinstance(acq, Acquisition) \
+                and acq.image_shape() == self.image_shape() and acq.image_dtype() == self.image_dtype():
+            self.__acquisitions.append(acq)
+
         else:
-            raise Exception("Error: Unable to append to AcquisitionSeries, the provided argument is not of type "
-                            "Acquisition.")
+            raise Exception("Error: Unable to append to AcquisitionSeries, either the provided argument is not of type "
+                            "Acquisition, the image is the wrong shape, or the image uses the wrong datatype.")
 
     def length(self) -> int:
         """
@@ -79,12 +89,37 @@ class AcquisitionSeries:
         """
         return len(self.__acquisitions)
 
+    def image_shape(self) -> Tuple[int, int]:
+        """
+        :return: (int, int):
+            Image shape, in pixels.
+            The image shape is determined by the shape of the first image in the series.
+        """
+        if self.length() > 0:
+            return self.get_acquisition(idx=0).image_shape()
+
+        else:
+            raise Exception("Cannot determine the image shape of an empty series.")
+
+    def image_dtype(self) -> type:
+        """
+        :return: type:
+            The image datatype.
+            The first image in the series is used as for reference.
+        """
+        if self.length() > 0:
+            ref_image = self.get_acquisition(idx=0).get_image()  # Use the first image as reference
+            return type(ref_image[0][0])
+
+        else:
+            raise Exception("Cannot determine the image type of an empty series.")
+
     def get_acquisition(self, idx: int) -> Acquisition:
         """
         :param idx: int:
             The index of the acquisition you want.
         :return: Acquisition:
-            The acquisition at the provided index
+            The acquisition at the provided index.
         """
         return self.__acquisitions[idx]
 
@@ -93,10 +128,17 @@ class AcquisitionSeries:
         :param acq: Acquisition:
             The acquisition to set.
         :param idx: int:
-            Where you want to put the acquisition.
+            Where you want to put the acquisition. The image of the acquisition must have the same shape and datatype
+             as the rest of those in the series.
         :return: None.
         """
-        self.__acquisitions[idx] = acq
+        if isinstance(acq, Acquisition) \
+                and acq.image_shape() == self.image_shape() and acq.image_dtype() == self.image_dtype():
+            self.__acquisitions[idx] = acq
+
+        else:
+            raise Exception("Error: Unable to append to AcquisitionSeries, either the provided argument is not of type "
+                            "Acquisition, the image is the wrong shape, or the image uses the wrong datatype.")
 
     def downsample(self) -> None:
         """
@@ -132,34 +174,22 @@ class AcquisitionSeries:
         out_file = str(out_file)  # Encase we received a path.
 
         if self.length() < 0:
-            raise Exception("AcquisitionSeries.save_as_mrc() requires at least one image exist in the series.")
+            raise Exception("AcquisitionSeries.save_as_mrc() requires at least one image exists in the series.")
 
         # In case we are missing the .mrc extension, add it on.
         if out_file[-4:] != ".mrc":
             out_file = out_file + ".mrc"
 
         # Stack all the images into a 3D array
-        # Use the first acquisition in the stack as a reference image to determine shape and type info.
-        ref_image = self.get_acquisition(idx=0).get_image()
-        image_shape = np.shape(ref_image)
-        image_stack = np.empty(shape=(self.length(), image_shape[0], image_shape[1]), dtype=np.int16)  # TODO
+        image_stack = np.empty(shape=(self.length(), self.image_shape()[0], self.image_shape()[1]),
+                               dtype=self.image_dtype())
         for i, acq in enumerate(self.__acquisitions):
-            if np.shape(acq.get_image()) == image_shape:
-                image_stack[i] = acq.get_image()
-            else:
-                warnings.warn("Acquisition at index " + str(i) + " omitted from " + out_file
-                              + " because the image is the wrong size.")
-
-        # Until we know how to build our own extended header, just use a stock one
-        # TODO: Figure out how to write metadata to MRC header
-        header_file = pathlib.Path(
-            __file__).parent.resolve().parent.resolve().parent.resolve() / "lib" / "interface" \
-                      / "stock_mrc_header" / "stock_mrc_header.npy"
-        extended_header = np.load(str(header_file))
+            image_stack[i] = acq.get_image()
 
         with mrcfile.new(out_file, overwrite=True) as mrc:
             mrc.set_data(image_stack)
-        mrc.set_extended_header(extended_header)
+            # Until we know how to build our own extended header, just use a stock one  # TODO: Write metadata to header
+            mrc.set_extended_header(get_stock_mrc_extended_header())
         warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
 
     def __iter__(self):
@@ -169,8 +199,14 @@ class AcquisitionSeries:
 if __name__ == "__main__":
     acq_series = AcquisitionSeries()
     acq_series.append(Acquisition(None))
+
+    print(acq_series.image_shape())
+    print(acq_series.get_acquisition(0).image_shape())
+    print(acq_series.image_dtype())
     acq_series.append(Acquisition(None))
     acq_series.append(Acquisition(None))
+
+    acq_series.downsample()
 
     out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
               / "interface" / "test_images"
