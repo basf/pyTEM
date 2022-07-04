@@ -12,7 +12,7 @@ import numpy as np
 import hyperspy.api as hs
 from PIL import Image
 from hyperspy.misc.utils import DictionaryTreeBrowser
-from typing import Union, Dict, Any
+from typing import Union, Dict, Any, Tuple
 from datetime import datetime
 
 from matplotlib import pyplot as plt
@@ -21,9 +21,8 @@ from numpy.typing import ArrayLike
 from tifffile import tifffile
 
 from pyTEM.lib.interface.RedirectStdStreams import RedirectStdStreams
+from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
 
-
-# TODO: Save images as 16-byte
 
 def _build_metadata_dictionary(tm_acquisition_object) -> Dict[str, Union[str, int, float]]:
     """
@@ -247,6 +246,20 @@ class Acquisition:
         """
         return self.update_metadata_parameter(key=key, value=value, force=True)
 
+    def image_shape(self) -> Tuple[int, int]:
+        """
+        :return: (int, int):
+            Image shape, in pixels.
+        """
+        return np.shape(self.get_image())
+
+    def image_dtype(self) -> type:
+        """
+        :return: type:
+            The image datatype.
+        """
+        return type(self.get_image()[0][0])
+
     def downsample(self) -> None:
         """
         Downsample the image by a factor of 2. Useful for saving space.
@@ -310,20 +323,15 @@ class Acquisition:
         """
         out_file = str(out_file)  # Encase we received a path.
 
-        # Until we know how to build our own extended header, just use a stock one
-        # TODO: Figure out how to write metadata to MRC header
-        header_file = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() / "lib" / "interface" \
-                      / "stock_mrc_header" / "stock_mrc_header.npy"
-        extended_header = np.load(str(header_file))
-
         # In case we are missing the .mrc extension, add it on.
         if out_file[-4:] != ".mrc":
             out_file = out_file + ".mrc"
 
         with mrcfile.new(out_file, overwrite=True) as mrc:
             mrc.set_data(self.get_image())
-            mrc.set_extended_header(extended_header)
-        warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
+            # Until we know how to build our own extended header, just use a stock one
+            mrc.set_extended_header(get_stock_mrc_extended_header())
+    warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
 
     def save_to_file(self, out_file: Union[str, pathlib.Path], extension: str = None) -> None:
         """
