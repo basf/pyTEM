@@ -264,12 +264,15 @@ class Acquisition:
         """
         Downsample the image by a factor of 2. Useful for saving space.
 
+        Image size will change (obviously), but the image datatype should remain the same.
+
         :return: None. Operation performed inplace.
         """
+        data_type = self.image_dtype()
         width, height = np.shape(self.get_image())
         image = Image.fromarray(self.get_image())
         resized_image = image.resize((int(width / 2), int(height / 2)))
-        self.__image = np.array(resized_image)
+        self.__image = np.array(resized_image, dtype=data_type)
 
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
@@ -352,7 +355,7 @@ class Acquisition:
         """
         out_file = str(out_file)  # Encase we received a path.
 
-        if out_file[-4:] == ".tif" or extension == 'tif':
+        if out_file[-4:] == ".tif" or extension == 'tif' or out_file[-5:] == ".tiff" or extension == 'tiff':
             self.save_as_tif(out_file)
 
         elif out_file[-4:] == ".mrc" or extension == 'mrc':
