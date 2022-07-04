@@ -74,13 +74,23 @@ def automated_alignment_message() -> Tuple[str, str]:
     """
     :return: str: A message explaining the automated image alignment functionality.
     """
-    title = "If you have any questions, please don’t hesitate to ask one of our crew members. " \
-            "We wish you all an enjoyable flight."
+    title = "If you have any questions, please don’t hesitate to ask one of our crew members."
     message = "This MicroED script supports automated image alignment functionality. The required image shifts will " \
               "be computed from a preparatory tilt sequence using the hyperspy Python library (phase correlation) " \
               "and then applied during the main acquisition sequence. While automated image alignment can be useful, " \
-              "it increases sample exposure and experiment run-time (although not significantly)." \
+              "it increases sample exposure time (although not significantly)." \
               "\n\nTo continue without image alignment functionality, please uncheck the checkbox below."
+    return title, message
+
+
+def get_insert_and_align_sad_aperture_message() -> Tuple[str, str]:
+    """
+    :return: str: A message prompting the user to insert and align the selected area diffraction (SAD) aperture.
+    """
+    title = "Our flight is ready for departure, we wish you all an enjoyable flight."
+    message = "Please, using your microscope's UI and the microscope control panel, insert and align the selected " \
+              "area diffraction (SAD) aperture." \
+              "\n\nOnce the SAD aperture is inserted and centered, please click the continue button."
     return title, message
 
 
@@ -105,7 +115,8 @@ def get_end_message(out_file) -> Tuple[str, str]:
     title = "Ladies and gentlemen, we have begun our descent into Ludwigshafen, where the weather is a balmy " \
             "30 degrees centigrade."
     message = "We have now completed the MicroED tilt acquisition series!" \
-              "\n\nYour images can be found in " + str(out_file)
+              "\n\nYour images can be found in " + str(out_file) + \
+              "\n\nAlpha stage tilt, beam shift, and image shift will be zeroed upon script termination."
     return title, message
 
 

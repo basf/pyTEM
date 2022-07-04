@@ -21,7 +21,8 @@ try:
     from pyTEM.lib.ued.exit_script import exit_script
     from pyTEM.lib.ued.AcquisitionSeriesProperties import AcquisitionSeriesProperties
     from pyTEM.lib.ued.messages import get_welcome_message, get_initialization_message, display_message, \
-        get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
+        get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message, \
+        get_insert_and_align_sad_aperture_message
     from pyTEM.lib.ued.obtain_shifts import obtain_shifts
     from pyTEM.lib.ued.perform_tilt_series import perform_tilt_series
     from pyTEM.lib.ued.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
@@ -84,27 +85,29 @@ def ued(verbose: bool = False) -> None:
         # Get the out path (where in the file system should we save the results?)
         out_file = get_out_file(microscope=microscope)
 
-        # Fnd out if the user wants to use the automated image alignment functionality or proceed without
-        apply_shift_correction = use_shift_correction(microscope=microscope)
-
-        # Confirm the user is happy, remove the screen, and start the procedure
-        title, message = get_start_message()
-        display_message(title=title, message=message, microscope=microscope, position="centered")
-        microscope.remove_screen()
-
         # Store all the acquisition properties in a AcquisitionSeriesProperties object, this just makes it easier and
         #  safer to pass around
         acquisition_properties = AcquisitionSeriesProperties(camera_name=camera_name, alpha_arr=alpha_arr,
                                                              out_file=out_file, integration_time=integration_time,
                                                              sampling=sampling, downsample=downsample)
 
-        if apply_shift_correction:
+        # Fnd out if the user wants to use the automated image alignment functionality or proceed without
+        if use_shift_correction(microscope=microscope):
             # Compute the image shifts required to keep the currently centered section of the specimen centered at all
             #  alpha tilt angles.
             shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas,
                                    camera_name=acquisition_properties.camera_name, verbose=verbose)
         else:
             shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)  # All zero.
+
+        # Have the user manually insert and center the SAD aperture  # TODO: Automate SAD aperture controls
+        title, message = get_insert_and_align_sad_aperture_message()
+        display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
+
+        # Confirm the user is happy, remove the screen, and start the procedure
+        title, message = get_start_message()
+        display_message(title=title, message=message, microscope=microscope, position="centered")
+        microscope.remove_screen()
 
         # microscope.set_projection_mode("Diffraction")  # Switch to diffraction mode
 
@@ -119,6 +122,8 @@ def ued(verbose: bool = False) -> None:
         # Thanks to the user, and direct them to report issues on GitHub.
         title, message = get_good_bye_message()
         display_message(title=title, message=message, microscope=microscope, position="centered")
+
+        exit_script(microscope=microscope, status=0)
 
     except KeyboardInterrupt:
         warnings.warn("Keyboard interrupt detected...")
