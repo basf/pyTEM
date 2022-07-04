@@ -60,7 +60,7 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
 
         acquisition_thread.start()  # Start the acquisition
 
-        # We need to give the acquisition thread a bit of a head start
+        # We need to give the acquisition thread a bit of a head start before we start tilting
         time.sleep(0.355 + acquisition_properties.integration_time)
 
         tilting_thread.start()  # Start tilting
