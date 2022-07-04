@@ -332,7 +332,7 @@ class Acquisition:
 
         with mrcfile.new(out_file, overwrite=True) as mrc:
             mrc.set_data(self.get_image())
-            # Until we know how to build our own extended header, just use a stock one
+            # Until we know how to build our own extended header, just use a stock one  # TODO: Write metadata to header
             mrc.set_extended_header(get_stock_mrc_extended_header())
     warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
 
