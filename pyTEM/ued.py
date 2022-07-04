@@ -26,7 +26,7 @@ try:
     from pyTEM.lib.ued.obtain_shifts import obtain_shifts
     from pyTEM.lib.ued.perform_tilt_series import perform_tilt_series
     from pyTEM.lib.ued.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
-        use_shift_correction, have_user_center_particle
+        shift_correction_info, have_user_center_particle
 
 except Exception as ImportException:
     raise ImportException
@@ -45,6 +45,8 @@ def ued(verbose: bool = False) -> None:
         Print out extra information. Useful for debugging.
     """
     microscope = None
+    shift_calibration_exposure_time = 0.25  # s
+
     try:
         # Display a welcome message
         title, message = get_welcome_message()
@@ -92,11 +94,15 @@ def ued(verbose: bool = False) -> None:
                                                              sampling=sampling, downsample=downsample)
 
         # Fnd out if the user wants to use the automated image alignment functionality or proceed without
-        if use_shift_correction(microscope=microscope):
+        use_correctional_shifts = shift_correction_info(microscope=microscope,
+                                                        tilt_start=alpha_arr[0], tilt_stop=alpha_arr[-1],
+                                                        exposure_time=shift_calibration_exposure_time)
+        if use_correctional_shifts:
             # Compute the image shifts required to keep the currently centered section of the specimen centered at all
             #  alpha tilt angles.
-            shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas,
-                                   camera_name=acquisition_properties.camera_name, verbose=verbose)
+            shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas, verbose=verbose,
+                                   camera_name=acquisition_properties.camera_name,
+                                   exposure_time=shift_calibration_exposure_time)
         else:
             shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)  # All zero.
 
