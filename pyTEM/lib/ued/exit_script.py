@@ -11,7 +11,8 @@ from pyTEM.Interface import Interface
 
 def exit_script(microscope: Union[Interface, None], status: int) -> None:
     """
-    Return the microscope to a safe state and exit the MicroED script.
+    Return the microscope to a safe state, zero the alpha tilt, zero the image and beam shifts, and exit the
+     MicroED script.
     :param microscope: pyTEM (or None):
         The microscope interface.
     :param status: int:
