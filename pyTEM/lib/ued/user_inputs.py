@@ -285,7 +285,7 @@ def get_tilt_range(microscope: Union[Interface, None]) -> np.array:
     return alpha_arr
 
 
-def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, float, str]:
+def get_acquisition_parameters(microscope: Union[Interface, None]) -> Tuple[str, float, str, bool]:
     """
     Get the camera parameters required for the acquisition series.
 
@@ -294,7 +294,7 @@ def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, floa
          through the quit button on the message box.
 
     :return:
-        str: camera: The name of the camera being used, one of:
+        str: camera_name: The name of the camera being used, one of:
             - 'BM-Ceta'
             - 'BM-Falcon'
         float: integration_time: Total exposure time.
@@ -303,6 +303,7 @@ def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, floa
             - '2k' for 2k images (2048 x 2048; sampling=2)
             - '1k' for 1k images (1024 x 1024; sampling=3)
             - '0.5k' for 05.k images (512 x 512; sampling=8)
+        bool: downsample: Whether to decimate the obtained image by a factor of 2.
     """
     try:
         camera_options = microscope.get_available_cameras()
@@ -330,12 +331,12 @@ def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, floa
         camera_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
         integration_time_label = ttk.Label(root, text="Integration Time:")
         integration_time_label.grid(column=0, row=2, sticky="e", padx=5, pady=5)
-        binning_label = ttk.Label(root, text="binning:")
+        binning_label = ttk.Label(root, text="Binning:")
         binning_label.grid(column=0, row=3, sticky="e", padx=5, pady=5)
 
         # Create widgets for user entry
-        camera = tk.StringVar()
-        camera_option_menu = ttk.OptionMenu(root, camera, camera_options[0], *camera_options)
+        camera_name = tk.StringVar()
+        camera_option_menu = ttk.OptionMenu(root, camera_name, camera_options[0], *camera_options)
         camera_option_menu.grid(column=1, row=1, padx=5, pady=5)
 
         integration_time = tk.StringVar()
@@ -343,21 +344,27 @@ def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, floa
         integration_time_entry_box.insert(0, "3")  # Default value
         integration_time_entry_box.grid(column=1, row=2, padx=5, pady=5)
 
-        binning = tk.StringVar()
-        binning.set(sampling_options[0])  # Default to the first option in the list
-        binning_option_menu = ttk.OptionMenu(root, binning, sampling_options[0], *sampling_options)
-        binning_option_menu.grid(column=1, row=3, padx=5, pady=5)
+        sampling = tk.StringVar()
+        sampling.set(sampling_options[0])  # Default to the first option in the list
+        sampling_option_menu = ttk.OptionMenu(root, sampling, sampling_options[0], *sampling_options)
+        sampling_option_menu.grid(column=1, row=3, padx=5, pady=5)
 
         # Add label showing integration time units.
         stop_units_label = ttk.Label(root, text="seconds")
         stop_units_label.grid(column=2, row=2, sticky="w", padx=5, pady=5)
 
+        # Create a checkbutton for whether to downsample.
+        downsample = tk.BooleanVar()
+        downsample.set(False)
+        downsample_checkbutton = ttk.Checkbutton(root, text="Downsample (Bilinear decimation by 2)", variable=downsample)
+        downsample_checkbutton.grid(column=0, columnspan=3, row=4, padx=5, pady=5)
+
         # Create continue and exit buttons
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
-        continue_button.grid(column=0, columnspan=3, row=4, padx=5, pady=5)
+        continue_button.grid(column=0, columnspan=3, row=5, padx=5, pady=5)
         exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                                  style="big.TButton")
-        exit_button.grid(column=0, columnspan=3, row=5, padx=5, pady=5)
+        exit_button.grid(column=0, columnspan=3, row=6, padx=5, pady=5)
 
         style.configure('big.TButton', font=(None, 10), foreground="blue4")
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
@@ -365,7 +372,8 @@ def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, floa
         root.mainloop()
 
         try:
-            min_supported_exposure_time, max_supported_exposure_time = microscope.get_exposure_time_range(str(camera.get()))
+            min_supported_exposure_time, max_supported_exposure_time = \
+                microscope.get_exposure_time_range(str(camera_name.get()))
         except AttributeError:
             warnings.warn("Unable to obtain supported exposure time range, assuming 0.1 s to 100 s.")
             min_supported_exposure_time, max_supported_exposure_time = 0.1, 100
@@ -377,7 +385,7 @@ def get_camera_parameters(microscope: Union[Interface, None]) -> Tuple[str, floa
                           + str(min_supported_exposure_time) + " and " + str(max_supported_exposure_time)
                           + " seconds.")
 
-    return str(camera.get()), float(integration_time.get()), str(binning.get())[0:2]
+    return str(camera_name.get()), float(integration_time.get()), str(sampling.get())[0:2], bool(downsample.get())
 
 
 def get_out_file(microscope: Union[Interface, None]) -> str:
@@ -520,7 +528,7 @@ def use_shift_correction(microscope: Union[Interface, None]) -> bool:
     message_label = ttk.Label(root, text=message, wraplength=window_width, font=(None, 15), justify='center')
     message_label.grid(column=0, row=0, sticky='w', padx=5, pady=5)
 
-    # Create a checkbutton that the user can use to
+    # Create a checkbutton for whether to proceed with automated image alignment.
     use_automated_alignment = tk.BooleanVar()
     use_automated_alignment.set(True)
     use_automated_alignment_button = ttk.Checkbutton(root, text="Proceed with Automated Image Alignment",
@@ -555,14 +563,15 @@ if __name__ == "__main__":
 
     """ Test getting tilt range info """
     # arr = get_tilt_range(microscope=None)
-    # print(arr)
+    # print(arr)f
 
     """ Test getting camera parameters"""
-    # camera_name, integration_time, sampling = get_camera_parameters(microscope=None)
-    # print("Camera name: " + camera_name)
-    # print("Integration time: " + str(integration_time))
-    # print("Sampling: " + sampling)
+    camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=None)
+    print("Camera name: " + camera_name_)
+    print("Integration time: " + str(integration_time_))
+    print("Sampling: " + sampling_)
+    print("Downsampling: " + str(downsample_))
 
     """ Test getting out file"""
-    out_file = get_out_file(None)
-    print(out_file)
+    # out_file = get_out_file(None)
+    # print(out_file)
