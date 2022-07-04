@@ -7,6 +7,7 @@ import time
 import pathlib
 import sys
 import warnings
+from threading import Thread
 from typing import List, Tuple
 
 import comtypes.client as cc
@@ -30,6 +31,7 @@ class AcquisitionMixin:
     """
     try:
         # Unresolved attribute warning suppression
+        _tem: type(cc.CreateObject("TEMScripting.Instrument"))
         _tem_advanced: type(cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument"))
     except OSError:
         pass
@@ -73,12 +75,14 @@ class AcquisitionMixin:
         return acq_series
 
     def acquisition(self, camera_name: str, sampling: str = None, exposure_time: float = None,
-                    readout_area: int = None) -> Tuple[Acquisition, Tuple[float, float]]:
+                    readout_area: int = None, verbose: bool = False) -> Tuple[Acquisition, Tuple[float, float]]:
         """
         Perform (and return the results of) a single acquisition.
 
         Also, we return a tuple with the start and end epochs of the core acquisition. While this whole acquisition()
-         method may take longer, these core times are the closest we can get to the actual acquisition time.
+         method may take longer, this core time is the time required by the underlying TH acquisition command, this is
+         the closest we can get to the actual acquisition time (the actual time the camera is recording useful
+         information).
 
         :param camera_name: str:
             The name of the camera you want use. For a list of available cameras, please use the
@@ -97,11 +101,18 @@ class AcquisitionMixin:
             - 0: full-size
             - 1: half-size
             - 2: quarter-size
+        :param verbose:
+            Print out extra information. Useful for debugging.
 
         :return:
             Acquisition: A single acquisition.
             (float, float): The core acquisition start and end times.
         """
+        self.blank_beam()  # Make sure the beam is blank while we set up the acquisition
+
+        # Blanker control will happen in its own thread to reduce sample exposure as much as possible
+        blanker_thread = BlankerControl(microscope=self, exposure_time=exposure_time, verbose=verbose)
+
         acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
         supported_cameras = acquisition.SupportedCameras
 
@@ -144,9 +155,14 @@ class AcquisitionMixin:
                               + " seconds. Returning an empty Acquisition object.")
                 return Acquisition(None), (np.nan, np.nan)
 
+        blanker_thread.start()
+
+        # Actually perform the acquisition
         core_acquisition_start_time = time.time()
         acq = acquisition.Acquire()
         core_acquisition_end_time = time.time()
+
+        blanker_thread.join()
 
         return Acquisition(acq), (core_acquisition_start_time, core_acquisition_end_time)
 
@@ -238,6 +254,76 @@ class AcquisitionMixin:
         exposure_time_range = acquisition.CameraSettings.Capabilities.ExposureTimeRange
 
         return exposure_time_range.Begin, exposure_time_range.End
+
+    def beam_is_blank(self) -> None:
+        """
+        Check if the beam is blanked.
+        :return: Beam status: bool:
+             True: Beam is blanked.
+             False: Beam is unblanked.
+        """
+        return self._tem.Illumination.BeamBlanked
+
+    def blank_beam(self) -> None:
+        """
+        Blank the beam.
+        :return: None.
+        """
+        if self.beam_is_blank():
+            print("The beam is already blanked.. no changes made.")
+            return
+
+        # Go ahead and blank the beam
+        self._tem.Illumination.BeamBlanked = True
+
+    def unblank_beam(self) -> None:
+        """
+        Unblank the beam.
+        :return: None.
+        """
+        if not self.beam_is_blank():
+            print("The beam is already unblanked.. no changes made.")
+            return
+
+        self._tem.Illumination.BeamBlanked = False
+
+
+class BlankerControl(Thread):
+    """
+    To reduce sample exposure time as much as possible, we need to keep the beam blanked whenever the camera is
+     not actually taking pictures. However, when using the TM acquire command with a requested integration time of dt,
+     the camera waits for dt, and then takes an image over the next dt. Therefore, executing the TM acquire command
+     requires 2 * dt + a delay of about 0.66 s.
+
+    Since there is no way to know way to tell what exactly causes this 0.66 s delay, we will assume that half of the
+    delay happens before imaging and the other half later.  # TODO: Further investigate
+    """
+
+    def __init__(self, microscope: AcquisitionMixin, exposure_time: float, verbose: bool = False):
+        """
+        :param microscope: AcquisitionMixin:
+            A pyTEM interface to the microscope (we only need the acquisition commands).
+        :param exposure_time: float:
+            The exposure time of the acquisition.
+        :param verbose: bool:
+            Print out extra information. Useful for debugging.
+        """
+        Thread.__init__(self)
+        self.microscope = microscope
+        self.exposure_time = exposure_time
+        self.verbose = verbose
+
+    def run(self):
+        self.microscope.unblank_beam()
+        start_time = time.time()
+        time.sleep(0.33 + self.exposure_time)
+        self.microscope.blank_beam()
+        stop_time = time.time()
+
+        if self.verbose:
+            print("\nUnblanked the beam at: " + str(start_time))
+            print("Re-blanked the beam at: " + str(stop_time))
+            print("Total time with the beam unblanked: " + str(stop_time - start_time))
 
 
 class AcquisitionMixinTesting(AcquisitionMixin):
