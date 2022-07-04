@@ -51,7 +51,7 @@ with mrcfile.open(in_file_, permissive=True) as mrc:
 
     print("RMS deviation of densities from mean: " + str(header.getfield(np.dtype('f4'), offset=216)))
 
-    np.save(str(out_dir / "stock_mrc_header"), extended_header)
+    np.save(str(out_dir / "stock_mrc_extended_header"), extended_header)
 
 
 # in_file_2 = out_dir / "size_testing.mrc"
