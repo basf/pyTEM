@@ -13,6 +13,7 @@ This is not a complete interface in that it does not provide access to all the f
 import math
 import pathlib
 import sys
+import warnings
 
 import numpy as np
 import comtypes.client as cc
@@ -149,9 +150,8 @@ class Interface(ModeMixin,  # Microscope mode controls, including those for proj
         else:
             raise Exception("Error: Current microscope mode unknown.")
 
-        # TODO: Retract camera
-        raise NotImplementedError("prepare_for_holder_removal() not fully implemented, please retract the camera "
-                                  "before removing the holder.")
+        warnings.warn("prepare_for_holder_removal() not fully implemented, please retract the camera "
+                      "before removing the holder.")  # TODO: Retract camera
 
     def zero_shifts(self):
         """
