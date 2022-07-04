@@ -24,8 +24,8 @@ try:
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message
     from pyTEM.lib.ued.obtain_shifts import obtain_shifts
     from pyTEM.lib.ued.perform_tilt_series import perform_tilt_series
-    from pyTEM.lib.ued.user_inputs import get_tilt_range, get_camera_parameters, get_out_file, use_shift_correction, \
-        have_user_center_particle
+    from pyTEM.lib.ued.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
+        use_shift_correction, have_user_center_particle
 
 except Exception as ImportException:
     raise ImportException
@@ -79,7 +79,7 @@ def ued(verbose: bool = False) -> None:
         alpha_arr = get_tilt_range(microscope=microscope)
 
         # Get the required camera parameters
-        camera_name, integration_time, sampling = get_camera_parameters(microscope=microscope)
+        camera_name, integration_time, sampling, downsample = get_acquisition_parameters(microscope=microscope)
 
         # Get the out path (where in the file system should we save the results?)
         out_file = get_out_file(microscope=microscope)
@@ -96,7 +96,7 @@ def ued(verbose: bool = False) -> None:
         #  safer to pass around
         acquisition_properties = AcquisitionSeriesProperties(camera_name=camera_name, alpha_arr=alpha_arr,
                                                              out_file=out_file, integration_time=integration_time,
-                                                             sampling=sampling)
+                                                             sampling=sampling, downsample=downsample)
 
         if apply_shift_correction:
             # Compute the image shifts required to keep the currently centered section of the specimen centered at all
