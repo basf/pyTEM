@@ -5,7 +5,7 @@
 This is BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows fast,
  high resolution 3D structure determination of small chemical compounds and biological macromolecules!
 """
-
+import os
 import warnings
 import pathlib
 import sys
@@ -27,6 +27,7 @@ try:
     from pyTEM.lib.ued.perform_tilt_series import perform_tilt_series
     from pyTEM.lib.ued.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
         shift_correction_info, have_user_center_particle
+    from pyTEM.lib.ued.build_full_shifts_array import build_full_shift_array
 
 except Exception as ImportException:
     raise ImportException
@@ -72,8 +73,6 @@ def ued(verbose: bool = False) -> None:
         # Have the user center the particle
         have_user_center_particle(microscope=microscope)
 
-        # TODO: Have the user align the SAD aperture
-
         # Have the user manually set eucentric height  # TODO: Automate eucentric height calibration
         title, message = get_eucentric_height_message()
         display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
@@ -88,21 +87,25 @@ def ued(verbose: bool = False) -> None:
         out_file = get_out_file(microscope=microscope)
 
         # Store all the acquisition properties in a AcquisitionSeriesProperties object, this just makes it easier and
-        #  safer to pass around
+        #  safer to pass around all things acquisition
         acquisition_properties = AcquisitionSeriesProperties(camera_name=camera_name, alpha_arr=alpha_arr,
-                                                             out_file=out_file, integration_time=integration_time,
-                                                             sampling=sampling, downsample=downsample)
+                                                             integration_time=integration_time, sampling=sampling)
 
         # Fnd out if the user wants to use the automated image alignment functionality or proceed without
-        use_correctional_shifts = shift_correction_info(microscope=microscope,
-                                                        tilt_start=alpha_arr[0], tilt_stop=alpha_arr[-1],
-                                                        exposure_time=shift_calibration_exposure_time)
-        if use_correctional_shifts:
+        use_shift_corrections, samples = shift_correction_info(microscope=microscope,
+                                                               tilt_start=alpha_arr[0], tilt_stop=alpha_arr[-1],
+                                                               exposure_time=shift_calibration_exposure_time)
+        if use_shift_corrections:
             # Compute the image shifts required to keep the currently centered section of the specimen centered at all
             #  alpha tilt angles.
-            shifts = obtain_shifts(microscope=microscope, alphas=acquisition_properties.alphas, verbose=verbose,
-                                   camera_name=acquisition_properties.camera_name,
-                                   exposure_time=shift_calibration_exposure_time)
+            shifts_at_samples = obtain_shifts(microscope=microscope, alphas=samples, verbose=verbose,
+                                              camera_name=acquisition_properties.camera_name,
+                                              exposure_time=shift_calibration_exposure_time)
+
+            shifts = build_full_shift_array(alphas=acquisition_properties.alphas, interpolation_scope="local",
+                                            shifts_at_samples=shifts_at_samples, samples=samples, kind="linear",
+                                            verbose=True)
+
         else:
             shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)  # All zero.
 
@@ -118,8 +121,26 @@ def ued(verbose: bool = False) -> None:
         # microscope.set_projection_mode("Diffraction")  # Switch to diffraction mode
 
         # Go ahead and actually perform the tilt series, saving the results to file.
-        perform_tilt_series(microscope=microscope, acquisition_properties=acquisition_properties, shifts=shifts,
-                            verbose=verbose)
+        acq_stack = perform_tilt_series(microscope=microscope, acquisition_properties=acquisition_properties,
+                                        shifts=shifts, verbose=verbose)
+
+        if downsample:
+            if verbose:
+                print("Downsampling images...")
+            acq_stack.downsample()
+
+        # Save each image individually as a jpeg for easy viewing.
+        file_name_base, file_extension = os.path.splitext(out_file)
+        for i, acq in enumerate(acq_stack):
+            out_file = file_name_base + "_" + str(i) + ".jpeg"
+            if verbose:
+                print("Saving image #" + str(i) + "to file as: " + out_file)
+            acq.save_to_file(out_file=out_file, extension=".jpeg")
+
+        # Save the image stack to file.
+        # if verbose:
+        #     print("Saving image stack to file as: " + acquisition_properties.out_file)
+        # image_stack.save_as_mrc(acquisition_properties.out_file)
 
         # The acquisition is now complete, inform the user.
         title, message = get_end_message(out_file=out_file)
