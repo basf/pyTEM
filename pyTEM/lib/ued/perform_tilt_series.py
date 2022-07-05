@@ -3,7 +3,6 @@
  Date:    Summer 2022
 """
 
-import os
 import pathlib
 import time
 import sys
@@ -23,7 +22,7 @@ except Exception as ImportException:
 
 
 def perform_tilt_series(microscope: Interface, acquisition_properties: AcquisitionSeriesProperties,
-                        shifts: np.array, verbose: bool) -> None:
+                        shifts: np.array, verbose: bool) -> AcquisitionSeries:
     """
     Actually perform a tilt series and save the results to file.
 
@@ -37,8 +36,8 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
      :param verbose: bool:
         Print out extra information. Useful for debugging.
 
-    :return: None.
-        Tilt series results are automatically saved to file.
+    :return: AcquisitionSeries.
+        The results of the tilt series acquisition.
     """
     acq_stack = AcquisitionSeries()
 
@@ -71,23 +70,7 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
 
         acq_stack.append(acq)
 
-    if acquisition_properties.downsample:
-        if verbose:
-            print("Downsampling images...")
-        acq_stack.downsample()
-
-    # Save each image individually as a jpeg for easy viewing.
-    file_name_base, file_extension = os.path.splitext(acquisition_properties.out_file)
-    for i, acq in enumerate(acq_stack):
-        out_file = file_name_base + "_" + str(i) + ".jpeg"
-        if verbose:
-            print("Saving image #" + str(i) + "to file as: " + out_file)
-        acq.save_to_file(out_file=out_file, extension=".jpeg")
-
-    # Save the image stack to file.
-    # if verbose:
-    #     print("Saving image stack to file as: " + acquisition_properties.out_file)
-    # image_stack.save_as_mrc(acquisition_properties.out_file)
+        return acq_stack
 
 
 class TiltingThread(Thread):
@@ -161,6 +144,9 @@ class AcquisitionThread(Thread):
 
 
 if __name__ == "__main__":
+    """
+    Testing
+    """
 
     try:
         scope = Interface()
@@ -169,6 +155,8 @@ if __name__ == "__main__":
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 
+    out_file = "C:/Users/Supervisor.TALOS-9950969/Downloads/test_series.jpeg"
+
     start_alpha_ = -20
     stop_alpha_ = 20
     step_alpha_ = 1
@@ -176,13 +164,25 @@ if __name__ == "__main__":
     num_alpha = int((stop_alpha_ - start_alpha_) / step_alpha_ + 1)
     alpha_arr = np.linspace(start=start_alpha_, stop=stop_alpha_, num=num_alpha, endpoint=True)
 
+    print("alpha_arr:")
+    print(alpha_arr)
+
     aqc_props = AcquisitionSeriesProperties(camera_name='BM-Ceta', alpha_arr=alpha_arr,
-                                            integration_time=0.5, sampling='1k',
-                                            out_file='C:/Users/Supervisor.TALOS-9950969/Downloads/test_series.jpeg')
+                                            integration_time=0.5, sampling='1k')
 
     shifts_ = np.full(shape=len(aqc_props.alphas), dtype=(float, 2), fill_value=0.0)
 
     print("Shifts:")
     print(shifts_)
 
-    perform_tilt_series(microscope=scope, acquisition_properties=aqc_props, shifts=shifts_, verbose=True)
+    acq_series = perform_tilt_series(microscope=scope, acquisition_properties=aqc_props, shifts=shifts_, verbose=True)
+
+    # Save the image series to file.
+    print("Saving image series to file as: " + out_file + ".mrc")
+    acq_series.save_as_mrc(out_file)
+
+    # Also, save each image individually as a jpeg for easy viewing.
+    for counter, acquisition in enumerate(acq_series):
+        out_file_temp = out_file + "_" + str(counter) + ".jpeg"
+        print("Saving image #" + str(counter) + "to file as: " + out_file_temp)
+        acquisition.save_to_file(out_file=out_file_temp, extension=".jpeg")
