@@ -21,7 +21,6 @@ class AcquisitionSeriesProperties:
         sampling:         str:              Photo resolution.
         out_file:         str:              Out file path.
         tilt_speed:       float:            Alpha fractional tilt speed required by Interface.set_stage_position().
-        downsample:       bool:             Whether the acquisitions are to be downsampled (decimated).
 
     Protected Attributes:
         None.
@@ -31,7 +30,7 @@ class AcquisitionSeriesProperties:
     """
 
     def __init__(self, camera_name: str, alpha_arr: ArrayLike, integration_time: float = 3, sampling: str = '1k',
-                 downsample: bool = False, out_file: str = None):
+                 out_file: str = None):
         """
         :param camera_name: str:
             The name of the camera being used.
@@ -43,8 +42,6 @@ class AcquisitionSeriesProperties:
                 - '2k' for 2k images (2048 x 2048; sampling=2)
                 - '1k' for 1k images (1024 x 1024; sampling=3)
                 - '0.5k' for 05.k images (512 x 512; sampling=8)
-        :param downsample: bool (optional; default is False):
-            Whether to downsample (decimate) the acquisition images.
         :param integration_time: float (optional; default is 3):
             Total exposure time for a single image in seconds.
         :param out_file: str (optional; default is None):
@@ -61,18 +58,16 @@ class AcquisitionSeriesProperties:
         distance_tilting = abs(self.alpha_arr[-1] - self.alpha_arr[0])  # deg
         tilt_velocity = distance_tilting / time_tilting  # deg / s
         self.tilt_speed = tem_tilt_speed(tilt_velocity)
-        self.downsample = downsample
 
     def __str__(self):
         return "-- Acquisition Properties -- " \
                "\nName of the camera being used: " + str(self.camera_name) + \
                "\nAn array of the tilt acquisition's alpha start-stop values: " + str(self.alpha_arr) + \
                "\nThe middle alpha values of the tilt acquisition: " + str(self.alphas) + \
-               "\nTotal exposure time for a single image: " + str(self.integration_time) + " [seconds]" + \
+               "\nTotal exposure time for a single image: " + str(round(self.integration_time, 4)) + " [seconds]" + \
                "\nPhoto resolution: " + str(self.sampling) + \
                "\nOut file path: " + str(self.out_file) + \
-               "\nAlpha tilt speed: " + str(self.tilt_speed) + " [Thermo Fisher speed units]" + \
-               "\ndownsample: " + str(self.downsample)
+               "\nAlpha tilt speed: " + str(round(self.tilt_speed, 4)) + " [Thermo Fisher speed units]"
 
 
 if __name__ == "__main__":
@@ -86,6 +81,6 @@ if __name__ == "__main__":
     alpha_arr_ = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
 
     acq_prop = AcquisitionSeriesProperties(camera_name="BM-Ceta", alpha_arr=alpha_arr_, integration_time=3,
-                                           sampling='1k', downsample=True, out_file=None)
+                                           sampling='1k', out_file=None)
 
     print(acq_prop)
