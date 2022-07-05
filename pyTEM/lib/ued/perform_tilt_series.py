@@ -155,7 +155,7 @@ if __name__ == "__main__":
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 
-    out_file = "C:/Users/Supervisor.TALOS-9950969/Downloads/test_series.jpeg"
+    out_file = "C:/Users/Supervisor.TALOS-9950969/Downloads/test_series"
 
     start_alpha_ = -20
     stop_alpha_ = 20
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
     # Save the image series to file.
     print("Saving image series to file as: " + out_file + ".mrc")
-    acq_series.save_as_mrc(out_file)
+    acq_series.save_as_mrc(out_file + ".mrc")
 
     # Also, save each image individually as a jpeg for easy viewing.
     for counter, acquisition in enumerate(acq_series):
