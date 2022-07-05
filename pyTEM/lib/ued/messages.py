@@ -78,7 +78,7 @@ def automated_alignment_message() -> Tuple[str, str]:
     message = "This MicroED script supports automated image alignment functionality. The required image shifts will " \
               "be computed from a preparatory tilt sequence using the hyperspy Python library (phase correlation) " \
               "and then applied during the main acquisition sequence. While automated image alignment can be useful, " \
-              "it increases sample exposure time (although not significantly)." \
+              "it increases sample exposure time (although usually not significantly)." \
               "\n\nTo continue without image alignment functionality, please uncheck the checkbox below."
     return title, message
 
