@@ -97,13 +97,11 @@ def build_full_shift_array(alphas: ArrayLike, samples: ArrayLike, shifts_at_samp
 
 if __name__ == "__main__":
 
-    # TODO: Check for tilt ranges from pos -> neg
-
     start_alpha = 23
     stop_alpha = -35
     step_alpha = 1
 
-    num_alpha = abs(int((stop_alpha - start_alpha) / step_alpha + 1))
+    num_alpha = abs(int((stop_alpha - start_alpha) / step_alpha)) + 1
     alpha_arr = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
     # alphas_ = alpha_arr[0:-1] + step_alpha / 2
     alphas_ = alpha_arr
