@@ -91,10 +91,11 @@ def ued(verbose: bool = False) -> None:
         acquisition_properties = AcquisitionSeriesProperties(camera_name=camera_name, alpha_arr=alpha_arr,
                                                              integration_time=integration_time, sampling=sampling)
 
-        # Fnd out if the user wants to use the automated image alignment functionality or proceed without
-        use_shift_corrections, samples = shift_correction_info(microscope=microscope,
-                                                               tilt_start=alpha_arr[0], tilt_stop=alpha_arr[-1],
-                                                               exposure_time=shift_calibration_exposure_time)
+        # Fnd out if the user wants to use the automated image alignment functionality, and if so which angles they
+        #  would like to sample and which interpolation strategy they would like to use to obtain the rest.
+        use_shift_corrections, samples, interpolation_scope = \
+            shift_correction_info(microscope=microscope, tilt_start=alpha_arr[0], tilt_stop=alpha_arr[-1],
+                                  exposure_time=shift_calibration_exposure_time)
         if use_shift_corrections:
             # Compute the image shifts required to keep the currently centered section of the specimen centered at all
             #  alpha tilt angles.
@@ -102,12 +103,13 @@ def ued(verbose: bool = False) -> None:
                                               camera_name=acquisition_properties.camera_name,
                                               exposure_time=shift_calibration_exposure_time)
 
-            shifts = build_full_shift_array(alphas=acquisition_properties.alphas, interpolation_scope="local",
-                                            shifts_at_samples=shifts_at_samples, samples=samples, kind="linear",
-                                            verbose=True)
+            shifts = build_full_shift_array(alphas=acquisition_properties.alphas, samples=samples,
+                                            shifts_at_samples=shifts_at_samples, kind="linear",
+                                            interpolation_scope=interpolation_scope, verbose=verbose)
 
         else:
-            shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)  # All zero.
+            # We will proceed without compensatory image shifts, just make shifts all zero
+            shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)
 
         # Have the user manually insert and center the SAD aperture  # TODO: Automate SAD aperture controls
         title, message = get_insert_and_align_sad_aperture_message()
