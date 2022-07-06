@@ -99,7 +99,7 @@ class GetTiltRange:
                             wraplength=window_width, font=(self.font, self.font_size), justify='center')
         message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
 
-        max_range_label = ttk.Label(root, text="Maximum allowed tilt range: " + str(round(self.alpha_min, 2)) + " - "
+        max_range_label = ttk.Label(root, text="Maximum allowed tilt range: " + str(round(self.alpha_min, 2)) + " to "
                                                + str(round(self.alpha_max, 2)) + " deg", wraplength=window_width,
                                     font=(self.font, self.font_size), justify='center')
         max_range_label.grid(column=0, row=1, columnspan=3, padx=5, pady=5)
@@ -165,7 +165,7 @@ class GetTiltRange:
                             wraplength=window_width, font=(self.font, self.font_size), justify='center')
         message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
 
-        max_range_label = ttk.Label(root, text="Maximum allowed tilt range: " + str(round(self.alpha_min, 2)) + " - "
+        max_range_label = ttk.Label(root, text="Maximum allowed tilt range: " + str(round(self.alpha_min, 2)) + " to "
                                                + str(round(self.alpha_max, 2)) + " deg",
                                     font=(self.font, self.font_size), justify='center')
         max_range_label.grid(column=0, row=1, columnspan=3, padx=5, pady=5)
@@ -227,7 +227,7 @@ class GetTiltRange:
         style = ttk.Style()
         window_width = 500
 
-        root.title("At this time, portable electronic devices must be switched into ‘airplane’ mode.")  # TODO.
+        root.title("At this time, portable electronic devices must be switched into ‘airplane’ mode.")
 
         add_basf_icon_to_tkinter_window(root)
 
@@ -280,7 +280,7 @@ def get_tilt_range(microscope: Union[Interface, None]) -> np.array:
     """
     tilt_range = GetTiltRange(microscope=microscope)
 
-    num_alpha = int((tilt_range.stop - tilt_range.start) / tilt_range.step + 1)
+    num_alpha = abs(int((tilt_range.stop - tilt_range.start) / tilt_range.step)) + 1
     alpha_arr = np.linspace(start=tilt_range.start, stop=tilt_range.stop, num=num_alpha, endpoint=True)
 
     return alpha_arr
@@ -503,7 +503,7 @@ def have_user_center_particle(microscope: Union[Interface, None]) -> None:
 
 
 def shift_correction_info(microscope: Union[Interface, None], tilt_start: float, tilt_stop: float,
-                          exposure_time: float) -> Tuple[bool, np.array]:
+                          exposure_time: float) -> Tuple[bool, np.array, str]:
     """
     The MicroED script supports automated image alignment using the hyperspy library (phase correlation image shift
      detection functionality). However, it is possible the user may want to proceed without enabling this functionality.
@@ -530,6 +530,10 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
             If we are using automatic alignment, then this is a numpy array of alpha angles at which we need to take
              calibration images.
             If we are proceeding without automated image alignment, then samples is None.
+        interpolation_scope: str:
+            Interpolation scope, one of:
+            - 'linear': Interpolate using only the adjacent (local) values from the sample array that bracket alpha.
+            - 'global': Interpolate using all the values in the sample array.
     """
 
     window_width = 650
@@ -545,19 +549,23 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     message_label = ttk.Label(root, text=message, wraplength=window_width, font=label_font, justify='center')
     message_label.grid(column=0, columnspan=3, row=0, sticky='w', padx=5, pady=5)
 
-    # Deactivate the correction_shift_interval entry box whenever the user unchecks the use_automated_alignment button.
-    def deactivate_correction_shift_interval_entry_box():
+    # Deactivate all the other entry widgets whenever the user unchecks the use_automated_alignment button.
+    def deactivate_other_entry_widgets():
         if use_automated_alignment.get() == 1:
             correction_shift_interval_entry_box.config(state=tk.NORMAL)
+            interpolation_scope_radio_button1.config(state=tk.NORMAL)
+            interpolation_scope_radio_button2.config(state=tk.NORMAL)
         else:
             correction_shift_interval_entry_box.config(state=tk.DISABLED)
+            interpolation_scope_radio_button1.config(state=tk.DISABLED)
+            interpolation_scope_radio_button2.config(state=tk.DISABLED)
 
     # Create a checkbutton for whether to proceed with automated image alignment.
     use_automated_alignment = tk.BooleanVar()
     use_automated_alignment.set(True)
     use_automated_alignment_button = ttk.Checkbutton(root, text="Proceed with Automated Image Alignment",
                                                      variable=use_automated_alignment, style="big.TCheckbutton",
-                                                     command=deactivate_correction_shift_interval_entry_box)
+                                                     command=deactivate_other_entry_widgets)
     use_automated_alignment_button.grid(column=0, columnspan=3, row=1, padx=5, pady=5)
 
     correction_shift_interval_label = ttk.Label(root, text="Perform a compensatory image shift every ", font=label_font)
@@ -608,7 +616,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
 
     txt = "Total exposure time required for automated image alignment with a correctional shift interval of " + \
           str(round(step, 2)) + " deg: " + str(round(total_exposure_time_required, 2)) + " seconds " + \
-          "\nThat is, calibration images taken at the following tilt angles: " + \
+          "\nThat is, calibration images will be taken at the following tilt angles: " + \
           "\n" + str(samples) + " (" + str(num_images_required) + " calibration images)"
     correction_shift_interval_label = ttk.Label(root, text=txt, font=label_font, wraplength=window_width,
                                                 justify='center')
@@ -616,22 +624,36 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
 
     # Provide a label explaining that we will linear interpolate the required compensatory image shifts between
     #  calibration images.
-    interpolation_explanation_label = ttk.Label(root, text="Compensatory image shifts will be linearly interpolated for"
-                                                           " tilt angles between these calibration angles.",
+    interpolation_explanation_label = ttk.Label(root, text="Compensatory image shifts will be linearly interpolated "
+                                                           "for tilt angles between these calibration angles. Please "
+                                                           "choose an interpolation strategy:",
                                                 font=label_font, wraplength=window_width, justify='center')
     interpolation_explanation_label.grid(column=0, columnspan=3, row=5, pady=5)
 
+    # Add radio buttons to obtain the interpolation scope from the user
+    interpolation_scope = tk.StringVar(value="local")
+    interpolation_scope_radio_button1 = ttk.Radiobutton(root, text="Local (Interpolate using data from only the "
+                                                                   "adjacent calibration images)",
+                                                        variable=interpolation_scope, value="local",
+                                                        style="big.TRadiobutton")
+    interpolation_scope_radio_button2 = ttk.Radiobutton(root, text="Global (Interpolate using data from all "
+                                                                   "calibration images)", variable=interpolation_scope,
+                                                        value="global", style="big.TRadiobutton")
+    interpolation_scope_radio_button1.grid(column=0, columnspan=3, row=6)
+    interpolation_scope_radio_button2.grid(column=0, columnspan=3, row=7, pady=(0, 5))
+
     # Create a 'Continue' button that the user can click to proceed with automated image alignment
     continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=0, columnspan=3, row=6, padx=5, pady=5)
+    continue_button.grid(column=0, columnspan=3, row=8, padx=5, pady=5)
 
     # Create an 'exit' button that the user can use to exit the script.
     exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                              style="big.TButton")
-    exit_button.grid(column=0, columnspan=3, row=7, padx=5, pady=5)
+    exit_button.grid(column=0, columnspan=3, row=9, padx=5, pady=5)
 
     style.configure('big.TButton', font=(None, 10), foreground="blue4")
     style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
+    style.configure('big.TRadiobutton', font=(None, 11))
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
@@ -648,15 +670,15 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
             #  alignment functionality
             warnings.warn("Cannot have a correctional shift interval <= 0 deg, proceeding with automated image shift "
                           "functionality.")
-            return False, None
+            return False, None, ""
         else:
-            # Proceed with automated image alignment functionality with the correction shift interval chosen by the
-            #  user.
-            return True, samples
+            # Proceed with automated image alignment functionality with the correction shift interval and
+            #  interpolation scope chosen by the user.
+            return True, samples, interpolation_scope.get()
 
     else:
         # We are proceeding without automated image alignment functionality
-        return False, None
+        return False, None, ""
 
 
 def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_interval: float) -> Tuple[np.array, float]:
@@ -703,7 +725,7 @@ if __name__ == "__main__":
 
     """ Test getting tilt range info """
     # arr = get_tilt_range(microscope=None)
-    # print(arr)f
+    # print(arr)
 
     """ Test getting camera parameters"""
     # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=None)
@@ -716,8 +738,9 @@ if __name__ == "__main__":
     # out_file = get_out_file(None)
     # print(out_file)
 
-    """ Test the  """
-    use_shift_corrections, arr = shift_correction_info(microscope=None, tilt_start=-30, tilt_stop=30,
-                                                       exposure_time=0.25)
+    """ Test getting shift correction samples """
+    use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=None, tilt_start=-30,
+                                                                                   tilt_stop=30, exposure_time=0.25)
     print("Use shift: " + str(use_shift_corrections))
-    print("Samples: " + str(arr))
+    print("Samples: " + str(samples__))
+    print("Interpolation scope: " + str(interpolation_scope_))
