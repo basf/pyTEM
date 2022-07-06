@@ -5,6 +5,7 @@
 This is BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows fast,
  high resolution 3D structure determination of small chemical compounds and biological macromolecules!
 """
+
 import os
 import warnings
 import pathlib
@@ -31,6 +32,23 @@ try:
 
 except Exception as ImportException:
     raise ImportException
+
+
+class MicroED:
+    """
+    # TODO
+    """
+
+    def __init__(self):
+        # Try to connect to a microscope
+        try:
+            self.microscope = Interface()
+        except BaseException as e:
+            warnings.warn("MicroED was unable to connect to a microscope: " + str(e))
+            self.microscope = None
+
+    def run(self):
+        pass
 
 
 def ued(verbose: bool = False) -> None:
