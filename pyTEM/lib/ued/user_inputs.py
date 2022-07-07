@@ -92,7 +92,7 @@ class GetTiltRange:
         add_basf_icon_to_tkinter_window(root)
 
         message = ttk.Label(root, text="Please enter the \u03B1 tilt angle at which to start tilting."
-                                       "\n\nPlease confirm, using the 'Test Input' button, that the stage is "
+                                       "\n\nPlease confirm, using the 'Test Input' button, that the stage is actually "
                                        "capable of tilting to the this \u03B1, and that the particle remains in the "
                                        "field-of-view and doesn't overlap any other particles before submitting your "
                                        "input.",
@@ -357,7 +357,8 @@ def get_acquisition_parameters(microscope: Union[Interface, None]) -> Tuple[str,
         # Create a checkbutton for whether to downsample.
         downsample = tk.BooleanVar()
         downsample.set(False)
-        downsample_checkbutton = ttk.Checkbutton(root, text="Downsample (Bilinear decimation by 2)", variable=downsample)
+        downsample_checkbutton = ttk.Checkbutton(root, text="Downsample (Bilinear decimation by 2)",
+                                                 variable=downsample)
         downsample_checkbutton.grid(column=0, columnspan=3, row=4, padx=5, pady=5)
 
         # Create continue and exit buttons
@@ -582,8 +583,8 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
 
         if samples_ is None:
             # We probably just cleared the entry box
-            txt_ = "We cannot have an correctional shift interval <= 0 deg, please enter a positive correctional shift" \
-                   " interval in the text box above."
+            txt_ = "We cannot have an correctional shift interval <= 0 deg, please enter a positive correctional " \
+                   "shift interval in the text box above."
         else:
             num_images_required_ = len(samples_)
             total_exposure_time_required_ = num_images_required_ * exposure_time
