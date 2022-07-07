@@ -21,11 +21,11 @@ package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().p
 sys.path.append(str(package_directory))
 try:
     from pyTEM.Interface import Interface
-    from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
-    from pyTEM.lib.ued.exit_script import exit_script
-    from pyTEM.lib.ued.messages import automated_alignment_message, get_welcome_message, display_message, \
+    from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
+    from pyTEM.lib.micro_ed.exit_script import exit_script
+    from pyTEM.lib.micro_ed.messages import automated_alignment_message, get_welcome_message, display_message, \
         get_alignment_message
-    from pyTEM.lib.ued.opposite_signs import opposite_signs
+    from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
 except Exception as ImportException:
     raise ImportException
 
@@ -720,7 +720,7 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_int
 if __name__ == "__main__":
 
     """ Display a welcome message """
-    # from pyTEM.lib.ued.messages import get_welcome_message, display_message
+    # from pyTEM.lib.micro_ed.messages import get_welcome_message, display_message
     # title_, message_ = get_welcome_message()
     # display_message(title=title_, message=message_, microscope=None, position="centered")
 

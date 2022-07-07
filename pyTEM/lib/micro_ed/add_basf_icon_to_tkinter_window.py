@@ -17,11 +17,11 @@ def add_basf_icon_to_tkinter_window(root: tk.Tk) -> None:
     """
     try:
         # Calling from within pyTEM
-        root.iconbitmap(pathlib.Path().resolve() / "lib" / "ued" / "ico" / "BASF.ico")
+        root.iconbitmap(pathlib.Path().resolve() / "lib" / "micro_ed" / "ico" / "BASF.ico")
     except TclError:
         try:
             # Calling from within pyTEM.lib
-            root.iconbitmap(pathlib.Path().resolve().parent.resolve() / "ued" / "ico" / "BASF.ico")
+            root.iconbitmap(pathlib.Path().resolve().parent.resolve() / "micro_ed" / "ico" / "BASF.ico")
         except TclError:
             # Calling from somewhere in test
-            root.iconbitmap(pathlib.Path().resolve().parent.resolve().parent.resolve() / "pyTEM" / "lib" / "ued" / "ico" / "BASF.ico")
+            root.iconbitmap(pathlib.Path().resolve().parent.resolve().parent.resolve() / "pyTEM" / "lib" / "micro_ed" / "ico" / "BASF.ico")

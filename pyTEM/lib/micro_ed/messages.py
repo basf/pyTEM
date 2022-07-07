@@ -8,8 +8,8 @@ from tkinter import ttk
 from typing import Tuple, Union
 
 from pyTEM.Interface import Interface
-from pyTEM.lib.ued.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
-from pyTEM.lib.ued.exit_script import exit_script
+from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
+from pyTEM.lib.micro_ed.exit_script import exit_script
 
 
 def get_welcome_message() -> Tuple[str, str]:
