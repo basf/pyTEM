@@ -53,26 +53,26 @@ u = my_microscope.get_image_shift()
 my_microscope.set_image_shift(x=u[0] + 2, y=u[1] + 3)
 ```
 
-### ued
+### MicroED
 This is BASF's micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows fast,
- high resolution 3D structure determination of small chemical compounds and biological macromolecules, and ```ued``` 
+ high resolution 3D structure determination of small chemical compounds and biological macromolecules, and ```MicroED``` 
  enables the automated acquisition of the required data series. More on micro-crystal electron diffraction 
  [here](https://en.wikipedia.org/wiki/Microcrystal_electron_diffraction).
 
-```ued``` achieves automated image alignment by computing the image deviation during a preparatory tilt 
+```MicroED``` achieves automated image alignment by computing the image deviation during a preparatory tilt 
  sequence and then applying a compensatory image shift during the main acquisition sequence. Automated image alignment 
  is optional. While useful, automated alignment increases both sample exposure and experiment run-time 
- (although not significantly).
+ (although usually not significantly).
 
-Since ```ued``` utilizes the ```Interface``` module, it requires that the Thermo Fisher Scientific / FEI scripting 
+Since ```MicroED``` utilizes the ```Interface``` module, it requires that the Thermo Fisher Scientific / FEI scripting 
  interface is properly configured on your microscope installation.
 
 ##### Quick-start Example
 
 ```
-from pyTEM.ued import ued
+from pyTEM.MicroED import MicroED
 
-ued(verbose=True)
+MicroED().run(verbose=True)
 ```
 
 # Authorship
@@ -90,7 +90,7 @@ Baltimore, Maryland, USA
 
 - Figured out how to interface with and control the microscope from a pure Python environment.
 - developed ```TEMPackage```, the predecessor to ```pyTEM```'s ```Interface``` module. View the project as it existed at the time of Meagan's final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
-- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```ued``` module. View [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
+- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```MicroED``` module. View [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
 - Wrote the original TEM Scripting Guide, which can be found in [docs](/docs).
 
 ### *[Michael Luciuk](https://github.com/mrl280) (May - Aug 2022)*
@@ -100,7 +100,7 @@ Saskatoon, Saskatchewan, Canada
 
 #### Contributions:
 
-- Refactored the original ```TEMPackage``` and ```microED_Tilt_Series``` into the ```Interface``` and ```ued```
+- Refactored the original ```TEMPackage``` and ```microED_Tilt_Series``` into the ```Interface``` and ```MicroED```
  ```pyTEM``` modules we know and love today.
 
 You can view the ```pyTEM``` project as it existed at the time of Michael's final commit [here](https://github.com/mrl280/pyTEM). # TODO: Update after Michael leaves
