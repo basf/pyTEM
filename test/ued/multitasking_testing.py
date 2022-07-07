@@ -20,9 +20,11 @@ try:
     from pyTEM.Interface import Interface
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.ued.AcquisitionSeriesProperties import AcquisitionSeriesProperties
-    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerController
+    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface
 except Exception as ImportException:
     raise ImportException
+
+# https://stackoverflow.com/questions/3246525/why-cant-i-create-a-com-object-in-a-new-thread-in-python
 
 
 def multitasking_testing(microscope: Interface, acquisition_properties: AcquisitionSeriesProperties,
