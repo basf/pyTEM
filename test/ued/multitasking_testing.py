@@ -168,7 +168,7 @@ def blanker(exposure_time):
             The requested exposure time, in seconds.
     :return:
     """
-    beam_blanker_controls = BeamBlankerController()
+    beam_blanker_interface = BeamBlankerInterface()
 
     # tem = cc.CreateObject("TEMScripting.Instrument")
     # tem.Illumination.BeamBlanked = True
@@ -178,10 +178,10 @@ def blanker(exposure_time):
 
     # Unblank for one exposure_time while the acquisition is active.
     beam_unblank_time = time.time()
-    beam_blanker_controls.unblank_beam()
+    beam_blanker_interface.unblank_beam()
     time.sleep(exposure_time)
     beam_reblank_time = time.time()
-    beam_blanker_controls.blank_beam()
+    beam_blanker_interface.blank_beam()
 
     print("\nUnblanked the beam at: " + str(beam_unblank_time))
     print("Re-blanked the beam at: " + str(beam_reblank_time))
