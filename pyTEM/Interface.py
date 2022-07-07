@@ -28,6 +28,7 @@ try:
     from pyTEM.lib.interface.mixins.StageMixin import StageMixin
     from pyTEM.lib.interface.mixins.MagnificationMixin import MagnificationMixin
     from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
+    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
     from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
     from pyTEM.lib.interface.mixins.BeamShiftMixin import BeamShiftMixin
     from pyTEM.lib.interface.mixins.AcquisitionMixin import AcquisitionMixin
@@ -40,14 +41,14 @@ except Exception as ImportException:
     raise ImportException
 
 
-class Interface(ModeMixin,  # Microscope mode controls, including those for projection and illuminations
-                StageMixin,  # Stage controls
-                MagnificationMixin,  # Magnification controls
-                VacuumMixin,  # Vacuum system controls and pressure readouts
-                ImageShiftMixin,  # Image shift controls
-                BeamShiftMixin,  # Beam Shift controls
-                AcquisitionMixin  # Microscope acquisition controls, including those for taking images and controlling
-                                  #  the beam blanker.
+class Interface(ModeMixin,           # Microscope mode controls, including those for projection and illuminations.
+                StageMixin,          # Stage controls.
+                MagnificationMixin,  # Magnification controls.
+                VacuumMixin,         # Vacuum system controls and pressure readouts.
+                BeamBlankerMixin,    # Blank/unblank the beam.
+                ImageShiftMixin,     # Image shift controls.
+                BeamShiftMixin,      # Beam Shift controls.
+                AcquisitionMixin     # Microscope acquisition controls, including those for taking images.
                 ):
     """
     An interface for the Thermo-Fisher TEM microscopes.

@@ -7,11 +7,12 @@ import time
 import pathlib
 import sys
 import warnings
-from threading import Thread
-from typing import List, Tuple
 
 import comtypes.client as cc
 import numpy as np
+
+from typing import List, Tuple
+from multiprocessing import Process
 
 # Add the pyTEM package directory to path
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
@@ -19,6 +20,7 @@ sys.path.append(str(package_directory))
 try:
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.interface.Acquisition import Acquisition
+    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerController
 except Exception as ImportException:
     raise ImportException
 
@@ -31,7 +33,6 @@ class AcquisitionMixin:
     """
     try:
         # Unresolved attribute warning suppression
-        _tem: type(cc.CreateObject("TEMScripting.Instrument"))
         _tem_advanced: type(cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument"))
     except OSError:
         pass
@@ -108,10 +109,16 @@ class AcquisitionMixin:
             Acquisition: A single acquisition.
             (float, float): The core acquisition start and end times.
         """
-        self.blank_beam()  # Make sure the beam is blank while we set up the acquisition
+        # Make sure the beam is blank while we set up the acquisition
+        beam_blanker_controls = BeamBlankerController()
+        if not beam_blanker_controls.beam_is_blank():
+            beam_blanker_controls.blank_beam()
 
-        # Blanker control will happen in its own thread to reduce sample exposure as much as possible
-        blanker_thread = BlankerControl(microscope=self, exposure_time=exposure_time, verbose=verbose)
+        # To reduce exposure time as much as possible, only unblank the beam during the active part of the acquisition.
+        #  Since Illumination controls (including beam blanker controls) can only be called from the thread in which
+        #  they were marshalled, we need to control the blanker from a whole separate process
+        blanker_process = BlankerControl(beam_blanker_controls=beam_blanker_controls,
+                                         exposure_time=exposure_time, verbose=verbose)
 
         acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
         supported_cameras = acquisition.SupportedCameras
@@ -155,14 +162,14 @@ class AcquisitionMixin:
                               + " seconds. Returning an empty Acquisition object.")
                 return Acquisition(None), (np.nan, np.nan)
 
-        blanker_thread.start()
+        blanker_process.start()
 
         # Actually perform the acquisition
         core_acquisition_start_time = time.time()
         acq = acquisition.Acquire()
         core_acquisition_end_time = time.time()
 
-        blanker_thread.join()
+        blanker_process.join()
 
         return Acquisition(acq), (core_acquisition_start_time, core_acquisition_end_time)
 
@@ -255,79 +262,44 @@ class AcquisitionMixin:
 
         return exposure_time_range.Begin, exposure_time_range.End
 
-    def beam_is_blank(self) -> None:
-        """
-        Check if the beam is blanked.
-        :return: Beam status: bool:
-             True: Beam is blanked.
-             False: Beam is unblanked.
-        """
-        return self._tem.Illumination.BeamBlanked
 
-    def blank_beam(self) -> None:
-        """
-        Blank the beam.
-        :return: None.
-        """
-        if self.beam_is_blank():
-            print("The beam is already blanked.. no changes made.")
-            return
-
-        # Go ahead and blank the beam
-        self._tem.Illumination.BeamBlanked = True
-
-    def unblank_beam(self) -> None:
-        """
-        Unblank the beam.
-        :return: None.
-        """
-        if not self.beam_is_blank():
-            print("The beam is already unblanked.. no changes made.")
-            return
-
-        self._tem.Illumination.BeamBlanked = False
-
-
-class BlankerControl(Thread):
+class BlankerControl(Process):
     """
-    To reduce sample exposure time as much as possible, we need to keep the beam blanked whenever the camera is
-     not actually taking pictures. However, when using the TM acquire command with a requested integration time of dt,
-     the camera waits for dt, and then takes an image over the next dt. Therefore, executing the TM acquire command
-     requires 2 * dt + a delay of about 0.66 s.
-
-    Since there is no way to know way to tell what exactly causes this 0.66 s delay, we will assume that half of the
-    delay happens before imaging and the other half later.  # TODO: Further investigate
+    Unblank the beam for the active part of the acquisition
     """
 
-    def __init__(self, microscope: AcquisitionMixin, exposure_time: float, verbose: bool = False):
+    def __init__(self, beam_blanker_controls: BeamBlankerController, exposure_time: float, verbose: bool = False):
         """
-        :param microscope: AcquisitionMixin:
-            A pyTEM interface to the microscope (we only need the acquisition commands).
+        :param beam_blanker_controls: pyTEM BeamBlankerController:
+            A pyTEM interface to the microscope beam blanker controls.
         :param exposure_time: float:
-            The exposure time of the acquisition.
+            The requested exposure time, in seconds.
         :param verbose: bool:
-            Print out extra information. Useful for debugging.
+            Print out timing information. Useful for debugging.
         """
-        Thread.__init__(self)
-        self.microscope = microscope
+        Process.__init__(self)
+        self.beam_blanker_controls = beam_blanker_controls
         self.exposure_time = exposure_time
         self.verbose = verbose
 
     def run(self):
-        self.microscope.unblank_beam()
-        start_time = time.time()
-        time.sleep(0.33 + self.exposure_time)
-        self.microscope.blank_beam()
-        stop_time = time.time()
+        # Wait for one exposure_time period while the camera prepares itself.
+        time.sleep(self.exposure_time)
+
+        # Unblank for one exposure_time while the acquisition is active.
+        beam_unblank_time = time.time()
+        self.beam_blanker_controls.unblank_beam()
+        time.sleep(self.exposure_time)
+        beam_reblank_time = time.time()
+        self.beam_blanker_controls.blank_beam()
 
         if self.verbose:
-            print("\nUnblanked the beam at: " + str(start_time))
-            print("Re-blanked the beam at: " + str(stop_time))
-            print("Total time with the beam unblanked: " + str(stop_time - start_time))
+            print("\nUnblanked the beam at: " + str(beam_unblank_time))
+            print("Re-blanked the beam at: " + str(beam_reblank_time))
+            print("Total time spent with the beam unblanked: " + str(beam_reblank_time - beam_unblank_time))
 
 
-class AcquisitionMixinTesting(AcquisitionMixin):
-    """ Testing """
+class AcquisitionController(AcquisitionMixin):
 
     def __init__(self):
         try:
@@ -341,15 +313,15 @@ if __name__ == "__main__":
 
     requested_exposure_time = 0.5  # s
 
-    acq_mixin_tester = AcquisitionMixinTesting()
-    available_cameras = acq_mixin_tester.get_available_cameras()
-    acq_mixin_tester.print_camera_capabilities(available_cameras[0])
+    acq_controller = AcquisitionController()
+    available_cameras = acq_controller.get_available_cameras()
+    acq_controller.print_camera_capabilities(available_cameras[0])
 
     print("\nPerforming an acquisition...")
     overall_start_time = time.time()
-    test_acq, (core_acq_start, core_acq_end) = acq_mixin_tester.acquisition(camera_name="BM-Ceta", sampling='1k',
-                                                                            exposure_time=requested_exposure_time,
-                                                                            readout_area=None)
+    test_acq, (core_acq_start, core_acq_end) = acq_controller.acquisition(camera_name="BM-Ceta", sampling='1k',
+                                                                          exposure_time=requested_exposure_time,
+                                                                          readout_area=None)
     overall_stop_time = time.time()
 
     print("\nRequested Exposure time: " + str(requested_exposure_time))
@@ -365,6 +337,9 @@ if __name__ == "__main__":
     print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
     print("Time between when the core acquisition finished and when acquisition() returned: "
           + str(overall_stop_time - core_acq_end))
+
+    print(test_acq.get_image())
+    test_acq.show_image()
 
     # out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
     # print("out_dir: " + str(out_dir))
