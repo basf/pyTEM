@@ -1,5 +1,6 @@
 import threading
 import time
+import multiprocessing
 
 
 class MyThread(threading.Thread):
@@ -18,6 +19,22 @@ class MyThread(threading.Thread):
         threadLock.release()
 
 
+class MyProcess(multiprocessing.Process):
+    def __init__(self, process_id, name, counter):
+        multiprocessing.Process.__init__(self)
+        self.process_id = process_id
+        self.name = name
+        self.counter = counter
+
+    def run(self):
+        print("Starting " + str(self.name))
+        # Get lock to synchronize threads
+        # threadLock.acquire()
+        print_time(self.name, self.counter, 3)
+        # Free lock to release next thread
+        # threadLock.release()
+
+
 def print_time(thread_name, delay, counter):
     while counter:
         time.sleep(delay)
@@ -26,10 +43,12 @@ def print_time(thread_name, delay, counter):
 
 
 if __name__ == "__main__":
+
+    print("Thread testing...")
     threadLock = threading.Lock()
     threads = []
 
-    # Create new threads
+    # Create threads
     thread1 = MyThread(1, "Thread-1", 1)
     thread2 = MyThread(2, "Thread-2", 2)
 
@@ -45,5 +64,24 @@ if __name__ == "__main__":
     for t in threads:
         t.join()
 
+    print("Process testing...")
+    processes = []
+
+    # Create processes
+    process1 = MyProcess(1, "Process-1", 1)
+    process2 = MyProcess(2, "Process-2", 2)
+
+    # Start new Threads
+    process1.start()
+    process2.start()
+
+    # Add threads to thread list
+    processes.append(process1)
+    processes.append(process2)
+
+    # Wait for all threads to complete
+    for p in processes:
+        p.join()
+
     # We are now all done
-    print("Exiting Main Thread")
+    print("\nExiting Main Thread")
