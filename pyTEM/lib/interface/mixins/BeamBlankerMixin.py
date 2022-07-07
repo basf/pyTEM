@@ -50,7 +50,10 @@ class BeamBlankerMixin:
         self._tem.Illumination.BeamBlanked = False
 
 
-class BeamBlankerController(BeamBlankerMixin):
+class BeamBlankerInterface(BeamBlankerMixin):
+    """
+    A microscope interface with only beam blanker controls.
+    """
 
     def __init__(self):
         try:

@@ -299,7 +299,10 @@ class BlankerControl(Process):
             print("Total time spent with the beam unblanked: " + str(beam_reblank_time - beam_unblank_time))
 
 
-class AcquisitionController(AcquisitionMixin):
+class AcquisitionInterface(AcquisitionMixin):
+    """
+    A microscope interface with only acquisition controls.
+    """
 
     def __init__(self):
         try:
@@ -313,15 +316,15 @@ if __name__ == "__main__":
 
     requested_exposure_time = 0.5  # s
 
-    acq_controller = AcquisitionController()
-    available_cameras = acq_controller.get_available_cameras()
-    acq_controller.print_camera_capabilities(available_cameras[0])
+    acq_interface = AcquisitionInterface()
+    available_cameras = acq_interface.get_available_cameras()
+    acq_interface.print_camera_capabilities(available_cameras[0])
 
     print("\nPerforming an acquisition...")
     overall_start_time = time.time()
-    test_acq, (core_acq_start, core_acq_end) = acq_controller.acquisition(camera_name="BM-Ceta", sampling='1k',
-                                                                          exposure_time=requested_exposure_time,
-                                                                          readout_area=None)
+    test_acq, (core_acq_start, core_acq_end) = acq_interface.acquisition(camera_name="BM-Ceta", sampling='1k',
+                                                                         exposure_time=requested_exposure_time,
+                                                                         readout_area=None)
     overall_stop_time = time.time()
 
     print("\nRequested Exposure time: " + str(requested_exposure_time))
