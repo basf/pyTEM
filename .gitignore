@@ -13,4 +13,4 @@
 
 # Other
 .idea/workspace.xml
-/test/ued/check_message_ordering.py
+/test/micro_ed/check_message_ordering.py
