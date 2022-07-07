@@ -47,26 +47,34 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
 
     # Fill in the image stack array
     for i, alpha in enumerate(acquisition_properties.alphas):
-        # So that both tilting and acquiring can happen simultaneously, perform these tasks in separate threads
+        # So that both tilting and acquiring can happen simultaneously, tilt in a separate thread
         tilting_thread = TiltingThread(microscope=microscope, destination=acquisition_properties.alpha_arr[i + 1],
+                                       integration_time=acquisition_properties.integration_time,
                                        speed=acquisition_properties.tilt_speed, verbose=verbose)
-
-        acquisition_thread = AcquisitionThread(microscope=microscope, acquisition_properties=acquisition_properties,
-                                               verbose=verbose)
 
         # Apply the appropriate shift
         microscope.set_image_shift(x=shifts[i][0], y=shifts[i][1])
 
-        acquisition_thread.start()  # Start the acquisition
-
-        # We need to give the acquisition thread a bit of a head start before we start tilting
-        time.sleep(0.355 + acquisition_properties.integration_time)
-
         tilting_thread.start()  # Start tilting
 
-        # Okay, collect our threads and proceed
+        # The acquisition must be performed here in the main thread where the COM interface was marshalled.
+        overall_acq_start_time = time.time()
+        acq, (core_acq_start, core_acq_end) = microscope.acquisition(
+            camera_name=acquisition_properties.camera_name, sampling=acquisition_properties.sampling,
+            exposure_time=acquisition_properties.integration_time)
+        overall_acq_end_time = time.time()
+
+        # Okay, wait for the tilting thread to return, and then we are done this one.
         tilting_thread.join()
-        acq = acquisition_thread.join()
+
+        if verbose:
+            print("\nCore acquisition started at: " + str(core_acq_start))
+            print("Core acquisition returned at: " + str(core_acq_end))
+            print("Core acquisition time: " + str(core_acq_end - core_acq_start))
+
+            print("\nOverall acquisition() method call started at: " + str(overall_acq_start_time))
+            print("Overall acquisition() method returned at: " + str(overall_acq_end_time))
+            print("Total overall time spent in acquisition(): " + str(overall_acq_end_time - overall_acq_start_time))
 
         acq_stack.append(acq)
 
@@ -75,12 +83,15 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
 
 class TiltingThread(Thread):
 
-    def __init__(self, microscope: Interface, destination: float, speed: float, verbose: bool = False):
+    def __init__(self, microscope: Interface, destination: float, integration_time: float, speed: float,
+                 verbose: bool = False):
         """
         :param microscope: pyTEM.Interface:
             A pyTEM interface to the microscope.
         :param destination: float:
             The alpha angle to which we will tilt.
+        :param integration_time: float:
+            The requested exposure time for the tilt image, in seconds.
         :param speed: float:
             Tilt speed, in TEM fractional tilt speed units.
         :param verbose: bool:
@@ -90,9 +101,13 @@ class TiltingThread(Thread):
         self.microscope = microscope
         self.destination = destination
         self.speed = speed
+        self.integration_time = integration_time
         self.verbose = verbose
 
     def run(self):
+        # We need to give the acquisition thread a bit of a head start before we start tilting
+        time.sleep(0.355 + self.integration_time)
+
         start_time = time.time()
         self.microscope.set_stage_position_alpha(alpha=self.destination, speed=self.speed, movement_type="go")
         stop_time = time.time()
@@ -101,46 +116,6 @@ class TiltingThread(Thread):
             print("\nStarting tilting at: " + str(start_time))
             print("Stopping tilting at: " + str(stop_time))
             print("Total time spent tilting: " + str(stop_time - start_time))
-
-
-class AcquisitionThread(Thread):
-
-    def __init__(self, microscope: Interface, acquisition_properties: AcquisitionSeriesProperties,
-                 verbose: bool = False):
-        """
-        :param microscope: pyTEM.Interface:
-            A pyTEM interface to the microscope.
-        :param acquisition_properties: AcquisitionSeriesProperties:
-            The acquisition properties.
-        :param verbose: bool:
-            Print out extra information. Useful for debugging.
-        """
-        Thread.__init__(self)
-        self.microscope = microscope
-        self.acquisition_properties = acquisition_properties
-        self.verbose = verbose
-        self.acq = None
-
-    def run(self):
-        overall_start_time = time.time()
-        self.acq, (core_acq_start, core_acq_end) = self.microscope.acquisition(
-            camera_name=self.acquisition_properties.camera_name,
-            sampling=self.acquisition_properties.sampling,
-            exposure_time=self.acquisition_properties.integration_time)
-        overall_stop_time = time.time()
-
-        if self.verbose:
-            print("\nCore acquisition started at: " + str(core_acq_start))
-            print("Core acquisition returned at: " + str(core_acq_end))
-            print("Core acquisition time: " + str(core_acq_end - core_acq_start))
-
-            print("\nOverall acquisition() method call started at: " + str(overall_start_time))
-            print("Overall acquisition() method returned at: " + str(overall_stop_time))
-            print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
-
-    def join(self, *args) -> Acquisition:
-        Thread.join(self, *args)
-        return self.acq
 
 
 if __name__ == "__main__":
