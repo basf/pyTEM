@@ -39,6 +39,14 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
     :return: AcquisitionSeries.
         The results of the tilt series acquisition.
     """
+    # Make sure the column valve is open nad the screen is removed.
+    column_valve_position = microscope.get_column_valve_position()
+    if column_valve_position == "closed":
+        microscope.open_column_valve()
+    screen_position = microscope.get_screen_position()
+    if screen_position == "inserted":
+        microscope.remove_screen()
+
     acq_stack = AcquisitionSeries()
 
     if verbose:
@@ -78,7 +86,13 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
 
         acq_stack.append(acq)
 
-        return acq_stack
+    # Housekeeping: Restore the column value and screen to the positions they were in before we started.
+    if column_valve_position == "closed":
+        microscope.close_column_valve()
+    if screen_position == "inserted":
+        microscope.insert_screen()
+
+    return acq_stack
 
 
 class TiltingThread(Thread):

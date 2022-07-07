@@ -58,6 +58,14 @@ def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: st
          of 0 degrees).
         Note: len(shifts) = len(alphas)
     """
+    # Make sure the column valve is open nad the screen is removed.
+    column_valve_position = microscope.get_column_valve_position()
+    if column_valve_position == "closed":
+        microscope.open_column_valve()
+    screen_position = microscope.get_screen_position()
+    if screen_position == "inserted":
+        microscope.remove_screen()
+
     # Start with the no tilt and no image shift
     if verbose:
         print("\nZeroing the stage position and image shift in preparation for negative tilt shift obtainment...")
@@ -108,6 +116,12 @@ def obtain_shifts(microscope: Interface, alphas: NDArray[float], camera_name: st
         # We are tilting neg -> pos, flip the negative array and merge the two shift arrays
         negative_shifts = np.flip(negative_shifts, axis=0)
         shifts = np.concatenate((negative_shifts, positive_shifts))
+
+    # Housekeeping: Restore the column value and screen to the positions they were in before we started.
+    if column_valve_position == "closed":
+        microscope.close_column_valve()
+    if screen_position == "inserted":
+        microscope.insert_screen()
 
     # Put the obtained shifts in a dataframe for easy viewing
     df = pd.DataFrame({'alpha': alphas, 'x-shift': shifts[:, 0], 'y-shift': shifts[:, 1]})
