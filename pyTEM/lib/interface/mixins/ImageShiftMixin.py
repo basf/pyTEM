@@ -9,12 +9,14 @@ import comtypes.client as cc
 
 from numpy.typing import ArrayLike
 
+from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
 
-class ImageShiftMixin:
+
+class ImageShiftMixin(ModeMixin):
     """
     Microscope image shift controls.
 
-    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.Interface, but can be included in other projects where helpful.
     """
     try:
         # Unresolved attribute warning suppression
@@ -26,13 +28,6 @@ class ImageShiftMixin:
     # Note: For precise shifting, an offset vector is required to account for hysteresis in the len's magnets. However,
     #  this is negligible for most applications.
     # _image_shift_vector: type(np.empty(shape=(2, 1)))
-
-    def get_projection_submode(self) -> str:
-        """
-        :return: str:
-            The current projection sub-mode.
-        """
-        return self._tem.Projection.SubModeString
 
     def get_image_shift_matrix(self) -> np.ndarray:
         """
@@ -55,7 +50,7 @@ class ImageShiftMixin:
         :return: [x, y]: 2-element numpy.array:
             The x and y values of the image shift, in micrometres.
         """
-        if self._tem.Projection.SubModeString != "SA":
+        if self.get_projection_submode() != "SA":
             warnings.warn("Image shift functions only tested for magnifications in SA range (4300 x -> 630 kx Zoom), "
                           "but the current projection submode is " + self._tem.Projection.SubModeString +
                           ". Magnifications in this range may require a different transformation matrix.")
@@ -78,7 +73,7 @@ class ImageShiftMixin:
 
         :return: None.
         """
-        if self._tem.Projection.SubModeString != "SA":
+        if self.get_projection_submode() != "SA":
             warnings.warn("Image shift functions only tested for magnifications in SA range (4300 x -> 630 kx Zoom), "
                           "but the current projection submode is " + self._tem.Projection.SubModeString +
                           ". Magnifications in this range may require a different transformation matrix.")
