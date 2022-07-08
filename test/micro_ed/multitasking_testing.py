@@ -3,15 +3,13 @@
  Date:    Summer 2022
 """
 
-import threading
-import multiprocessing
 import pathlib
-import time
 import sys
+import threading
+import time
 
 import numpy as np
-import comtypes.client as cc
-import pythoncom
+from pathos.helpers import mp
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
 print(package_directory)
@@ -42,7 +40,7 @@ def multitasking_testing(microscope: Interface, acquisition_properties: Acquisit
         # So that tilting can happen simultaneously, it will be performed in a separate thread
         # tilting_thread = TiltingThread(microscope=microscope, destination=acquisition_properties.alpha_arr[i + 1],
         #                                speed=acquisition_properties.tilt_speed, verbose=verbose)
-        blanking_process = multiprocessing.Process(target=blanker, args=(acquisition_properties.alpha_arr[i + 1],
+        blanking_process = mp.Process(target=blanker, args=(acquisition_properties.alpha_arr[i + 1],
                                                                          acquisition_properties.tilt_speed))
 
         # Apply the appropriate shift
@@ -121,7 +119,7 @@ class TiltingThread(threading.Thread):
         print("Total time spent tilting: " + str(stop_time - start_time))
 
 
-class TiltingProcess(multiprocessing.Process):
+class TiltingProcess(mp.Process):
 
     def __init__(self, microscope: Interface, destination: float, speed: float, verbose: bool = False):
         """
@@ -135,7 +133,7 @@ class TiltingProcess(multiprocessing.Process):
             Print out extra information. Useful for debugging.
         """
 
-        multiprocessing.Process.__init__(self)
+        mp.Process.__init__(self)
         # self.microscope = microscope
         self.microscope = microscope
         self.destination = destination
