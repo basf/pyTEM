@@ -17,7 +17,7 @@ class BeamBlankerMixin:
     except OSError:
         pass
 
-    def beam_is_blank(self) -> None:
+    def beam_is_blank(self) -> bool:
         """
         Check if the beam is blanked.
         :return: Beam status: bool:
