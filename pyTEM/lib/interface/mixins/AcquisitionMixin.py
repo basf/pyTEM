@@ -2,11 +2,14 @@
  Author:  Michael Luciuk
  Date:    Summer 2022
 """
-
+import threading
 import time
 import pathlib
 import sys
 import warnings
+
+import pythoncom
+import win32com
 
 import comtypes.client as cc
 import numpy as np
@@ -114,18 +117,10 @@ class AcquisitionMixin(BeamBlankerMixin):
         if not user_had_beam_blanked:
             self.blank_beam()
 
-
-
-        # if not beam_blanker_controls.beam_is_blank():
-        #     beam_blanker_controls.blank_beam()
-
         # To reduce exposure time as much as possible, only unblank the beam during the active part of the acquisition.
         #  Since Illumination controls (including beam blanker controls) can only be called from the thread in which
         #  they were marshalled, we need to control the blanker from a whole separate process
         # blanker_process = BlankerControl(exposure_time=exposure_time, verbose=verbose)
-
-
-
         acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
         supported_cameras = acquisition.SupportedCameras
 
@@ -187,15 +182,18 @@ class AcquisitionMixin(BeamBlankerMixin):
                 print("Re-blanked the beam at: " + str(beam_reblank_time))
                 print("Total time spent with the beam unblanked: " + str(beam_reblank_time - beam_unblank_time))
 
-        blanker_process = mp.Process(target=blanker_control)
-        blanker_process.start()
+        # Create id
+        xl_id = pythoncom.CoMarshalInterThreadInterfaceInStream(pythoncom.IID_IDispatch, self._tem)
+
+        blanker_thread = threading.Thread(target=blanker_control_thread, kwargs={'xl_id': xl_id})
+        blanker_thread.start()
 
         # Actually perform the acquisition
         core_acquisition_start_time = time.time()
         acq = acquisition.Acquire()
         core_acquisition_end_time = time.time()
 
-        blanker_process.join()
+        blanker_thread.join()
 
         # Leave the blanker the same way the user had it
         if not user_had_beam_blanked:
@@ -293,7 +291,17 @@ class AcquisitionMixin(BeamBlankerMixin):
         return exposure_time_range.Begin, exposure_time_range.End
 
 
+def blanker_control_thread(xl_id):
 
+    # https://stackoverflow.com/questions/26764978/using-win32com-with-multithreading
+
+    # Initialize
+    pythoncom.CoInitialize()
+
+    # Get instance from the id
+    xl = win32com.client.Dispatch(
+            pythoncom.CoGetInterfaceAndReleaseStream(xl_id, pythoncom.IID_IDispatch)
+    )
 
 
 class AcquisitionInterface(AcquisitionMixin):
