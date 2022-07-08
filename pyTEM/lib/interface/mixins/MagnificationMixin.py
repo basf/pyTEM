@@ -7,49 +7,21 @@ import math
 import warnings
 import comtypes.client as cc
 
+from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
 
-class MagnificationMixin:
+
+class MagnificationMixin(ModeMixin):
     """
     Microscope magnification controls, including those for getting and setting the current microscope magnification and
      magnification index.
 
-    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.Interface, but can be included in other projects where helpful.
     """
     try:
         # Unresolved attribute warning suppression
         _tem: type(cc.CreateObject("TEMScripting.Instrument"))
     except OSError:
         pass
-
-    def get_mode(self) -> str:
-        """
-        :return: str:
-            The current microscope mode, one of:
-            - "TEM" (normal imaging mode)
-            - "STEM" (Scanning TEM)
-        """
-        if self._tem.InstrumentModeControl.InstrumentMode == 0:
-            return "TEM"
-
-        elif self._tem.InstrumentModeControl.InstrumentMode == 1:
-            return "STEM"  # Scanning TEM
-
-        else:
-            raise Exception("Error: Microscope mode unknown.")
-
-    def get_projection_mode(self) -> str:
-        """
-        :return: str:
-            The current projection mode, either "Diffraction" or "Imaging".
-        """
-        if self._tem.Projection.Mode == 1:
-            return "Imaging"
-
-        elif self._tem.Projection.Mode == 2:
-            return "Diffraction"
-
-        else:
-            raise Exception("Error: Projection mode unknown.")
 
     def get_magnification(self) -> float:
         """
@@ -58,9 +30,9 @@ class MagnificationMixin:
             Note: Returns Nan when the instrument is in TEM diffraction mode.
         """
         if self.get_mode() == "TEM":
-            if self.get_projection_mode() == "Imaging":
+            if self.get_projection_mode() == "imaging":
                 return self._tem.Projection.Magnification
-            elif self.get_projection_mode() == "Diffraction":
+            elif self.get_projection_mode() == "diffraction":
                 warnings.warn("Since we are in TEM diffraction mode, get_magnification() is returning Nan...")
                 return math.nan
             else:
@@ -193,7 +165,7 @@ class MagnificationMixin:
 
         if self.get_mode() == "TEM":
 
-            if self.get_projection_mode() == "Imaging":
+            if self.get_projection_mode() == "imaging":
                 available_magnifications = [25.0, 34.0, 46.0, 62.0, 84.0, 115.0, 155.0, 210.0, 280.0, 380.0,
                                             510.0, 700.0, 940.0, 1300.0, 1700.0, 2300.0, 2050.0, 2600.0, 3300.0,
                                             4300.0, 5500.0, 7000.0, 8600.0, 11000.0, 14000.0, 17500.0, 22500.0,
@@ -205,7 +177,7 @@ class MagnificationMixin:
                 for i, magnification in enumerate(available_magnifications):
                     print("{:<20} {:<20}".format(i + 1, magnification))
 
-            elif self.get_projection_mode() == "Diffraction":
+            elif self.get_projection_mode() == "diffraction":
                 warnings.warn("Magnification not relevant in TEM diffraction mode.")  # TODO: Is this true?
 
             else:
@@ -213,12 +185,12 @@ class MagnificationMixin:
 
         elif self.get_mode() == "STEM":
 
-            if self.get_projection_mode() == "Imaging":
+            if self.get_projection_mode() == "imaging":
                 available_magnifications = [4300.0, 5500.0, 7000.0, 8600.0, 11000.0, 14000.0, 17500.0, 22500.0,
                                             28500.0, 36000.0, 46000.0, 58000.0, 74000.0, 94000.0, 120000.0,
                                             150000.0, 190000.0, 245000.0, 310000.0, 390000.0, 500000.0, 630000.0]
 
-            elif self.get_projection_mode() == "Diffraction":
+            elif self.get_projection_mode() == "diffraction":
                 available_magnifications = [320.0, 450.0, 630.0, 900.0, 1250.0, 1800.0, 2550.0, 3600.0, 5100.0, 7200.0,
                                             10000.0, 14500.0, 20500.0, 28500.0, 41000.0, 57000.0, 81000.0, 115000.0,
                                             160000.0, 230000.0, 320000.0, 460000.0, 650000.0, 920000.0, 1300000.0,
