@@ -12,7 +12,7 @@ import comtypes.client as cc
 import numpy as np
 
 from typing import List, Tuple
-from multiprocessing import Process
+from pathos.helpers import mp
 
 # Add the pyTEM package directory to path
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
@@ -20,7 +20,7 @@ sys.path.append(str(package_directory))
 try:
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.interface.Acquisition import Acquisition
-    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerController
+    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface
 except Exception as ImportException:
     raise ImportException
 
@@ -29,7 +29,7 @@ class AcquisitionMixin:
     """
     Microscope image acquisition controls.
 
-    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.Interface, but can be included in other projects where helpful.
     """
     try:
         # Unresolved attribute warning suppression
@@ -110,9 +110,9 @@ class AcquisitionMixin:
             (float, float): The core acquisition start and end times.
         """
         # Make sure the beam is blank while we set up the acquisition
-        beam_blanker_controls = BeamBlankerController()
-        if not beam_blanker_controls.beam_is_blank():
-            beam_blanker_controls.blank_beam()
+        beam_blanker_controls = BeamBlankerInterface()
+        # if not beam_blanker_controls.beam_is_blank():
+        #     beam_blanker_controls.blank_beam()
 
         # To reduce exposure time as much as possible, only unblank the beam during the active part of the acquisition.
         #  Since Illumination controls (including beam blanker controls) can only be called from the thread in which
@@ -263,21 +263,21 @@ class AcquisitionMixin:
         return exposure_time_range.Begin, exposure_time_range.End
 
 
-class BlankerControl(Process):
+class BlankerControl(mp.Process):
     """
     Unblank the beam for the active part of the acquisition
     """
 
-    def __init__(self, beam_blanker_controls: BeamBlankerController, exposure_time: float, verbose: bool = False):
+    def __init__(self, beam_blanker_controls: BeamBlankerInterface, exposure_time: float, verbose: bool = False):
         """
-        :param beam_blanker_controls: pyTEM BeamBlankerController:
+        :param beam_blanker_controls: pyTEM BeamBlankerInterface:
             A pyTEM interface to the microscope beam blanker controls.
         :param exposure_time: float:
             The requested exposure time, in seconds.
         :param verbose: bool:
             Print out timing information. Useful for debugging.
         """
-        Process.__init__(self)
+        mp.Process.__init__(self)
         self.beam_blanker_controls = beam_blanker_controls
         self.exposure_time = exposure_time
         self.verbose = verbose
@@ -317,8 +317,8 @@ if __name__ == "__main__":
     requested_exposure_time = 0.5  # s
 
     acq_interface = AcquisitionInterface()
-    available_cameras = acq_interface.get_available_cameras()
-    acq_interface.print_camera_capabilities(available_cameras[0])
+    # available_cameras = acq_interface.get_available_cameras()
+    # acq_interface.print_camera_capabilities(available_cameras[0])
 
     print("\nPerforming an acquisition...")
     overall_start_time = time.time()
