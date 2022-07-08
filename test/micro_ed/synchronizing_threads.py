@@ -34,6 +34,9 @@ class MyProcess(mp.Process):
         # Free lock to release next thread
         # threadLock.release()
 
+    def join(self, *args):
+        return self.name
+
 
 def print_time(thread_name, delay, counter):
     while counter:
@@ -73,6 +76,8 @@ if __name__ == "__main__":
 
     # Start new Threads
     process1.start()
+    status = process1.is_alive()
+    print(status)
     process2.start()
 
     # Add threads to thread list
@@ -81,7 +86,7 @@ if __name__ == "__main__":
 
     # Wait for all threads to complete
     for p in processes:
-        p.join()
+        print(str(p.join()) + " has joined.")
 
     # We are now all done
     print("\nExiting Main Thread")
