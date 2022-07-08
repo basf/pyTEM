@@ -1,6 +1,6 @@
 import threading
 import time
-import multiprocessing
+from pathos.helpers import mp
 
 
 class MyThread(threading.Thread):
@@ -19,9 +19,9 @@ class MyThread(threading.Thread):
         threadLock.release()
 
 
-class MyProcess(multiprocessing.Process):
+class MyProcess(mp.Process):
     def __init__(self, process_id, name, counter):
-        multiprocessing.Process.__init__(self)
+        mp.Process.__init__(self)
         self.process_id = process_id
         self.name = name
         self.counter = counter
