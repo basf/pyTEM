@@ -15,7 +15,7 @@ class VacuumMixin:
     """
     Microscope vacuum system valve controls and pressure reports.
 
-    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.Interface, but can be included in other projects where helpful.
     """
     try:
         # Unresolved attribute warning suppression
@@ -117,13 +117,13 @@ class VacuumMixin:
     def get_column_valve_position(self) -> str:
         """
         :return: str:
-            The current column value position, either "Open" or "Closed".
+            The current column value position, either "open" or "closed".
             The column value should always be closed when the microscope is not in use.
         """
         if self._tem.Vacuum.ColumnValvesOpen:
-            return "Open"
+            return "open"
         else:
-            return "Closed"
+            return "closed"
 
     def close_column_valve(self) -> None:
         """

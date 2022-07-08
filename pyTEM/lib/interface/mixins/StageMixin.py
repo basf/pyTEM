@@ -20,7 +20,7 @@ class StageMixin:
     Microscope stage controls, including those for getting and setting the stage position. Also, helpful stage status
      print functions.
 
-    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.Interface, but can be included in other projects where helpful.
     """
     try:
         # Unresolved attribute warning suppression
