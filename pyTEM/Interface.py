@@ -161,19 +161,6 @@ class Interface(ModeMixin,           # Microscope mode controls, including those
         self.set_beam_shift(x=0, y=0)
         self.set_image_shift(x=0, y=0)
 
-    """
-    When multiple of the same methods exist across mixins, override to ensure we get the one we want.
-    """
-
-    def get_mode(self) -> str:
-        return ModeMixin.get_mode(self)
-
-    def get_projection_mode(self) -> str:
-        return ModeMixin.get_projection_mode(self)
-
-    def get_projection_submode(self) -> str:
-        return ModeMixin.get_projection_submode(self)
-
 
 if __name__ == "__main__":
     scope = Interface()
