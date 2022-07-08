@@ -10,7 +10,7 @@ class ModeMixin:
     """
     Microscope mode controls, including those for projection and illumination.
 
-    This mixin was developed in support of pyTEM.pyTEM, but can be included in other projects where helpful.
+    This mixin was developed in support of pyTEM.Interface, but can be included in other projects where helpful.
     """
     try:
         # Unresolved attribute warning suppression
@@ -62,13 +62,13 @@ class ModeMixin:
     def get_projection_mode(self) -> str:
         """
         :return: str:
-            The current projection mode, either "Diffraction" or "Imaging".
+            The current projection mode, either "diffraction" or "imaging".
         """
         if self._tem.Projection.Mode == 1:
-            return "Imaging"
+            return "imaging"
 
         elif self._tem.Projection.Mode == 2:
-            return "Diffraction"
+            return "diffraction"
 
         else:
             raise Exception("Error: Projection mode unknown.")
@@ -77,8 +77,8 @@ class ModeMixin:
         """
         :param new_projection_mode: str:
             The new projection mode, one of:
-            - "Diffraction" (reciprocal space)
-            - "Imaging" (real space)
+            - "diffraction" (reciprocal space)
+            - "imaging" (real space)
         :return: None
         """
         new_projection_mode = str(new_projection_mode).title()
@@ -89,19 +89,19 @@ class ModeMixin:
 
         screen_position = self.get_screen_position()
 
-        if screen_position == 'Removed':
+        if screen_position == 'removed':
             # Insert the screen before switching moves to avoid damaging the camera
             self.insert_screen()
 
-        if new_projection_mode in {"Imaging", "I"}:
+        if new_projection_mode.lower() in {"imaging", "i"}:
             self._tem.Projection.Mode = 1  # Switch microscope into imaging mode
-            if screen_position == 'Removed':
+            if screen_position == 'removed':
                 # Put the screen back where the user had it
                 self.remove_screen()
 
-        elif new_projection_mode in {"Diffraction", "D"}:
+        elif new_projection_mode.lower() in {"diffraction", "d"}:
             self._tem.Projection.Mode = 2  # Switch microscope into diffraction mode
-            if screen_position == 'Removed':
+            if screen_position == 'removed':
                 # Put the screen back where the user had it
                 self.remove_screen()
 
@@ -140,14 +140,14 @@ class ModeMixin:
         """
         :return: str:
             The current illumination mode, one of:
-            - "Nanoprobe" (used to get a small convergent electron beam)
-            - "Microprobe" (provides a nearly parallel illumination at the cost of a larger probe size)
+            - "nanoprobe" (used to get a small convergent electron beam)
+            - "microprobe" (provides a nearly parallel illumination at the cost of a larger probe size)
         """
         if self._tem.Illumination.Mode == 0:
-            return "Nanoprobe"
+            return "nanoprobe"
 
         elif self._tem.Illumination.Mode == 1:
-            return "Microprobe"
+            return "microprobe"
 
         else:
             raise Exception("Error: Projection mode '" + str(self._tem.Illumination.Mode) + "' not recognized.")
@@ -159,8 +159,8 @@ class ModeMixin:
 
         :param new_mode: str:
             The new illumination mode, one of:
-             - "Nanoprobe" (used to get a small convergent electron beam)
-             - "Microprobe" (provides a nearly parallel illumination at the cost of a larger probe size)
+             - "nanoprobe" (used to get a small convergent electron beam)
+             - "microprobe" (provides a nearly parallel illumination at the cost of a larger probe size)
         :return: None.
         """
         new_mode = str(new_mode).title()
@@ -169,10 +169,10 @@ class ModeMixin:
             print("The microscope is already in '" + new_mode + "' mode.. no changes made.")
             return
 
-        if new_mode == "Nanoprobe":
+        if new_mode == "nanoprobe":
             self._tem.Illumination.Mode = 0
 
-        elif new_mode == "Microprobe":
+        elif new_mode == "microprobe":
             self._tem.Illumination.Mode = 1
 
         else:
@@ -181,14 +181,14 @@ class ModeMixin:
     def get_screen_position(self) -> str:
         """
         :return: str: The position of the FluCam's fluorescent screen, one of:
-            - 'Removed' (required to take images)
-            - 'Inserted' (required to use the FluCam to view the live image)
+            - 'removed' (required to take images)
+            - 'inserted' (required to use the FluCam to view the live image)
         """
         if self._tem.Camera.MainScreen == 2:
-            return "Removed"
+            return "removed"
 
         elif self._tem.Camera.MainScreen == 3:
-            return "Inserted"
+            return "inserted"
 
         else:
             raise Exception("Error: Current screen position (" + str(self._tem.Camera.MainScreen) + ") not recognized.")
@@ -199,7 +199,7 @@ class ModeMixin:
         This is required to use the FluCam to view the live image.
         :return: None.
         """
-        if self.get_screen_position() == "Inserted":
+        if self.get_screen_position() == "inserted":
             print("The microscope screen is already inserted.. no changes made.")
             return
 
@@ -211,7 +211,7 @@ class ModeMixin:
         This is required to take images.
         :return: None.
         """
-        if self.get_screen_position() == "Removed":
+        if self.get_screen_position() == "removed":
             print("The microscope screen is already removed.. no changes made.")
             return
 
