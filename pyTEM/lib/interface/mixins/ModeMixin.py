@@ -216,3 +216,16 @@ class ModeMixin:
             return
 
         self._tem.Camera.MainScreen = 2  # Remove the screen
+
+
+class ModeInterface(ModeMixin):
+    """
+    A microscope interface with only mode controls.
+    """
+
+    def __init__(self):
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e
