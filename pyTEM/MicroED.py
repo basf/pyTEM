@@ -44,7 +44,8 @@ class MicroED:
         try:
             self.microscope = Interface()
         except BaseException as e:
-            warnings.warn("MicroED was unable to connect to a microscope: " + str(e))
+            warnings.warn("MicroED was unable to connect to a microscope, try (re)connecting by MicroED.connect(): "
+                          + str(e))
             self.microscope = None
 
     def connect(self) -> None:
@@ -54,7 +55,8 @@ class MicroED:
         try:
             self.microscope = Interface()
         except BaseException as e:
-            warnings.warn("MicroED was unable to connect to a microscope: " + str(e))
+            warnings.warn("MicroED was unable to connect to a microscope, try (re)connecting by MicroED.connect(): "
+                          + str(e))
             self.microscope = None
 
     def run(self, verbose: bool = False) -> None:
@@ -87,7 +89,7 @@ class MicroED:
             # TODO: If not verbose, redirect standard input for these commands that may print stuff.
             self.microscope.insert_screen()
             self.microscope.open_column_valve()  # Might not work if the column isn't under vacuum
-            if self.microscope.get_column_valve_position() == "Closed":
+            if self.microscope.get_column_valve_position() == "closed":
                 raise Exception("Error: We were unable to open the column value, probably because the column isn't "
                                 "under sufficient vacuum. Please check the instrument.")
 
