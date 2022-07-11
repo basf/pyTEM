@@ -146,8 +146,8 @@ class VacuumMixin:
             self._tem.Vacuum.ColumnValvesOpen = True
 
         else:
-            print("The column value cannot be safely opened because the column isn't under sufficient vacuum. "
-                  "Please check the TEM.")
+            raise Exception("The column value cannot be safely opened because the column isn't under sufficient "
+                            "vacuum. Please check microscope pressures with print_vacuum_info().")
 
     def print_vacuum_status(self) -> None:
         """
