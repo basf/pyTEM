@@ -9,7 +9,7 @@ import time
 iterations = 10000000
 start_time = time.time()
 for i in range(iterations):
-    time.time()
+    dummy = time.time()
 
 end_time = time.time()
 
