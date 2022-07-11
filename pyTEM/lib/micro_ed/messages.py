@@ -33,7 +33,6 @@ def get_initialization_message() -> Tuple[str, str]:
     title = "We are now inviting those passengers with small children, and any passengers requiring special " \
             "assistance, to begin boarding at this time."
     message = "In order to initialize the microscope for MicroED, we are now going to: " \
-              "\n - Connect to the microscope." \
               "\n - Insert the Flucam screen." \
               "\n - Make sure the microscope is in 'TEM' mode." \
               "\n - Make sure the microscope is in 'Imaging' mode. " \
