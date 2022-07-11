@@ -5,8 +5,10 @@
 
 import comtypes.client as cc
 
+from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
 
-class ModeMixin:
+
+class ModeMixin(ScreenMixin):
     """
     Microscope mode controls, including those for projection and illumination.
 
@@ -87,26 +89,24 @@ class ModeMixin:
             print("The microscope is already in '" + new_projection_mode + "' mode.. no changes made.")
             return
 
-        screen_position = self.get_screen_position()
+        user_screen_position = self.get_screen_position()
 
-        if screen_position == 'removed':
+        if user_screen_position == 'retracted':
             # Insert the screen before switching moves to avoid damaging the camera
             self.insert_screen()
 
         if new_projection_mode.lower() in {"imaging", "i"}:
             self._tem.Projection.Mode = 1  # Switch microscope into imaging mode
-            if screen_position == 'removed':
-                # Put the screen back where the user had it
-                self.remove_screen()
 
         elif new_projection_mode.lower() in {"diffraction", "d"}:
             self._tem.Projection.Mode = 2  # Switch microscope into diffraction mode
-            if screen_position == 'removed':
-                # Put the screen back where the user had it
-                self.remove_screen()
 
         else:
             print("The requested projection mode (" + new_projection_mode + ") isn't recognized.. no changes made.")
+
+        if user_screen_position == 'retracted':
+            # Put the screen back where the user had it
+            self.retract_screen()
 
     def get_projection_submode(self) -> str:
         """
@@ -177,45 +177,6 @@ class ModeMixin:
 
         else:
             print("The requested illumination mode (" + new_mode + ") isn't recognized.. no changes made.")
-
-    def get_screen_position(self) -> str:
-        """
-        :return: str: The position of the FluCam's fluorescent screen, one of:
-            - 'removed' (required to take images)
-            - 'inserted' (required to use the FluCam to view the live image)
-        """
-        if self._tem.Camera.MainScreen == 2:
-            return "removed"
-
-        elif self._tem.Camera.MainScreen == 3:
-            return "inserted"
-
-        else:
-            raise Exception("Error: Current screen position (" + str(self._tem.Camera.MainScreen) + ") not recognized.")
-
-    def insert_screen(self) -> None:
-        """
-        Insert the FluCam's fluorescent screen.
-        This is required to use the FluCam to view the live image.
-        :return: None.
-        """
-        if self.get_screen_position() == "inserted":
-            print("The microscope screen is already inserted.. no changes made.")
-            return
-
-        self._tem.Camera.MainScreen = 3  # Insert the screen
-
-    def remove_screen(self) -> None:
-        """
-        Remove the FluCam's fluorescent screen.
-        This is required to take images.
-        :return: None.
-        """
-        if self.get_screen_position() == "removed":
-            print("The microscope screen is already removed.. no changes made.")
-            return
-
-        self._tem.Camera.MainScreen = 2  # Remove the screen
 
 
 class ModeInterface(ModeMixin):

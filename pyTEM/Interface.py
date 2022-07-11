@@ -32,6 +32,7 @@ try:
     from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
     from pyTEM.lib.interface.mixins.BeamShiftMixin import BeamShiftMixin
     from pyTEM.lib.interface.mixins.AcquisitionMixin import AcquisitionMixin
+    from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
 
     # Other library imports
     from pyTEM.lib.interface.pascal_to_log import pascal_to_log
@@ -48,7 +49,8 @@ class Interface(ModeMixin,           # Microscope mode controls, including those
                 BeamBlankerMixin,    # Blank/unblank the beam.
                 ImageShiftMixin,     # Image shift controls.
                 BeamShiftMixin,      # Beam Shift controls.
-                AcquisitionMixin     # Microscope acquisition controls, including those for taking images.
+                AcquisitionMixin,    # Microscope acquisition controls, including those for taking images.
+                ScreenMixin          # Microscope FluCam screen controls.
                 ):
     """
     An interface for the Thermo-Fisher TEM microscopes.
