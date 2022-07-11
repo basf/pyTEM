@@ -2,20 +2,17 @@
  Author:  Michael Luciuk
  Date:    Summer 2022
 """
-import threading
+
 import time
 import pathlib
 import sys
 import warnings
 
-import pythoncom
-import win32com
-
 import comtypes.client as cc
 import numpy as np
+import multiprocessing as mp
 
 from typing import List, Tuple
-from pathos.helpers import mp
 
 # Add the pyTEM package directory to path
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
@@ -132,8 +129,8 @@ class AcquisitionMixin(BeamBlankerMixin):
            Print out extra information. Useful for debugging.
 
         This function provides the following optional controls by means of multiprocessing. Utilizing either of these
-         functionalities significantly increase runtime because we have to wait for a separate parallel process to
-         spawn and initialize its own microscope interface.
+         functionalities significantly increase runtime because we have to wait for a separate parallel process (a new
+         instance of the Python interpreter) to spawn and initialize a new microscope interface for this other process.
          # TODO: Eliminate the additional runtime caused by process creation and interface creation (maybe by switching
             to threading, sharing an single interface across processes/threads, or creating the parallel process right
             when the user first connects to the microscope).
@@ -208,14 +205,20 @@ class AcquisitionMixin(BeamBlankerMixin):
 
         # Blanker optimization and tilting while acquiring both require multitasking.
         multitasking_required = blanker_optimization or tilt_destination is not None
-        blanker_tilt_thread = None  # Warning suppression
+        blanker_tilt_process = None  # Warning suppression
         if multitasking_required:
             # Then we either need to optimize the blanker or tilt while acquiring. Either way, we need to spawn a
             #  parallel process.
-            blanker_tilt_thread = mp.Process(target=blanker_tilt_control, kwargs={'exposure_time': exposure_time,
-                                             'blanker_optimization': blanker_optimization,
-                                             'tilt_destination': tilt_destination, 'verbose': verbose})
-            blanker_tilt_thread.start()
+
+            # Create a barrier to help improve synchronization.
+            barrier = mp.Barrier(2)  # 1 for the main process + 1 for the blanker/tilt process = 2
+
+            blanker_tilt_process = mp.Process(target=blanker_tilt_control, kwargs={'exposure_time': exposure_time,
+                                              'blanker_optimization': blanker_optimization, 'barrier': barrier,
+                                              'tilt_destination': tilt_destination, 'verbose': verbose})
+
+            blanker_tilt_process.start()
+            barrier.wait()  # Wait for the blanker/tilt process to initialize.
 
         # Actually perform the acquisition
         core_acquisition_start_time = time.time()
@@ -223,7 +226,7 @@ class AcquisitionMixin(BeamBlankerMixin):
         core_acquisition_end_time = time.time()
 
         if multitasking_required:
-            blanker_tilt_thread.join()
+            blanker_tilt_process.join()
 
         # Leave the blanker the same way we found it
         if not user_had_beam_blanked:
@@ -321,7 +324,8 @@ class AcquisitionMixin(BeamBlankerMixin):
         return exposure_time_range.Begin, exposure_time_range.End
 
 
-def blanker_tilt_control(exposure_time: float, blanker_optimization: bool, tilt_destination: float,
+def blanker_tilt_control(barrier: mp.Barrier, exposure_time: float,
+                         blanker_optimization: bool, tilt_destination: float,
                          verbose: bool = False) -> None:
     """
     This function is to be run in a parallel thread/process.
@@ -329,8 +333,11 @@ def blanker_tilt_control(exposure_time: float, blanker_optimization: bool, tilt_
     Support pyTEM.Interface.acquisition() with the control of blanking and/or tilting. For more information on why this
      is helpful, please refer to pyTEM.Interface.acquisition()
 
-    :param exposure_time: float (optional; default is None):
-            Integration time, in seconds.
+    :param barrier: mp.Barrier:
+        Multiprocessing barrier, used to synchronize with the main thread.
+    :param exposure_time: float:
+        Exposure (integration) time, in seconds.
+
     :param blanker_optimization: bool:
         Whether to perform blanker optimization or not.
     :param tilt_destination: float (optional; default is None):
@@ -345,6 +352,11 @@ def blanker_tilt_control(exposure_time: float, blanker_optimization: bool, tilt_
 
     # Declarations for warning suppression
     beam_unblank_time, beam_reblank_time, tilt_start_time, tilt_stop_time = None, None, None, None
+
+    barrier.wait()  # Synchronize with the main thread
+
+    # Wait while the camera is blind
+    time.sleep(exposure_time)
 
     if blanker_optimization:
         # Unblank while the acquisition is active.
