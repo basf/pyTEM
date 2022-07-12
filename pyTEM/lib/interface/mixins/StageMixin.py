@@ -64,6 +64,8 @@ class StageMixin:
 
         :param speed: float (optional; default is 1.0):
             The fraction of the standard speed setting with which to move the stage.
+            Hint: use pyTEM.lib.interface.tem_tilt_speed() to convert from degrees-per-second to fractional microscope
+             speed.
             Some examples:
                 1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
                  15 deg / s).
@@ -243,6 +245,8 @@ class StageMixin:
 
         :param speed: float (optional; default is 1.0):
             The fraction of the standard speed setting with which to move the stage.
+            Hint: use pyTEM.lib.interface.tem_tilt_speed() to convert from degrees-per-second to fractional microscope
+             speed.
             Some examples:
                 1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
                  15 deg / s).
@@ -275,6 +279,8 @@ class StageMixin:
 
         :param speed: float (optional; default is 1.0):
             The fraction of the standard speed setting with which to move the stage.
+            Hint: use pyTEM.lib.interface.tem_tilt_speed() to convert from degrees-per-second to fractional microscope
+             speed.
             Some examples:
                 1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
                  15 deg / s).
@@ -307,6 +313,8 @@ class StageMixin:
 
         :param speed: float (optional; default is 1.0):
             The fraction of the standard speed setting with which to move the stage.
+            Hint: use pyTEM.lib.interface.tem_tilt_speed() to convert from degrees-per-second to fractional microscope
+             speed.
             Some examples:
                 1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
                  15 deg / s).
@@ -339,6 +347,8 @@ class StageMixin:
 
         :param speed: float (optional; default is 1.0):
             The fraction of the standard speed setting with which to move the stage.
+            Hint: use pyTEM.lib.interface.tem_tilt_speed() to convert from degrees-per-second to fractional microscope
+             speed.
             Some examples:
                 1.0: Move with 100% of the standard microscope speed (maximum speed; for tilting this is about
                  15 deg / s).
