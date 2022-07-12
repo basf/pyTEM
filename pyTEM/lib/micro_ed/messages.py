@@ -117,10 +117,11 @@ def get_start_message() -> Tuple[str, str]:
     :return: str: A start message.
     """
     title = "Flight attendants, prepare doors for departure and cross-check."
-    message = "We are now ready to perform a MicroED tilt acquisition series! Please refrain from touching the " \
-              "microscope controls for the duration of the experiment. If at any point you need to stop the " \
-              "experiment, please hit Ctrl-C on your keyboard. " \
-              "\n\nUpon pressing continue, the stage will be removed and the automated acquisition series will begin!"
+    message = "We are now ready to perform a MicroED tilt acquisition series! " \
+              "\n\nPlease insert the aperture. " \
+              "\n\nPlease refrain from touching the microscope controls for the duration of the experiment. If at " \
+              "any point you need to stop the experiment, please hit Ctrl-C on your keyboard. " \
+              "\n\nUpon pressing continue, the automated acquisition series will begin!"
     return title, message
 
 
@@ -203,5 +204,5 @@ def display_message(title: str, message: str, microscope: Union[Interface, None]
 
 if __name__ == "__main__":
     """ Testing """
-    title_, message_ = get_eucentric_height_message()
+    title_, message_ = get_start_message()
     display_message(title=title_, message=message_, microscope=None, position="centered")
