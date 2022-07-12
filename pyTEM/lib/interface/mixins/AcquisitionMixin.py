@@ -14,7 +14,6 @@ import multiprocessing as mp
 
 from typing import List, Tuple
 
-# Add the pyTEM package directory to path
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
@@ -22,11 +21,12 @@ try:
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.interface.Acquisition import Acquisition
     from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface, BeamBlankerMixin
+    from pyTEM.lib.interface.blanker_tilt_control import blanker_tilt_control
 except Exception as ImportException:
     raise ImportException
 
 
-class AcquisitionMixin:
+class AcquisitionMixin(BeamBlankerMixin, StageMixin):
     """
     Microscope image acquisition controls.
 
@@ -108,8 +108,8 @@ class AcquisitionMixin:
          useful information).
 
         :param camera_name: str:
-            The name of the camera you want use. For a list of available cameras, please use the
-             get_available_cameras() method.
+            The name of the camera you want use.
+            For a list of available cameras, please use the get_available_cameras() method.
         :param exposure_time: float:
             Exposure time, in seconds. Please expose responsibly.
         :param sampling: str:
@@ -140,14 +140,14 @@ class AcquisitionMixin:
 
         :param blanker_optimization: bool (optional; default is True):
             When we call the core Thermo Fisher acquisition command, the camera is blind for
-             one interval of exposure_time and then records for next interval of exposure_time. Therefore the full
+             one interval of exposure_time and then records for the next interval of exposure_time. Therefore the full
              acquisition takes 2 * exposure_time + some communication delays. In order to minimize sample exposure
              (material are often beam sensitive), we control the blanker in a parallel process where we only unblank
-             when the camera is actually recording. This optional beam blanker control can be controlled via the
-             following optional parameter.
-            True: Minimize dose by means of blanking while the camera is not actually recording.
-            False: Proceed without optimized blanker control, the beam will be unblanked for the full
-                    2 * exposure_time + some communication delays.
+             when the camera is actually recording. This optional beam blanker control can be controlled via this
+             optional parameter. One of:
+                True: Minimize dose by means of blanking while the camera is not actually recording.
+                False: Proceed without optimized blanker control, the beam will be unblanked for the full
+                        2 * exposure_time + some communication delays.
 
         :param tilt_destination: float (optional; default is None):
             The angle to which you would like to tilt to over the duration of the acquisition.
@@ -176,6 +176,7 @@ class AcquisitionMixin:
                             "could not be selected. Please use the get_available_cameras() method to get a list of "
                             "the available cameras.")
 
+        # Configure camera settings
         camera_settings = acquisition.CameraSettings
 
         camera_settings.ReadoutArea = readout_area
@@ -201,8 +202,6 @@ class AcquisitionMixin:
                             + str(min_supported_exposure_time) + " to " + str(max_supported_exposure_time)
                             + " seconds. ")
 
-        print("Staring beam blanker process at.." + str(time.time()))
-
         # Blanker optimization and tilting while acquiring both require multitasking.
         multitasking_required = blanker_optimization or tilt_destination is not None
         blanker_tilt_process = None  # Warning suppression
@@ -213,9 +212,22 @@ class AcquisitionMixin:
             # Create a barrier to help improve synchronization.
             barrier = mp.Barrier(2)  # 1 for the main process + 1 for the blanker/tilt process = 2
 
-            blanker_tilt_process = mp.Process(target=blanker_tilt_control, kwargs={'exposure_time': exposure_time,
-                                              'blanker_optimization': blanker_optimization, 'barrier': barrier,
-                                              'tilt_destination': tilt_destination, 'verbose': verbose})
+            if tilt_destination is None:
+                tilt_bounds = None  # No tilting
+            else:
+                # We want to tilt from our current position to the provided destination.
+                tilt_bounds = [self.get_stage_position_alpha(), tilt_destination]
+
+            if verbose:
+                print("This acquisition requires multitasking, creating an separate blanking/tilting process.")
+
+            blanker_tilt_args = {'num_acquisitions': 1, 'barriers': [barrier], 'exposure_time': exposure_time,
+                                 'blanker_optimization': blanker_optimization, 'tilt_bounds': tilt_bounds,
+                                 'verbose': verbose}
+            blanker_tilt_process = mp.Process(target=blanker_tilt_control, kwargs=blanker_tilt_args)
+
+            if verbose:
+                print("Starting the blanking/tilting process.")
 
             blanker_tilt_process.start()
             barrier.wait()  # Wait for the blanker/tilt process to initialize.
@@ -324,90 +336,14 @@ class AcquisitionMixin:
         return exposure_time_range.Begin, exposure_time_range.End
 
 
-def blanker_tilt_control(barrier: mp.Barrier, exposure_time: float,
-                         blanker_optimization: bool, tilt_destination: float,
-                         verbose: bool = False) -> None:
-    """
-    This function is to be run in a parallel thread/process.
-
-    Support pyTEM.Interface.acquisition() with the control of blanking and/or tilting. For more information on why this
-     is helpful, please refer to pyTEM.Interface.acquisition()
-
-    :param barrier: mp.Barrier:
-        Multiprocessing barrier, used to synchronize with the main thread.
-    :param exposure_time: float:
-        Exposure (integration) time, in seconds.
-
-    :param blanker_optimization: bool:
-        Whether to perform blanker optimization or not.
-    :param tilt_destination: float (optional; default is None):
-        The angle to tilt to, in degrees. If None, then no tilting is performed.
-
-    :param verbose: (optional; default is False):
-           Print out extra information. Useful for debugging.
-
-    :return: None.
-    """
-    interface = StageAndBlankerInterface()
-
-    # Declarations for warning suppression
-    beam_unblank_time, beam_reblank_time, tilt_start_time, tilt_stop_time = None, None, None, None
-
-    barrier.wait()  # Synchronize with the main thread
-
-    # Wait while the camera is blind
-    time.sleep(exposure_time)
-
-    if blanker_optimization:
-        # Unblank while the acquisition is active.
-        interface.unblank_beam()
-        beam_unblank_time = time.time()
-
-    if tilt_destination is not None:
-        # Perform a tilt, this blocks the program for the full integration time so no need to sleep
-        tilt_start_time = time.time()
-        interface.set_stage_position_alpha(alpha=tilt_destination, speed=tilt_speed, movement_type="go")
-        tilt_stop_time = time.time()
-    else:
-        time.sleep(exposure_time)
-
-    if blanker_optimization:
-        # Re-blank the beam
-        beam_reblank_time = time.time()
-        interface.blank_beam()
-
-    if verbose:
-        if blanker_optimization:
-            print("\nUnblanked the beam at: " + str(beam_unblank_time))
-            print("Re-blanked the beam at: " + str(beam_reblank_time))
-            print("Total time spent with the beam unblanked: " + str(beam_reblank_time - beam_unblank_time))
-        if tilt_destination is not None:
-            print("\nStarted titling at: " + str(tilt_start_time))
-            print("Stopped tilting at: " + str(tilt_stop_time))
-            print("Total time spent tilting: " + str(tilt_stop_time - tilt_start_time))
-
-
 class AcquisitionInterface(AcquisitionMixin):
     """
-    A microscope interface with only acquisition controls.
+    A microscope interface with only acquisition (and by extension beam blanker and stage) controls.
     """
 
     def __init__(self):
         try:
             self._tem_advanced = cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument")
-        except OSError as e:
-            print("Unable to connect to the microscope.")
-            raise e
-
-
-class StageAndBlankerInterface(StageMixin, BeamBlankerMixin):
-    """
-    A microscope interface with only stage and blanker controls.
-    """
-
-    def __init__(self):
-        try:
-            self._tem = cc.CreateObject("TEMScripting.Instrument")
         except OSError as e:
             print("Unable to connect to the microscope.")
             raise e
