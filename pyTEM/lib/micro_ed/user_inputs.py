@@ -612,6 +612,7 @@ def have_user_center_particle(microscope: Union[Interface, None]) -> None:
 
     :return: None.
     """
+    microscope.unblank_beam()
     while True:
         title, message = get_alignment_message()
         display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
@@ -623,6 +624,7 @@ def have_user_center_particle(microscope: Union[Interface, None]) -> None:
         else:
             warnings.warn("Currently we are in the " + str(microscope.get_projection_submode())
                           + " magnification range, please select a magnification in the SA range.")
+    microscope.blank_beam()
     return None
 
 
