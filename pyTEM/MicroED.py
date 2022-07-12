@@ -134,6 +134,9 @@ class MicroED:
             # Get tilt range info
             alpha_arr = get_tilt_range(microscope=self.microscope)
 
+            # The user is done adjusting, we can now retract the screen
+            self.microscope.retract_screen()
+
             # Get the required acquisition parameters
             camera_name, integration_time, sampling, downsample = get_acquisition_parameters(microscope=self.microscope)
 
@@ -165,7 +168,7 @@ class MicroED:
                 # We will proceed without compensatory image shifts, just make shifts all zero
                 shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)
 
-            # Confirm the user is happy, remove the screen, and start the procedure
+            # Have the user insert the aperture, confirm they are happy, and start the procedure.
             title, message = get_start_message()
             display_message(title=title, message=message, microscope=self.microscope, position="centered")
 
