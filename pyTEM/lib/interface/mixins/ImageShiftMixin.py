@@ -94,3 +94,16 @@ class ImageShiftMixin(ModeMixin):
         new_image_shift.X = u_prime[0]
         new_image_shift.Y = u_prime[1]
         self._tem.Projection.ImageShift = new_image_shift
+
+
+class ImageShiftInterface(ImageShiftMixin):
+    """
+    A microscope interface with only image shift (and be extension mode) controls.
+    """
+
+    def __init__(self):
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e

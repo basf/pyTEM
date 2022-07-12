@@ -101,3 +101,16 @@ class BeamShiftMixin:
         new_beam_shift.X = u_prime[0]
         new_beam_shift.Y = u_prime[1]
         self._tem.Illumination.Shift = new_beam_shift
+
+
+class BeamShiftInterface(BeamShiftMixin):
+    """
+    A microscope interface with only beam shift controls.
+    """
+
+    def __init__(self):
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e

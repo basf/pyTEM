@@ -26,7 +26,7 @@ except Exception as ImportException:
     raise ImportException
 
 
-class AcquisitionMixin(BeamBlankerMixin):
+class AcquisitionMixin:
     """
     Microscope image acquisition controls.
 

@@ -181,7 +181,7 @@ class ModeMixin(ScreenMixin):
 
 class ModeInterface(ModeMixin):
     """
-    A microscope interface with only mode controls.
+    A microscope interface with only mode (and by extension screen) controls.
     """
 
     def __init__(self):

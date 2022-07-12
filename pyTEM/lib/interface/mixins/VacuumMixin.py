@@ -170,3 +170,16 @@ class VacuumMixin:
                   "without any further action of the user.")
         else:
             raise Exception("Vacuum Status '" + str(vacuum_status) + "' not recognized.")
+
+
+class VacuumInterface(VacuumMixin):
+    """
+    A microscope interface with only vacuum controls.
+    """
+
+    def __init__(self):
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e

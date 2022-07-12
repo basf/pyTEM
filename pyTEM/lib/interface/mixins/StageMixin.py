@@ -500,3 +500,16 @@ class StageMixin:
 
         else:
             raise Exception("Error: axis '" + str(axis) + "' not recognized!")
+
+
+class StageInterface(StageMixin):
+    """
+    A microscope interface with only stage controls.
+    """
+
+    def __init__(self):
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e

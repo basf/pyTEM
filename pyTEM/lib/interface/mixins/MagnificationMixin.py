@@ -209,3 +209,16 @@ class MagnificationMixin(ModeMixin):
 
         else:
             raise Exception("Error: Microscope mode unknown.")
+
+
+class MagnificationInterface(MagnificationMixin):
+    """
+    A microscope interface with only magnification (and be extension mode) controls.
+    """
+
+    def __init__(self):
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e
