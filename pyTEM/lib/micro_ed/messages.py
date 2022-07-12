@@ -22,7 +22,7 @@ def get_welcome_message() -> Tuple[str, str]:
               "script. MicroED allows fast, high resolution 3D structure determination of small chemical " \
               "compounds biological macromolecules! You can exit the script any time using the exit buttons on the " \
               "pop-up message boxes, or by hitting Ctrl-C on your keyboard. " \
-              "\n\nPlease click the continue button to get started!"
+              "\n\nPlease click the Continue button to get started!"
     return title, message
 
 
@@ -31,28 +31,33 @@ def get_initialization_message() -> Tuple[str, str]:
     :return: str: Initialization/connection message.
     """
     title = "We are now inviting those passengers with small children, and any passengers requiring special " \
-            "assistance, to begin boarding at this time."
+            "assistance, to begin boarding at gate 7 at this time."
     message = "In order to initialize the microscope for MicroED, we are now going to: " \
               "\n - Insert the Flucam screen." \
               "\n - Make sure the microscope is in 'TEM' mode." \
-              "\n - Make sure the microscope is in 'Imaging' mode. " \
+              "\n - Make sure the microscope is in 'imaging' mode. " \
               "\n - Zero the image shift." \
               "\n - Zero the \u03B1 tilt." \
               "\n - Normalize all lenses." \
-              "\n\nThe beam will remain blanked." \
-              "\n\nTo start this initialization procedure, please click the continue button."
+              "\n - Unblank the beam." \
+              "\n\nIf a chosen particle has already been identified, you may want to reduce the illumination and " \
+              "move the stage such that it will not be illuminated once, upon completion of the initialization " \
+              "process, we unblank the beam." \
+              "\n\nOnce you are ready to start the initialization procedure, please click the Continue button."
     return title, message
 
 
-def get_alignment_message() -> Tuple[str, str]:
+def get_find_dummy_particle_message() -> Tuple[str, str]:
     """
-    :return: str: An alignment message.
+    :return: str: An message prompting the user to find the dummy particle.
     """
-    title = "We will now begin general boarding for TEM Air flight M300 with service to Ludwigshafen am Rhein."
+    title = "We are now inviting our business and first-class customers to gate 7 for priority boarding."
     message = "Using the microscope control panel, please select a magnification in the SA range and center the " \
-              "microscope on the particle of interest. " \
+              "microscope on some dummy particle. Don't worry about over-exposing the particle, this is the not the " \
+              "particle we are going to analyse. For best results, please choose a dummy particle at approximately " \
+              "the same y-location as (and preferably near to) the particle you want to analyse." \
               "\n\nPlease do not adjust the stage tilt nor the image shift. " \
-              "\n\nOnce the particle is centered, please click the continue button."
+              "\n\nOnce the dummy particle is centered, please click the Continue button."
     return title, message
 
 
@@ -60,12 +65,24 @@ def get_eucentric_height_message() -> Tuple[str, str]:
     """
     :return: str: An eucentric height message.
     """
-    title = "In order to expedite the boarding process, please be seated as quickly as possible after stowing your " \
-            "carry-on items."
+    title = "We will now begin general boarding for TEM Air flight M300 with service to Ludwigshafen am Rhein."
     message = "Please, using the \u03B1 wobble and z-axis buttons on the microscope control panel, manually set the " \
               "microscope to the eucentric height. That is, please find and select the z-height where tilting the " \
               "specimen leads to a minimal lateral movement of the image." \
-              "\n\nOnce at eucentric height, re-center the particle if necessary."
+              "\n\nOnce at eucentric height, re-center on the dummy particle and click the Continue button."
+    return title, message
+
+
+def get_alignment_message() -> Tuple[str, str]:
+    """
+    :return: str: An alignment message.
+    """
+    title = "Our flight is now ready for departure, we wish you all an enjoyable flight."
+    message = "Using the microscope control panel, please (still with a magnification in the SA range) center the " \
+              "microscope on the particle of interest. " \
+              "\n\nPlease do not adjust the stage tilt nor the image shift. " \
+              "\n\nOnce the particle is centered, please click the Continue button and the blanker will be " \
+              "enabled automatically."
     return title, message
 
 
@@ -86,10 +103,12 @@ def get_insert_and_align_sad_aperture_message() -> Tuple[str, str]:
     """
     :return: str: A message prompting the user to insert and align the selected area diffraction (SAD) aperture.
     """
-    title = "Our flight is now ready for departure, we wish you all an enjoyable flight."
-    message = "Please, using your microscope's UI and the microscope control panel, insert and align the selected " \
-              "area diffraction (SAD) aperture." \
-              "\n\nOnce the SAD aperture is inserted and centered, please click the continue button."
+    title = "In order to expedite the boarding process, please be seated as quickly as possible after stowing your " \
+            "carry-on items."
+    message = "Please, using your microscope's UI and the microscope control panel, insert and align the required " \
+              "selected area diffraction (SAD) aperture." \
+              "\n\nOnce the SAD aperture is aligned, please remove it." \
+              "\n\nOnce the SAD aperture has been removed, please click the continue button."
     return title, message
 
 
@@ -97,7 +116,7 @@ def get_start_message() -> Tuple[str, str]:
     """
     :return: str: A start message.
     """
-    title = "Flight attendants, prepare doors for departure and cross check."
+    title = "Flight attendants, prepare doors for departure and cross-check."
     message = "We are now ready to perform a MicroED tilt acquisition series! Please refrain from touching the " \
               "microscope controls for the duration of the experiment. If at any point you need to stop the " \
               "experiment, please hit Ctrl-C on your keyboard. " \
@@ -173,7 +192,7 @@ def display_message(title: str, message: str, microscope: Union[Interface, None]
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
     elif position == "out-of-the-way":
-        root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=root.winfo_height(),
+        root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=215,
                                                         x=int(0.65 * root.winfo_screenwidth()),
                                                         y=int(0.025 * root.winfo_screenheight())))
     else:
@@ -184,5 +203,5 @@ def display_message(title: str, message: str, microscope: Union[Interface, None]
 
 if __name__ == "__main__":
     """ Testing """
-    title_, message_ = get_insert_and_align_sad_aperture_message()
-    display_message(title=title_, message=message_, microscope=None, position="out-of-the-way")
+    title_, message_ = get_eucentric_height_message()
+    display_message(title=title_, message=message_, microscope=None, position="centered")

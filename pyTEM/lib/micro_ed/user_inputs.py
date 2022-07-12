@@ -24,7 +24,7 @@ try:
     from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
     from pyTEM.lib.micro_ed.exit_script import exit_script
     from pyTEM.lib.micro_ed.messages import automated_alignment_message, get_welcome_message, display_message, \
-        get_alignment_message
+        get_alignment_message, get_find_dummy_particle_message
     from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
     from pyTEM.lib.micro_ed.closest_number import closest_number
 except Exception as ImportException:
@@ -602,19 +602,26 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     return out_path
 
 
-def have_user_center_particle(microscope: Union[Interface, None]) -> None:
+def have_user_center_particle(microscope: Union[Interface, None], dummy_particle: bool) -> None:
     """
-    Have the user center the particle.
+    Have the user center on a particle.
 
-    :param microscope: pyTEM TEMInterface (or None):
+    :param microscope: pyTEM Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
+    :param dummy_particle: bool:
+        Whether we are aligning the dummy particle.
+            True: We are aligning a dummy particle.
+            False: We are aligning on the actual particle we want to analyse
 
     :return: None.
     """
     microscope.unblank_beam()
     while True:
-        title, message = get_alignment_message()
+        if dummy_particle:
+            title, message = get_find_dummy_particle_message()
+        else:
+            title, message = get_alignment_message()
         display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
 
         # Confirm that we are in the correct magnification range (at the time of writing image shift is only
@@ -661,7 +668,6 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
             - 'linear': Interpolate using only the adjacent (local) values from the sample array that bracket alpha.
             - 'global': Interpolate using all the values in the sample array.
     """
-
     window_width = 650
     label_font = (None, 13)
 
@@ -730,9 +736,9 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     units_label = ttk.Label(root, text="degrees.", font=label_font)
     units_label.grid(column=2, row=2, sticky="w", pady=5)
 
-    tilt_range_label = ttk.Label(root, text="For reference, the selected tilt range is \u03B1=" + str(tilt_start)
-                                            + " to " + str(tilt_stop) + " degrees.", font=label_font,
-                                 justify='center', wraplength=window_width)
+    tilt_range_label = ttk.Label(root, text="For reference, the selected tilt range is \u03B1="
+                                            + str(round(tilt_start, 2)) + " to " + str(round(tilt_stop, 2))
+                                            + " degrees.", font=label_font, justify='center', wraplength=window_width)
     tilt_range_label.grid(column=0, row=3, columnspan=3, padx=5, pady=5)
 
     samples, step = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop,
@@ -743,7 +749,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     txt = "Total exposure time required for automated image alignment with a correctional shift interval of " + \
           str(round(step, 2)) + " deg: " + str(round(total_exposure_time_required, 2)) + " seconds " + \
           "\nThat is, calibration images will be taken at the following tilt angles: " + \
-          "\n" + str(samples) + " (" + str(num_images_required) + " calibration images)"
+          "\n" + str(np.round(samples, decimals=2)) + " (" + str(num_images_required) + " calibration images)"
     correction_shift_interval_label = ttk.Label(root, text=txt, font=label_font, wraplength=window_width,
                                                 justify='center')
     correction_shift_interval_label.grid(column=0, row=4, columnspan=3, padx=5, pady=5)

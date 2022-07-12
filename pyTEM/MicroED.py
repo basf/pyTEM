@@ -23,7 +23,7 @@ try:
     from pyTEM.lib.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
     from pyTEM.lib.micro_ed.messages import get_welcome_message, get_initialization_message, display_message, \
         get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message, \
-        get_insert_and_align_sad_aperture_message
+        get_insert_and_align_sad_aperture_message, get_find_dummy_particle_message
     from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
     from pyTEM.lib.micro_ed.perform_tilt_series import perform_tilt_series
     from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
@@ -110,20 +110,31 @@ class MicroED:
             self.microscope.set_image_shift(x=0, y=0)  # Zero the image shift
             self.microscope.set_stage_position(alpha=0)  # Zero the stage tilt
             self.microscope.normalize()
+            self.microscope.unblank_beam()
+
+            # Have the user select a dummy particle with which we can calibrate the eucentric height and aperture
+            have_user_center_particle(microscope=self.microscope, dummy_particle=True)
+
+            # Have the user manually set eucentric height
+            # TODO: Automate eucentric height calibration
+            title, message = get_eucentric_height_message()
+            display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
+
+            # Have the user manually insert, align, and then remove the SAD aperture
+            # TODO: Automate SAD aperture controls
+            title, message = get_insert_and_align_sad_aperture_message()
+            display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
 
             # Have the user center the particle
-            have_user_center_particle(microscope=self.microscope)
+            have_user_center_particle(microscope=self.microscope, dummy_particle=False)
 
-            # Have the user manually set eucentric height  # TODO: Automate eucentric height calibration
-            title, message = get_eucentric_height_message()
-            self.microscope.unblank_beam()
-            display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
+            # We are now centered on the particle and need to keep the beam blank whenever possible.
             self.microscope.blank_beam()
 
             # Get tilt range info
             alpha_arr = get_tilt_range(microscope=self.microscope)
 
-            # Get the required camera parameters
+            # Get the required acquisition parameters
             camera_name, integration_time, sampling, downsample = get_acquisition_parameters(microscope=self.microscope)
 
             # Get the out path (where in the file system should we save the results?)
@@ -154,19 +165,13 @@ class MicroED:
                 # We will proceed without compensatory image shifts, just make shifts all zero
                 shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)
 
-            # Have the user manually insert and center the SAD aperture  # TODO: Automate SAD aperture controls
-            title, message = get_insert_and_align_sad_aperture_message()
-            self.microscope.unblank_beam()
-            display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
-            self.microscope.blank_beam()
-
             # Confirm the user is happy, remove the screen, and start the procedure
             title, message = get_start_message()
             display_message(title=title, message=message, microscope=self.microscope, position="centered")
 
             # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode
 
-            # Go ahead and actually perform the tilt series, saving the results to file.
+            # Go ahead and actually perform the tilt series.
             acq_stack = perform_tilt_series(microscope=self.microscope, acquisition_properties=acquisition_properties,
                                             shifts=shifts, verbose=verbose)
 
