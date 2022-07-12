@@ -3,6 +3,7 @@
  Date:    Summer 2022
 """
 
+import math
 import time
 
 import comtypes.client as cc
@@ -16,9 +17,9 @@ from pyTEM.lib.interface.tem_tilt_speed import tem_tilt_speed
 
 
 def blanker_tilt_control(num_acquisitions: int,
+                         barriers: ArrayLike,
                          exposure_time: float,
                          blanker_optimization: bool,
-                         barriers: ArrayLike,
                          tilt_bounds: Union[ArrayLike, None],
                          verbose: bool = False) -> None:
     """
@@ -43,6 +44,7 @@ def blanker_tilt_control(num_acquisitions: int,
         An array of alpha start-stop values for the tilt acquisition(s), in degrees.
         len(tilt_bounds) should equal num_acquisitions + 1
         Doesn't need to be evenly spaced, the tilt speed will adapt for each individual acquisition.
+        We will ensure we are at the starting angle (tilt_bounds[0]) before performing the first acquisition.
         If None, or an array of length 0, then no tilting is performed.
 
     :param verbose: (optional; default is False):
@@ -57,6 +59,9 @@ def blanker_tilt_control(num_acquisitions: int,
         raise Exception("Error: blanker_tilt_control() didn't receive the expected number of barriers. Expected "
                         + str(num_acquisitions) + ", but received " + str(len(barriers)) + ".")
 
+    # Build an interface with stage and blanker controls that this process can use to control the microscope.
+    interface = StageAndBlankerInterface()
+
     tilting = False  # Assume we are not tilting
     if tilt_bounds is not None:
         # Then we expect an array, either of length 0 or num_acquisitions + 1.
@@ -64,13 +69,14 @@ def blanker_tilt_control(num_acquisitions: int,
             pass
         if len(tilt_bounds) == num_acquisitions + 1:
             tilting = True  # We need to tilt.
+
+            # Ensure we are at the starting tilt angle.
+            if not math.isclose(interface.get_stage_position_alpha(), tilt_bounds[0], abs_tol=0.01):
+                interface.set_stage_position_alpha(alpha=tilt_bounds[0], speed=0.25, movement_type="go")
         else:
             raise Exception("Error: The length of the non-empty tilt_bounds array (" + str(len(tilt_bounds))
                             + ") received by blanker_tilt_control() is inconsistent with the requested number of "
                               "requested acquisitions (" + str(num_acquisitions) + ").")
-
-    # Build an interface with stage and blanker controls that this process can use to control the microscope.
-    interface = StageAndBlankerInterface()
 
     # Declarations for warning suppression
     beam_unblank_time, beam_reblank_time, tilt_start_time, tilt_stop_time = None, None, None, None
