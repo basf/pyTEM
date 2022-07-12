@@ -36,16 +36,17 @@ except Exception as ImportException:
 
 class MicroED:
     """
-    A MicroED objection that can be used to run MicroED experiments
+    A MicroED objection that can be used to run MicroED experiments.
     """
 
     def __init__(self):
         # Try to connect to a microscope
         try:
             self.microscope = Interface()
+            print("Microscope connection established successfully.")
         except BaseException as e:
-            warnings.warn("MicroED was unable to connect to a microscope, try (re)connecting by MicroED.connect(): "
-                          + str(e))
+            warnings.warn("MicroED was unable to connect to a microscope, try (re)connecting with MicroED.connect(). "
+                          "\nError details:" + str(e))
             self.microscope = None
 
     def connect(self) -> None:
@@ -54,14 +55,17 @@ class MicroED:
         """
         try:
             self.microscope = Interface()
+            print("Microscope connection established successfully.")
         except BaseException as e:
-            warnings.warn("MicroED was unable to connect to a microscope, try (re)connecting by MicroED.connect(): "
-                          + str(e))
+            warnings.warn("MicroED was unable to connect to a microscope, try (re)connecting with MicroED.connect(). "
+                          "\nError details:" + str(e))
             self.microscope = None
 
     def run(self, verbose: bool = False) -> None:
         """
         Perform a MicroED automated imaging sequence.
+
+        To reduce dose, the beam is kept blank whenever possible.
 
         This involves:
          1. prompting the user for the required information,
@@ -74,44 +78,52 @@ class MicroED:
             Print out extra information. Useful for debugging.
         """
         if self.microscope is None:
-            raise Exception("No microscope connection")
+            raise Exception("Error: Unable to run MicroED for there is no microscope connection.")
+        else:
+            # To reduce dose, keep the microscope blanked whenever possible.
+            self.microscope.blank_beam()
+
+        # In order to minimize sample destruction, we want to expose as little as possible. However, during image shift
+        #  calibration, we need to expose for long enough that we get usable images.
         shift_calibration_exposure_time = 0.25  # s
 
         try:
-            # Display a welcome message
+            # Display welcome messages
             title, message = get_welcome_message()
             display_message(title=title, message=message, microscope=self.microscope, position="centered")
-
-            # Connect to the microscope and Initialize for MicroED
             title, message = get_initialization_message()
             display_message(title=title, message=message, microscope=self.microscope, position="centered")
 
-            # TODO: If not verbose, redirect standard input for these commands that may print stuff.
-            self.microscope.insert_screen()
-            self.microscope.open_column_valve()  # Might not work if the column isn't under vacuum
+            # Initialize for MicroED
+            if self.microscope.get_screen_position() != "inserted":
+                self.microscope.insert_screen()
+            if self.microscope.get_column_valve_position() != "open":
+                self.microscope.open_column_valve()  # Might not work if the column isn't under vacuum
+            # Confirm that the column valve was actually opened
             if self.microscope.get_column_valve_position() == "closed":
                 raise Exception("Error: We were unable to open the column value, probably because the column isn't "
                                 "under sufficient vacuum. Please check the instrument.")
-
-            self.microscope.set_mode("TEM")
-            self.microscope.set_projection_mode("Imaging")
+            if self.microscope.get_mode() != "TEM":
+                self.microscope.set_mode("TEM")
+            if self.microscope.get_projection_mode() != "imaging":
+                self.microscope.set_projection_mode("imaging")
             self.microscope.set_image_shift(x=0, y=0)  # Zero the image shift
             self.microscope.set_stage_position(alpha=0)  # Zero the stage tilt
             self.microscope.normalize()
-            self.microscope.unblank_beam()
 
             # Have the user center the particle
             have_user_center_particle(microscope=self.microscope)
 
             # Have the user manually set eucentric height  # TODO: Automate eucentric height calibration
             title, message = get_eucentric_height_message()
+            self.microscope.unblank_beam()
             display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
+            self.microscope.blank_beam()
 
             # Get tilt range info
             alpha_arr = get_tilt_range(microscope=self.microscope)
 
             # Get the required camera parameters
-            self.microscope.blank_beam()
             camera_name, integration_time, sampling, downsample = get_acquisition_parameters(microscope=self.microscope)
 
             # Get the out path (where in the file system should we save the results?)
@@ -143,8 +155,8 @@ class MicroED:
                 shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)
 
             # Have the user manually insert and center the SAD aperture  # TODO: Automate SAD aperture controls
-            self.microscope.unblank_beam()
             title, message = get_insert_and_align_sad_aperture_message()
+            self.microscope.unblank_beam()
             display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
             self.microscope.blank_beam()
 
@@ -152,7 +164,7 @@ class MicroED:
             title, message = get_start_message()
             display_message(title=title, message=message, microscope=self.microscope, position="centered")
 
-            # microscope.set_projection_mode("Diffraction")  # Switch to diffraction mode
+            # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode
 
             # Go ahead and actually perform the tilt series, saving the results to file.
             acq_stack = perform_tilt_series(microscope=self.microscope, acquisition_properties=acquisition_properties,
