@@ -29,6 +29,5 @@ setup(
                       'mrcfile',
                       'pathlib',
                       'Pillow',
-                      'pathos'
                       ],
 )
