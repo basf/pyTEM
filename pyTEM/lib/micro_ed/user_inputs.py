@@ -26,6 +26,7 @@ try:
     from pyTEM.lib.micro_ed.messages import automated_alignment_message, get_welcome_message, display_message, \
         get_alignment_message
     from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
+    from pyTEM.lib.micro_ed.closest_number import closest_number
 except Exception as ImportException:
     raise ImportException
 
@@ -39,6 +40,10 @@ class GetTiltRange:
             through the quit button on the message box.
         """
         self.microscope = microscope
+        user_had_the_beam_blank = self._beam_is_blank()
+        if not user_had_the_beam_blank:
+            # Blank to reduce unnecessary dose
+            self._blank_beam()
 
         # Obtain the tilt range limits
         try:
@@ -50,6 +55,14 @@ class GetTiltRange:
         self.font = None  # Default is fine
         self.font_size = 13
 
+        # Since the tilt step is always to be respected, we will get it first
+        while True:
+            self.step = self.get_tilt_step()
+            if 0.001 <= abs(self.step) <= 40.1:
+                break  # Input is okay  # TODO: Add tkinter validation to Entry widget itself
+            else:
+                warnings.warn("The provided alpha step is unpractical, please try again!")
+
         while True:
             self.start = self.get_tilt_start()
             if self.alpha_min < self.start < self.alpha_max and self.start != 0:
@@ -57,23 +70,63 @@ class GetTiltRange:
             else:
                 warnings.warn("Invalid alpha start, please try again!")
 
-        while True:
-            self.stop = self.get_tilt_stop()
-            if self.alpha_min < self.stop < self.alpha_max and self.stop != 0 and opposite_signs(self.start, self.stop):
-                break  # Input is okay  # TODO: Add tkinter validation to Entry widget itself
-            else:
-                warnings.warn("Invalid alpha stop, please try again!")
-
-        while True:
-            self.step = self.get_tilt_step()
-            if abs(self.step) <= abs(self.start - self.stop) / 2:
-                break  # Input is okay  # TODO: Add tkinter validation to Entry widget itself
-            else:
-                warnings.warn("Invalid alpha step, please try again!")
-
         # tilt_step and tilt_start should have opposite signs
         if not opposite_signs(self.start, self.step):
             self.step = -1 * self.step
+
+        self.stop = self.get_tilt_stop()
+
+        if not user_had_the_beam_blank:
+            # Leave the blanker as we found it
+            self._unblank_beam()
+
+    def get_tilt_step(self) -> float:
+        """
+        Prompt the user for the microED alpha step (angle interval between successive images).
+
+        :return: float:
+            step: alpha angle interval between successive images.
+        """
+        root = tk.Tk()
+        style = ttk.Style()
+        window_width = 500
+
+        root.title("At this time, portable electronic devices must be switched into ‘airplane’ mode.")
+
+        add_basf_icon_to_tkinter_window(root)
+
+        message = ttk.Label(root, text="Please enter the desired tilt step "
+                                       "\n(the alpha tilt angle between adjacent images).",
+                            font=(self.font, self.font_size), justify='center', wraplength=window_width)
+        message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
+
+        # Add labels for the parameters we are trying to collect.
+        step_label = ttk.Label(root, text="Step:", font=(self.font, self.font_size))
+        step_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
+
+        # Add entry box for user input.
+        step = tk.StringVar()
+        step_entry_box = ttk.Entry(root, textvariable=step)
+        step_entry_box.grid(column=1, row=1, padx=5, pady=5)
+        step_entry_box.insert(0, "0.3")
+
+        # Add labels showing the units.
+        step_units_label = ttk.Label(root, text="deg", font=(self.font, self.font_size))
+        step_units_label.grid(column=2, row=1, sticky="w", padx=5, pady=5)
+
+        # Create submit and exit buttons
+        continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
+        continue_button.grid(column=1, row=2, padx=5, pady=5)
+        exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
+                                 style="big.TButton")
+        exit_button.grid(column=1, row=3, padx=5, pady=5)
+
+        style.configure('big.TButton', font=(self.font, self.font_size), foreground="blue4")
+        root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+
+        root.mainloop()
+
+        return float(step.get())
 
     def get_tilt_start(self) -> float:
         """
@@ -85,17 +138,18 @@ class GetTiltRange:
         root = tk.Tk()
         style = ttk.Style()
         window_width = 500
-        window_height = 235
+        window_height = 280
 
         root.title("Please ensure your seat back is straight up and your tray table is stowed.")
 
         add_basf_icon_to_tkinter_window(root)
 
         message = ttk.Label(root, text="Please enter the \u03B1 tilt angle at which to start tilting."
-                                       "\n\nPlease confirm, using the 'Test Input' button, that the stage is actually "
-                                       "capable of tilting to the this \u03B1, and that the particle remains in the "
-                                       "field-of-view and doesn't overlap any other particles before submitting your "
-                                       "input.",
+                                       "\n\nPlease confirm, using the 'Unblank & Test Input' button, that the stage is "
+                                       "actually capable of tilting to the this \u03B1, and that the particle remains "
+                                       "in the field-of-view and doesn't overlap any other particles before submitting "
+                                       "your input."
+                                       "\n\nFor reference, our tilt step is \u0394\u03B1=" + str(self.step) + " deg.",
                             wraplength=window_width, font=(self.font, self.font_size), justify='center')
         message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
 
@@ -119,7 +173,7 @@ class GetTiltRange:
         start_units_label.grid(column=2, row=2, sticky="w", padx=5, pady=5)
 
         # Create test, continue, and exit buttons
-        test_button = ttk.Button(root, text="Test Input", style="big.TButton",
+        test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
                                  command=lambda: self._update_alpha(alpha=float(start.get())))
         test_button.grid(column=0, row=3, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
@@ -146,10 +200,17 @@ class GetTiltRange:
         :return: float
             stop: The alpha tilt angle at which to stop the series acquisition, in degrees.
         """
+        # Try to build a symmetric array of alpha values using the start and step values. Encase the tilt range can't
+        #  be divided evenly by the tilt step, the stop value will not be respected.
+        alpha_arr = np.arange(self.start, -1 * self.start + self.step, self.step)
+
+        # Suggest the final value in alpha_arr as a legal final stop value.
+        default_stop_value = round(alpha_arr[-1], 2)
+
         root = tk.Tk()
         style = ttk.Style()
         window_width = 500
-        window_height = 275
+        window_height = 350
 
         root.title("Fasten your seat belt by placing the metal fitting into the buckle, and adjust the strap so it "
                    "fits low and tight around your hips.")
@@ -161,7 +222,8 @@ class GetTiltRange:
                                        "capable of tilting to the desired \u03B1, and that the particle remains in the "
                                        "field-of-view and doesn't overlap any other particles before submitting your "
                                        "input."
-                                       "\n\nFor reference, our start angle is \u03B1=" + str(self.start) + " deg.",
+                                       "\n\nFor reference, our start angle is \u03B1=" + str(self.start) + " deg \n"
+                                       "and our tilt step is \u0394\u03B1=" + str(self.step),
                             wraplength=window_width, font=(self.font, self.font_size), justify='center')
         message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
 
@@ -169,6 +231,59 @@ class GetTiltRange:
                                                + str(round(self.alpha_max, 2)) + " deg",
                                     font=(self.font, self.font_size), justify='center')
         max_range_label.grid(column=0, row=1, columnspan=3, padx=5, pady=5)
+
+        # Show the user what last stop we will use encase of an uneven division
+        def update_uneven_division_label(*args):
+            try:
+                current_stop = float(stop.get())
+            except ValueError:
+                current_stop = 0
+
+            if current_stop < self.alpha_min or current_stop > self.alpha_max:
+                # The suggested value falls outside of the legal tilt range.
+                continue_button.config(state=tk.DISABLED)
+                txt_ = "Warning: The current stop falls outside of the allowable tilt range. Suggested stop: " \
+                       + str(default_stop_value) + "."
+                uneven_division_label.configure(foreground="red")
+
+            elif not opposite_signs(self.start, current_stop):
+                # The start and stop values must have opposite signs
+                continue_button.config(state=tk.DISABLED)
+                txt_ = "Warning: The stop value must differ in sign from the start value. Suggested stop: " \
+                       + str(default_stop_value) + "."
+                uneven_division_label.configure(foreground="red")
+
+            elif current_stop == 0:
+                # Zero is not allowed.
+                continue_button.config(state=tk.DISABLED)
+                txt_ = "Warning: 0 degrees is an illegal stop value. Suggested stop: " + str(default_stop_value) + "."
+                uneven_division_label.configure(foreground="red")
+
+            else:
+                # Try to build an array of alpha values using the provided start, stop, and step values.
+                alpha_arr_ = np.arange(self.start, current_stop + self.step, self.step)
+                print(alpha_arr)
+
+                if math.isclose(a=alpha_arr_[-1], b=current_stop, abs_tol=1e-4) or \
+                        math.isclose(a=alpha_arr_[-2], b=current_stop, abs_tol=1e-4):
+                    # The input value is okay from a division standpoint.
+                    txt_ = ""
+                    continue_button.config(state=tk.NORMAL)
+                    uneven_division_label.configure(foreground="black")
+
+                else:
+                    # The current stop value would result in a tilt range that is not evenly divisible by the tilt
+                    #  step, disable the continue button and warn the user.
+                    continue_button.config(state=tk.DISABLED)
+
+                    # Suggest the final value in alpha_arr as a legal final stop value.
+                    suggested_stop = round(alpha_arr_[-1], 2)
+                    txt_ = "Warning: A stop value of " + str(current_stop) + " would provide a tilt interval that " \
+                           "doesn't divide evently by \u0394\u03B1=" + str(self.step) + ". Suggested stop: " + \
+                           str(suggested_stop)
+                    uneven_division_label.configure(foreground="red")
+
+            uneven_division_label.config(text=txt_)
 
         # Add labels for the parameters we are trying to collect.
         stop_label = ttk.Label(root, text="Stop:", font=(self.font, self.font_size))
@@ -178,21 +293,28 @@ class GetTiltRange:
         stop = tk.StringVar()
         stop_entry_box = ttk.Entry(root, textvariable=stop)
         stop_entry_box.grid(column=1, row=2, padx=5, pady=5)
-        stop_entry_box.insert(0, str(-1 * self.start))
+        stop_entry_box.insert(0, str(default_stop_value))
+        stop.trace('w', update_uneven_division_label)
 
         # Add labels showing the units.
         stop_units_label = ttk.Label(root, text="deg", font=(self.font, self.font_size))
         stop_units_label.grid(column=2, row=2, sticky="w", padx=5, pady=5)
 
+        # Add a warning label encase we are unable to evenly divide the provided interval by the provided step and thus
+        #  cannot use this step exactly
+        uneven_division_label = ttk.Label(root, text="", wraplength=window_width, font=(self.font, self.font_size),
+                                          justify='center')
+        uneven_division_label.grid(column=0, columnspan=3, row=3, padx=5, pady=5)
+
         # Create test, continue, and exit buttons
-        test_button = ttk.Button(root, text="Test Input", style="big.TButton",
+        test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
                                  command=lambda: self._update_alpha(alpha=float(stop.get())))
-        test_button.grid(column=0, row=3, padx=5, pady=5)
+        test_button.grid(column=0, row=4, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
-        continue_button.grid(column=1, row=3, padx=5, pady=5)
+        continue_button.grid(column=1, row=4, padx=5, pady=5)
         exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
                                  style="big.TButton")
-        exit_button.grid(column=2, row=3, padx=5, pady=5)
+        exit_button.grid(column=2, row=4, padx=5, pady=5)
 
         style.configure('big.TButton', font=(self.font, self.font_size), foreground="blue4")
 
@@ -204,84 +326,85 @@ class GetTiltRange:
 
         return float(stop.get())
 
+    # The following helper functions are all Interface wrappers that allow us to test this class without an actual
+    #  microscope connection.
+
     def _update_alpha(self, alpha: float) -> None:
         """
-        Helper function to update the alpha tilt angle as the user searches for a valid alpha tilt range.
+        Helper function to update the alpha tilt angle.
         :param alpha: float:
             The alpha tilt angle that we will move the stage to.
         :return: None.
         """
         if self.microscope is None:
-            print("We are not connected to the microscope, but otherwise would be moving to \u03B1=" + str(alpha))
+            print("We are not connected to the microscope, but otherwise would be moving to \u03B1=" + str(alpha)
+                  + " and then briefly unblanking.")
         else:
             self.microscope.set_stage_position_alpha(alpha=alpha, speed=0.5)
+            self.microscope.unblank_beam()
+            self.microscope.blank_beam()
 
-    def get_tilt_step(self) -> float:
+    def _blank_beam(self) -> None:
         """
-        Prompt the user for the microED alpha step (angle interval between successive images).
-
-        :return: float:
-            step: alpha angle interval between successive images.
+        Helper function to blank the beam.
+        :return: None.
         """
-        root = tk.Tk()
-        style = ttk.Style()
-        window_width = 500
+        if self.microscope is None:
+            print("We are not connected to the microscope, but otherwise would be blanking the beam.")
+        else:
+            self.microscope.blank_beam()
 
-        root.title("At this time, portable electronic devices must be switched into ‘airplane’ mode.")
+    def _unblank_beam(self) -> None:
+        """
+        Helper function to unblank the beam.
+        :return: None.
+        """
+        if self.microscope is None:
+            print("We are not connected to the microscope, but otherwise we would be unblanking the beam.")
+        else:
+            self.microscope.blank_beam()
 
-        add_basf_icon_to_tkinter_window(root)
-
-        message = ttk.Label(root, text="Please enter the tilt step "
-                                       "\n(the alpha tilt angle between adjacent images)."
-                                       "\n\nFor reference, our tilt range is \u03B1=" + str(self.start) + " to "
-                                       + str(self.stop) + " deg.",
-                            font=(self.font, self.font_size), justify='center', wraplength=window_width)
-        message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
-
-        # Add labels for the parameters we are trying to collect.
-        step_label = ttk.Label(root, text="Step:", font=(self.font, self.font_size))
-        step_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
-
-        # Add entry boxes for user input.
-        step = tk.StringVar()
-        step_entry_box = ttk.Entry(root, textvariable=step)
-        step_entry_box.grid(column=1, row=1, padx=5, pady=5)
-        step_entry_box.insert(0, "0.3")
-
-        # Add labels showing the units.
-        step_units_label = ttk.Label(root, text="deg", font=(self.font, self.font_size))
-        step_units_label.grid(column=2, row=1, sticky="w", padx=5, pady=5)
-
-        # Create continue and exit buttons
-        continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
-        continue_button.grid(column=1, row=2, padx=5, pady=5)
-        exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
-                                 style="big.TButton")
-        exit_button.grid(column=1, row=3, padx=5, pady=5)
-
-        style.configure('big.TButton', font=(self.font, self.font_size), foreground="blue4")
-        root.eval('tk::PlaceWindow . center')  # Center the window on the screen
-
-        root.mainloop()
-
-        return float(step.get())
+    def _beam_is_blank(self) -> bool:
+        """
+        Helper function to see if the beam is blank.
+        :return: bool:
+            True: Beam is blank.
+            False: Beam is unblanked.
+        """
+        if self.microscope is None:
+            print("We are not connected to the microscope, but otherwise we would be returning whether the beam is "
+                  "blank.")
+            return True  # For testing, just assume the user has the beam blank
+        else:
+            return self.microscope.beam_is_blank()
 
 
 def get_tilt_range(microscope: Union[Interface, None]) -> np.array:
     """
     Get the full alpha tilt range from the user.
 
-    :param microscope: pyTEM TEMInterface (or None):
-        The microscope interface, needed to return the microscope to a safe state if the user exits the script
-         through the quit button on the message box.
+    :param microscope: pyTEM Interface (or None):
+        The microscope interface, needed to test out different tilt angles, and also to return the microscope to a safe
+         state if the user exits the script through the 'Quit' button on the message box.
 
     :return: np.array of floats:
         An array of alpha start-stop values that can be used for a tilt acquisition series.
     """
     tilt_range = GetTiltRange(microscope=microscope)
+    alpha_arr = np.arange(tilt_range.start, tilt_range.stop + tilt_range.step, tilt_range.step)
 
-    num_alpha = abs(int((tilt_range.stop - tilt_range.start) / tilt_range.step)) + 1
-    alpha_arr = np.linspace(start=tilt_range.start, stop=tilt_range.stop, num=num_alpha, endpoint=True)
+    if math.isclose(a=alpha_arr[-1], b=tilt_range.stop, abs_tol=1e-4):
+        # Then all is good, np.arange() worked as we intended.
+        pass
+
+    elif math.isclose(a=alpha_arr[-2], b=tilt_range.stop, abs_tol=1e-4):
+        # Our array is one element too long (owing to inconsistencies in np.arange() from numerical error, just remove
+        #  the last element and then we are good)
+        alpha_arr = np.delete(arr=alpha_arr, obj=-1)
+
+    else:
+        # Something is not right, panic!
+        exit_script(microscope=microscope, status=1)
 
     return alpha_arr
 
@@ -725,8 +848,12 @@ if __name__ == "__main__":
     # display_message(title=title_, message=message_, microscope=None, position="centered")
 
     """ Test getting tilt range info """
-    # arr = get_tilt_range(microscope=None)
-    # print(arr)
+    # Restore default numpy print options
+    np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
+                        threshold=1000, formatter=None)
+    arr = get_tilt_range(microscope=None)
+    print("Here is the final alpha array received from get_tilt_range():")
+    print(arr)
 
     """ Test getting camera parameters"""
     # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=None)
@@ -740,8 +867,8 @@ if __name__ == "__main__":
     # print(out_file)
 
     """ Test getting shift correction samples """
-    use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=None, tilt_start=-30,
-                                                                                   tilt_stop=30, exposure_time=0.25)
-    print("Use shift: " + str(use_shift_corrections))
-    print("Samples: " + str(samples__))
-    print("Interpolation scope: " + str(interpolation_scope_))
+    # use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=None, tilt_start=-30,
+    #                                                                                tilt_stop=30, exposure_time=0.25)
+    # print("Use shift: " + str(use_shift_corrections))
+    # print("Samples: " + str(samples__))
+    # print("Interpolation scope: " + str(interpolation_scope_))
