@@ -24,15 +24,15 @@ sys.path.append(str(package_directory))
 
 try:
     # Mixins
-    from pyTEM.lib.interface.mixins.MagnificationMixin import MagnificationMixin
     from pyTEM.lib.interface.mixins.AcquisitionMixin import AcquisitionMixin
+    from pyTEM.lib.interface.mixins.MagnificationMixin import MagnificationMixin
     from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
     from pyTEM.lib.interface.mixins.BeamShiftMixin import BeamShiftMixin
     from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
     from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
+    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
     from pyTEM.lib.interface.mixins.StageMixin import StageMixin
     from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
-    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
 
     # Other library imports
     from pyTEM.lib.interface.pascal_to_log import pascal_to_log
@@ -42,15 +42,15 @@ except Exception as ImportException:
     raise ImportException
 
 
-class Interface(MagnificationMixin,  # Magnification controls.
-                AcquisitionMixin,    # Microscope acquisition controls, including those for taking images.
+class Interface(AcquisitionMixin,    # Microscope acquisition controls, including those for taking images.
+                MagnificationMixin,  # Magnification controls.
                 ImageShiftMixin,     # Image shift controls.
                 BeamShiftMixin,      # Beam Shift controls.
                 ModeMixin,           # Microscope mode controls, including those for projection and illuminations.
                 ScreenMixin,         # Microscope FluCam screen controls.
+                BeamBlankerMixin,    # Blank/unblank the beam.
                 StageMixin,          # Stage controls.
                 VacuumMixin,         # Vacuum system controls and pressure readouts.
-                BeamBlankerMixin,    # Blank/unblank the beam.
                 ):
     """
     An interface for the Thermo-Fisher TEM microscopes.
