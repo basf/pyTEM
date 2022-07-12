@@ -39,8 +39,8 @@ def get_initialization_message() -> Tuple[str, str]:
               "\n - Zero the image shift." \
               "\n - Zero the \u03B1 tilt." \
               "\n - Normalize all lenses." \
-              "\n - Unblank the beam." \
-              "\n\n To start this initialization procedure, please click the continue button."
+              "\n\nThe beam will remain blanked." \
+              "\n\nTo start this initialization procedure, please click the continue button."
     return title, message
 
 
