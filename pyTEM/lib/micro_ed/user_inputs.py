@@ -240,7 +240,7 @@ class GetTiltRange:
                 current_stop = 0
 
             if current_stop < self.alpha_min or current_stop > self.alpha_max:
-                # The suggested value falls outside of the legal tilt range.
+                # The suggested value falls outside the legal tilt range.
                 continue_button.config(state=tk.DISABLED)
                 txt_ = "Warning: The current stop falls outside of the allowable tilt range. Suggested stop: " \
                        + str(default_stop_value) + "."
@@ -262,7 +262,6 @@ class GetTiltRange:
             else:
                 # Try to build an array of alpha values using the provided start, stop, and step values.
                 alpha_arr_ = np.arange(self.start, current_stop + self.step, self.step)
-                print(alpha_arr)
 
                 if math.isclose(a=alpha_arr_[-1], b=current_stop, abs_tol=1e-4) or \
                         math.isclose(a=alpha_arr_[-2], b=current_stop, abs_tol=1e-4):
@@ -438,7 +437,6 @@ def get_acquisition_parameters(microscope: Union[Interface, None]) -> Tuple[str,
     sampling_options = ['4k (4096 x 4096)', '2k (2048 x 2048)', '1k (1024 x 1024)', '0.5k (512 x 512)']
 
     while True:
-
         root = tk.Tk()
         style = ttk.Style()
 
