@@ -24,7 +24,7 @@ except Exception as ImportException:
 def perform_tilt_series(microscope: Interface, acquisition_properties: AcquisitionSeriesProperties,
                         shifts: np.array, verbose: bool) -> AcquisitionSeries:
     """
-    Actually perform a tilt series and save the results to file.
+    Test performing a tilt-and-acquire series.
 
     :param microscope: pyTEM.Interface:
         A pyTEM interface to the microscope.
@@ -45,7 +45,7 @@ def perform_tilt_series(microscope: Interface, acquisition_properties: Acquisiti
         microscope.open_column_valve()
     screen_position = microscope.get_screen_position()
     if screen_position == "inserted":
-        microscope.remove_screen()
+        microscope.retract_screen()
 
     acq_stack = AcquisitionSeries()
 
