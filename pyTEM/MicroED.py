@@ -25,7 +25,6 @@ try:
         display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
         display_good_bye_message, display_initialization_message, have_user_center_particle
     from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
-    from test.micro_ed.perform_tilt_series import perform_tilt_series
     from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
         shift_correction_info
     from pyTEM.lib.micro_ed.build_full_shifts_array import build_full_shift_array
@@ -168,8 +167,10 @@ class MicroED:
             # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode
 
             # Go ahead and actually perform the tilt series.
-            acq_stack = perform_tilt_series(microscope=self.microscope, acquisition_properties=acquisition_properties,
-                                            shifts=shifts, verbose=verbose)
+            acq_stack = self.microscope.acquisition_series(num=len(alpha_arr) - 1, camera_name=camera_name,
+                                                           exposure_time=integration_time, sampling=sampling,
+                                                           blanker_optimization=True, tilt_bounds=alpha_arr,
+                                                           shifts=shifts, verbose=verbose)
 
             if downsample:
                 if verbose:
