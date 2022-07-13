@@ -23,8 +23,7 @@ try:
     from pyTEM.Interface import Interface
     from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
     from pyTEM.lib.micro_ed.exit_script import exit_script
-    from pyTEM.lib.micro_ed.messages import automated_alignment_message, get_welcome_message, display_message, \
-        get_alignment_message, get_find_dummy_particle_message
+    from pyTEM.lib.micro_ed.messages import get_automated_alignment_message, display_message
     from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
     from pyTEM.lib.micro_ed.closest_number import closest_number
 except Exception as ImportException:
@@ -600,39 +599,6 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     return out_path
 
 
-def have_user_center_particle(microscope: Union[Interface, None], dummy_particle: bool) -> None:
-    """
-    Have the user center on a particle.
-
-    :param microscope: pyTEM Interface (or None):
-        The microscope interface, needed to return the microscope to a safe state if the user exits the script
-         through the quit button on the message box.
-    :param dummy_particle: bool:
-        Whether we are aligning the dummy particle.
-            True: We are aligning a dummy particle.
-            False: We are aligning on the actual particle we want to analyse
-
-    :return: None.
-    """
-    microscope.unblank_beam()
-    while True:
-        if dummy_particle:
-            title, message = get_find_dummy_particle_message()
-        else:
-            title, message = get_alignment_message()
-        display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
-
-        # Confirm that we are in the correct magnification range (at the time of writing image shift is only
-        #  calibrated for magnifications in the SA range)
-        if microscope.get_projection_submode() == "SA":
-            break  # Magnification is okay
-        else:
-            warnings.warn("Currently we are in the " + str(microscope.get_projection_submode())
-                          + " magnification range, please select a magnification in the SA range.")
-    microscope.blank_beam()
-    return None
-
-
 def shift_correction_info(microscope: Union[Interface, None], tilt_start: float, tilt_stop: float,
                           exposure_time: float) -> Tuple[bool, np.array, str]:
     """
@@ -673,7 +639,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     style = ttk.Style()
 
     # Display a message informing the user about the automated image alignment functionality.
-    title, message = automated_alignment_message()
+    title, message = get_automated_alignment_message()
     root.title(title)
     add_basf_icon_to_tkinter_window(root)
     message_label = ttk.Label(root, text=message, wraplength=window_width, font=label_font, justify='center')
@@ -847,11 +813,6 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_int
 
 
 if __name__ == "__main__":
-
-    """ Display a welcome message """
-    # from pyTEM.lib.micro_ed.messages import get_welcome_message, display_message
-    # title_, message_ = get_welcome_message()
-    # display_message(title=title_, message=message_, microscope=None, position="centered")
 
     """ Test getting tilt range info """
     # Restore default numpy print options
