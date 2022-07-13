@@ -3,7 +3,6 @@
  Date:    Summer 2022
 """
 
-import math
 import time
 import pathlib
 import sys
@@ -29,7 +28,8 @@ try:
     # Other library imports
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.interface.Acquisition import Acquisition
-    from pyTEM.lib.interface.blanker_tilt_control import blanker_tilt_control
+    from pyTEM.lib.interface.blanker_control import blanker_control
+    from pyTEM.lib.interface.tilt_control import tilt_control
 except Exception as ImportException:
     raise ImportException
 
@@ -99,16 +99,15 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
            Print out extra information. Useful for debugging.
 
         This function provides the following optional controls by means of multitasking. Utilizing either of these
-         functionalities results in the spawning of a separate parallel process.
+         functionalities results in the spawning of a separate parallel process to handle it.
 
         :param blanker_optimization: bool (optional; default is True):
             When we call the core Thermo Fisher acquisition command, the camera is blind for
              one interval of exposure_time and then records for the next interval of exposure_time. Therefore the full
              acquisition takes 2 * exposure_time + some communication delays. In order to minimize sample exposure
-             (material are often beam sensitive), we control the blanker in a parallel process where we only unblank
-             when the camera is actually recording.
-            This optional beam blanker control can be controlled via this
-             optional parameter. One of:
+             (material are often beam sensitive), we can opt to control the blanker in a parallel process where we
+             only unblank when the camera is actually recording.
+            One of:
                 True: Minimize dose by means of blanking while the camera is not actually recording.
                 False: Proceed without optimized blanker control, the beam will be unblanked for the full
                         2 * exposure_time + some communication delays.
@@ -151,47 +150,51 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
             # Then we expect an array, either of length 0 or num_acquisitions + 1.
             if len(tilt_bounds) == 0:
                 pass
+
             if len(tilt_bounds) == num + 1:
                 tilting = True  # We need to tilt.
 
-                # Ensure we are at the starting tilt angle.
-                if not math.isclose(self.get_stage_position_alpha(), tilt_bounds[0], abs_tol=0.01):
-                    if verbose:
-                        print("Moving the stage to the start angle, \u03B1=" + str(tilt_bounds[0]))
-                    self.set_stage_position_alpha(alpha=tilt_bounds[0], speed=0.25, movement_type="go")
             else:
                 raise Exception("Error: The length of the non-empty tilt_bounds array (" + str(len(tilt_bounds))
-                                + ") received by blanker_tilt_control() is inconsistent with the requested number of "
+                                + ") received by acquisition_series() is inconsistent with the requested number of "
                                   "requested acquisitions (" + str(num) + ").")
 
-        # Blanker optimization and tilting while acquiring both require multitasking.
-        multitasking_required = blanker_optimization or tilting
-        blanker_tilt_process, barriers = None, None  # Warning suppression
-        if multitasking_required:
-            # Then we either need to optimize the blanker or tilt while acquiring. Either way, we need to spawn a
-            #  parallel process.
+        blanker_process, tilt_process, barriers = None, None, None  # Warning suppression
 
-            # Create an array of barriers that can be used to keep the blanking/tilting process synchronized with the
-            #  main thread.
+        if blanker_optimization or tilting:
+            # We need an array of barriers that can be used to keep the blanking/tilting processes synchronized with
+            #  the main thread.
             barriers = np.full(shape=num, fill_value=np.nan)
             for i in range(len(barriers)):
-                barriers[i] = mp.Barrier(2)  # 1 for the main process + 1 for the blanker/tilt process = 2
+                barriers[i] = mp.Barrier(1 + blanker_optimization + tilting)  # 1 party for each process
 
-            if tilting is None:
-                tilt_bounds = None  # No tilting
+        if blanker_optimization:
+            # Then we need to spawn a parallel process from which we control the blanker.
+            if verbose:
+                print("The user has requested we optimize the beam blanker, creating an separate blanking process...")
+
+            blanker_args = {'num_acquisitions': num, 'barriers': barriers, 'exposure_time': exposure_time,
+                            'verbose': verbose}
+            blanker_process = mp.Process(target=blanker_control, kwargs=blanker_args)
 
             if verbose:
-                print("This acquisition series requires multitasking, creating an separate blanking/tilting process.")
+                print("Starting the blanking process...")
 
-            blanker_tilt_args = {'num_acquisitions': num, 'barriers': barriers, 'exposure_time': exposure_time,
-                                 'blanker_optimization': blanker_optimization, 'tilt_bounds': tilt_bounds,
-                                 'verbose': verbose}
-            blanker_tilt_process = mp.Process(target=blanker_tilt_control, kwargs=blanker_tilt_args)
+            blanker_process.start()
+
+        if tilting:
+            # Then we need to spawn a parallel process from which we can tilt
+            if verbose:
+                print("This acquisition series requires tilting, creating an separate tilt process...")
+
+            tilt_args = {'num_acquisitions': num, 'barriers': barriers, 'integration_time': exposure_time,
+                         'tilt_bounds': tilt_bounds, 'verbose': verbose}
+            tilt_process = mp.Process(target=tilt_control, kwargs=tilt_args)
 
             if verbose:
-                print("Starting the blanking/tilting process.")
+                print("Starting the tilt process...")
 
-            blanker_tilt_process.start()
+            tilt_process.start()
 
         acq_series = AcquisitionSeries()
         for i in range(num):
@@ -238,21 +241,20 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                                 + str(min_supported_exposure_time) + " to " + str(max_supported_exposure_time)
                                 + " seconds. ")
 
-            if multitasking_required:
-                barriers[i].wait()  # Wait for the blanker/tilt process.
-            else:
-                # No multitasking required, just unblank ourselves
+            if not blanker_optimization:
+                # No separate blanker control, we have to unblank ourselves
                 self.unblank_beam()
+
+            if blanker_optimization or tilting:
+                barriers[i].wait()  # Wait for the blanker and/or tilt process(es) to synchronize.
 
             # Actually perform an acquisition
             core_acquisition_start_time = time.time()
             acq = acquisition.Acquire()
             core_acquisition_end_time = time.time()
 
-            if multitasking_required:
-                pass
-            else:
-                # No multitasking required, we have to re-blank the beam ourselves.
+            if not blanker_optimization:
+                # No separate blanker control, we have to re-blank ourselves
                 self.blank_beam()
 
             acq_series.append(acq=acq)
@@ -263,9 +265,13 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                 print("Core acquisition returned at: " + str(core_acquisition_end_time))
                 print("Core acquisition time: " + str(core_acquisition_end_time - core_acquisition_start_time))
 
-        if multitasking_required:
-            # We are now done multitasking, collect the beam blanker processes before returning.
-            blanker_tilt_process.join()
+        if blanker_optimization:
+            # Collect the beam blanker process.
+            blanker_process.join()
+
+        if tilting:
+            # Collect the tilting process
+            tilt_process.join()
 
         # Housekeeping: Leave the blanker, column value, and screen the way they were when we started.
         if user_column_valve_position == "closed":
@@ -322,7 +328,8 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
 
         This function provides the following optional controls by means of multiprocessing. Utilizing either of these
          functionalities significantly increase runtime because we have to wait for a separate parallel process (a new
-         instance of the Python interpreter) to spawn and initialize a new microscope interface for this other process.
+         instance of the Python interpreter) to spawn and we have to initialize a new microscope interface in that
+         process.
          # TODO: Eliminate the additional runtime caused by process creation and interface creation (maybe by switching
             to threading, sharing an single interface across processes/threads, or creating the parallel process right
             when the user first connects to the microscope).
@@ -334,9 +341,9 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
             When we call the core Thermo Fisher acquisition command, the camera is blind for
              one interval of exposure_time and then records for the next interval of exposure_time. Therefore the full
              acquisition takes 2 * exposure_time + some communication delays. In order to minimize sample exposure
-             (material are often beam sensitive), we control the blanker in a parallel process where we only unblank
-             when the camera is actually recording. This optional beam blanker control can be controlled via this
-             optional parameter. One of:
+             (material are often beam sensitive), we can opt to control the blanker in a parallel process where we
+             only unblank when the camera is actually recording.
+            One of:
                 True: Minimize dose by means of blanking while the camera is not actually recording.
                 False: Proceed without optimized blanker control, the beam will be unblanked for the full
                         2 * exposure_time + some communication delays.
@@ -401,49 +408,66 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                             + str(min_supported_exposure_time) + " to " + str(max_supported_exposure_time)
                             + " seconds. ")
 
-        # Blanker optimization and tilting while acquiring both require multitasking.
-        multitasking_required = blanker_optimization or tilt_destination is not None
-        blanker_tilt_process = None  # Warning suppression
-        if multitasking_required:
-            # Then we either need to optimize the blanker or tilt while acquiring. Either way, we need to spawn a
-            #  parallel process.
+        blanker_process, tilt_process, barrier = None, None, None  # Warning suppression
+        tilting = tilt_destination is not None  # Convenience
 
-            # Create a barrier to help improve synchronization.
-            barrier = mp.Barrier(2)  # 1 for the main process + 1 for the blanker/tilt process = 2
+        if blanker_optimization or tilting:
+            # We need a barrier that can be used to keep the blanking/tilting processes synchronized with
+            #  the main thread.
+            barrier = mp.Barrier(1 + blanker_optimization + tilting)  # 1 party for each process
 
-            if tilt_destination is None:
-                tilt_bounds = None  # No tilting
-            else:
-                # We want to tilt from our current position to the provided destination.
-                tilt_bounds = [self.get_stage_position_alpha(), tilt_destination]
+        if blanker_optimization:
+            # Then we need to spawn a parallel process from which we control the blanker.
+            if verbose:
+                print("The user has requested we optimize the beam blanker, creating an separate blanking process...")
+
+            blanker_args = {'num_acquisitions': 1, 'barriers': [barrier], 'exposure_time': exposure_time,
+                            'verbose': verbose}
+            blanker_process = mp.Process(target=blanker_control, kwargs=blanker_args)
 
             if verbose:
-                print("This acquisition requires multitasking, creating an separate blanking/tilting process.")
+                print("Starting the blanking process...")
 
-            blanker_tilt_args = {'num_acquisitions': 1, 'barriers': [barrier], 'exposure_time': exposure_time,
-                                 'blanker_optimization': blanker_optimization, 'tilt_bounds': tilt_bounds,
-                                 'verbose': verbose}
-            blanker_tilt_process = mp.Process(target=blanker_tilt_control, kwargs=blanker_tilt_args)
+            blanker_process.start()
+
+        if tilting:
+            # Then we need to spawn a parallel process from which we can tilt
+            if verbose:
+                print("This acquisition series requires tilting, creating an separate tilt process...")
+
+            tilt_bounds = [self.get_stage_position_alpha(), tilt_destination]
+            tilt_args = {'num_acquisitions': 1, 'barriers': [barrier], 'integration_time': exposure_time,
+                         'tilt_bounds': tilt_bounds, 'verbose': verbose}
+            tilt_process = mp.Process(target=tilt_control, kwargs=tilt_args)
 
             if verbose:
-                print("Starting the blanking/tilting process.")
+                print("Starting the tilt process...")
 
-            blanker_tilt_process.start()
-            barrier.wait()  # Wait for the blanker/tilt process to initialize.
+            tilt_process.start()
 
-        else:
-            # No multitasking required, just unblank ourselves.
+        if not blanker_optimization:
+            # No separate blanker control, we have to unblank ourselves
             self.unblank_beam()
+
+        if blanker_optimization or tilting:
+            barrier.wait()  # Wait for the blanker and/or tilt process(es) to synchronize.
 
         # Actually perform the acquisition.
         core_acquisition_start_time = time.time()
         acq = acquisition.Acquire()
         core_acquisition_end_time = time.time()
 
-        if multitasking_required:
-            blanker_tilt_process.join()
-        else:
+        if not blanker_optimization:
+            # No separate blanker control, we have to re-blank ourselves
             self.blank_beam()
+
+        if blanker_optimization:
+            # Collect the beam blanker process.
+            blanker_process.join()
+
+        if tilting:
+            # Collect the tilting process
+            tilt_process.join()
 
         # Housekeeping: Leave the blanker, column value, and screen the way they were when we started.
         if user_column_valve_position == "closed":
@@ -763,7 +787,6 @@ def acquisition_series_testing():
     out_file_ = out_dir / "test_series_only_tilting.mrc"
     print("Saving series as " + str(out_file_))
     acq_series.save_as_mrc(out_file=out_file_)
-
 
 
     """ Perform an acquisition with both tilting and blanker optimization """
