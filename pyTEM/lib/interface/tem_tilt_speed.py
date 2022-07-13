@@ -3,8 +3,6 @@
  Date:    Summer 2022
 """
 
-import warnings
-
 
 def tem_tilt_speed(speed_deg_per_s: float) -> float:
     """
@@ -19,9 +17,7 @@ def tem_tilt_speed(speed_deg_per_s: float) -> float:
     """
 
     if speed_deg_per_s > 15:
-        warnings.warn("The microscope's maximum tilt speed is 15 deg / s. tem_tilt_speed() is returning a fractional "
-                      "tilt speed of 1 (100% microscope speed)")
-        return 1
+        raise Exception("The microscope's maximum tilt speed is 15 deg / s.")
 
     elif speed_deg_per_s > 1.5:
         # This conversion works well for larger tilting speeds, R^2 = 0.99985445
@@ -31,7 +27,7 @@ def tem_tilt_speed(speed_deg_per_s: float) -> float:
                - 0.004913243  # Notice that the non-zero y-intercepts are likely due to a constant delay
 
     elif speed_deg_per_s <= 0.000376177 / 0.034841591:
-        return 0
+        raise Exception("The microscope's minimum tilt speed is 0.02 deg / s.")
 
     else:
         # This conversion works well for low tilt speeds where the relationship is ~linear, R^2 = 0.999982772
