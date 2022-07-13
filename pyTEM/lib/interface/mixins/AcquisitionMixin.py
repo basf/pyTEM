@@ -54,7 +54,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
     def acquisition_series(self,
                            num: int,
                            camera_name: str,
-                           exposure_time: float = 0,
+                           exposure_time: float = 1,
                            sampling: str = None,
                            readout_area: int = None,
                            blanker_optimization: bool = True,
@@ -75,7 +75,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         :param camera_name: str:
             The name of the camera you want use.
             For a list of available cameras, please use the get_available_cameras() method.
-        :param exposure_time: float:
+        :param exposure_time: float (optional; default is 1 second):
             Exposure time, in seconds. Please expose responsibly.
         :param sampling: str:
             One of:
@@ -279,7 +279,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
 
     def acquisition(self,
                     camera_name: str,
-                    exposure_time: float = None,
+                    exposure_time: float = 1,
                     sampling: str = None,
                     readout_area: int = 0,
                     blanker_optimization: bool = True,
@@ -302,7 +302,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         :param camera_name: str:
             The name of the camera you want use.
             For a list of available cameras, please use the get_available_cameras() method.
-        :param exposure_time: float:
+        :param exposure_time: float (optional; default is 1 second):
             Exposure time, in seconds. Please expose responsibly.
         :param sampling: str:
             One of:
