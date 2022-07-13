@@ -686,7 +686,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
             txt_ = "Total exposure time required for automated image alignment with a correctional shift interval " \
                    "of " + str(round(step_, 2)) + " deg: " + str(round(total_exposure_time_required_, 2)) + \
                    " seconds " + "\nThat is, calibration images taken at the following tilt angles: " + \
-                   "\n" + str(samples_) + " (" + str(num_images_required_) + " calibration images)"
+                   "\n" + str(np.round(samples_, 2)) + " (" + str(num_images_required_) + " calibration images)"
         correction_shift_interval_label.config(text=txt_)
 
     # Provide a text box, in which the user can entry the correction shift interval
@@ -815,12 +815,12 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_int
 if __name__ == "__main__":
 
     """ Test getting tilt range info """
-    # Restore default numpy print options
-    np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
-                        threshold=1000, formatter=None)
-    arr = get_tilt_range(microscope=None)
-    print("Here is the final alpha array received from get_tilt_range():")
-    print(arr)
+    # # Restore default numpy print options
+    # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
+    #                     threshold=1000, formatter=None)
+    # arr = get_tilt_range(microscope=None)
+    # print("Here is the final alpha array received from get_tilt_range():")
+    # print(arr)
 
     """ Test getting camera parameters"""
     # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=None)
@@ -834,8 +834,8 @@ if __name__ == "__main__":
     # print(out_file)
 
     """ Test getting shift correction samples """
-    # use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=None, tilt_start=-30,
-    #                                                                                tilt_stop=30, exposure_time=0.25)
-    # print("Use shift: " + str(use_shift_corrections))
-    # print("Samples: " + str(samples__))
-    # print("Interpolation scope: " + str(interpolation_scope_))
+    use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=None, tilt_start=-30,
+                                                                                   tilt_stop=30, exposure_time=0.25)
+    print("Use shift: " + str(use_shift_corrections))
+    print("Samples: " + str(samples__))
+    print("Interpolation scope: " + str(interpolation_scope_))
