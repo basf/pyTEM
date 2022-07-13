@@ -26,13 +26,13 @@ def blanker_tilt_control(num_acquisitions: int,
     Support pyTEM.Interface.acquisition() with the control of blanking and/or tilting. For more information on why this
      is helpful, please refer to pyTEM.Interface.acquisition().
 
-     This function is to be run in a parallel thread/process while an acquisition (or acquisition series) is being
-     performed from the main thread.
+     This function is to be run in a parallel thread or process while an acquisition (or acquisition series) is being
+     performed from the main thread/process.
 
     :param num_acquisitions: int:
         The number of acquisitions to perform. Must be at least 1.
     :param barriers: Array of mp.Barrier:
-        An array of multiprocessing barriers, these are used to synchronize with the main thread before each
+        An array of multiprocessing barriers, these are used to synchronize with the main thread/process before each
          acquisition.
     :param exposure_time: float:
         Exposure time for a single acquisition, in seconds. If tilting, then this can be thought of more as an
@@ -87,12 +87,13 @@ def blanker_tilt_control(num_acquisitions: int,
     # Loop through the requested number of acquisitions.
     for i in range(num_acquisitions):
 
-        # Compute tilt speed
-        distance_tilting = abs(tilt_bounds[i + 1] - tilt_bounds[i])  # deg
-        tilt_speed = distance_tilting / exposure_time  # deg / s
-        tilt_speed = tem_tilt_speed(tilt_speed)  # convert to fractional speed as required by the stage setters.
+        if tilting:
+            # Compute tilt speed
+            distance_tilting = abs(tilt_bounds[i + 1] - tilt_bounds[i])  # deg
+            tilt_speed = distance_tilting / exposure_time  # deg / s
+            tilt_speed = tem_tilt_speed(tilt_speed)  # convert to fractional speed as required by the stage setters.
 
-        barriers[i].wait()  # Synchronize with the main thread.
+        barriers[i].wait()  # Synchronize with the main process.
 
         # Wait while the camera is blind.
         time.sleep(exposure_time)
