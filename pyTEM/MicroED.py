@@ -21,13 +21,13 @@ try:
 
     from pyTEM.lib.micro_ed.exit_script import exit_script
     from pyTEM.lib.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
-    from pyTEM.lib.micro_ed.messages import get_welcome_message, get_initialization_message, display_message, \
-        get_alignment_message, get_start_message, get_eucentric_height_message, get_end_message, get_good_bye_message, \
-        get_insert_and_align_sad_aperture_message, get_find_dummy_particle_message
+    from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
+        display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
+        display_good_bye_message, display_initialization_message, have_user_center_particle
     from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
-    from pyTEM.lib.micro_ed.perform_tilt_series import perform_tilt_series
+    from test.micro_ed.perform_tilt_series import perform_tilt_series
     from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
-        shift_correction_info, have_user_center_particle
+        shift_correction_info
     from pyTEM.lib.micro_ed.build_full_shifts_array import build_full_shift_array
 
 except Exception as ImportException:
@@ -88,11 +88,9 @@ class MicroED:
         shift_calibration_exposure_time = 0.25  # s
 
         try:
-            # Display welcome messages
-            title, message = get_welcome_message()
-            display_message(title=title, message=message, microscope=self.microscope, position="centered")
-            title, message = get_initialization_message()
-            display_message(title=title, message=message, microscope=self.microscope, position="centered")
+            # Display welcome and initialization messages
+            display_welcome_message(microscope=self.microscope)
+            display_initialization_message(microscope=self.microscope)
 
             # Initialize for MicroED
             if self.microscope.get_screen_position() != "inserted":
@@ -112,21 +110,17 @@ class MicroED:
             self.microscope.normalize()
             self.microscope.unblank_beam()
 
-            # Have the user select a dummy particle with which we can calibrate the eucentric height and aperture
+            # Have the user center on a dummy particle with which we can calibrate the eucentric height and aperture
             have_user_center_particle(microscope=self.microscope, dummy_particle=True)
 
-            # Have the user manually set eucentric height
-            # TODO: Automate eucentric height calibration
-            title, message = get_eucentric_height_message()
-            display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
+            # Have the user manually set eucentric height  # TODO: Automate eucentric height calibration
+            display_eucentric_height_message(microscope=self.microscope)
 
-            # Have the user manually insert, align, and then remove the SAD aperture
-            # TODO: Automate SAD aperture controls
-            title, message = get_insert_and_align_sad_aperture_message()
-            display_message(title=title, message=message, microscope=self.microscope, position="out-of-the-way")
+            # Have the user manually insert, align, and remove the SAD aperture  # TODO: Automate SAD aperture controls
+            display_insert_and_align_sad_aperture_message(microscope=self.microscope)
 
             # Have the user center the particle
-            have_user_center_particle(microscope=self.microscope, dummy_particle=False)
+            have_user_center_particle(microscope=self.microscope)
 
             # We are now centered on the particle and need to keep the beam blank whenever possible.
             self.microscope.blank_beam()
@@ -134,7 +128,7 @@ class MicroED:
             # Get tilt range info
             alpha_arr = get_tilt_range(microscope=self.microscope)
 
-            # The user is done adjusting, we can now retract the screen
+            # The user is done making their adjustments, we can now retract the screen
             self.microscope.retract_screen()
 
             # Get the required acquisition parameters
@@ -168,9 +162,8 @@ class MicroED:
                 # We will proceed without compensatory image shifts, just make shifts all zero
                 shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)
 
-            # Have the user insert the aperture, confirm they are happy, and start the procedure.
-            title, message = get_start_message()
-            display_message(title=title, message=message, microscope=self.microscope, position="centered")
+            # Confirm they are happy, and have them insert the aperture/beam stop.
+            display_start_message(microscope=self.microscope)
 
             # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode
 
@@ -197,12 +190,10 @@ class MicroED:
             # image_stack.save_as_mrc(acquisition_properties.out_file)
 
             # The acquisition is now complete, inform the user.
-            title, message = get_end_message(out_file=out_file)
-            display_message(title=title, message=message, microscope=self.microscope, position="centered")
+            display_end_message(microscope=self.microscope, out_file=out_file)
 
             # Thanks to the user, and direct them to report issues on GitHub.
-            title, message = get_good_bye_message()
-            display_message(title=title, message=message, microscope=self.microscope, position="centered")
+            display_good_bye_message(microscope=self.microscope)
 
             exit_script(microscope=self.microscope, status=0)
 
