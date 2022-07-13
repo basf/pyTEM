@@ -552,6 +552,7 @@ class AcquisitionInterface(AcquisitionMixin):
 
     def __init__(self):
         try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
             self._tem_advanced = cc.CreateObject("TEMAdvancedScripting.AdvancedInstrument")
         except OSError as e:
             print("Unable to connect to the microscope.")
