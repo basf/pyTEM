@@ -1,0 +1,70 @@
+Requested exposure time: 2 s
+Core acquisition time:
+4.666405439376831
+4.662489652633667
+4.644346714019775
+4.6553778648376465
+
+Total acquisition time:
+4.952165126800537
+4.900120973587036
+4.934117317199707
+4.92208456993103
+
+
+
+Requested exposure time: 3 s
+Core acquisition time:
+6.653700828552246
+6.654743671417236
+
+Total acquisition time:
+6.9384565353393555
+6.951532363891602
+
+
+
+Requested exposure time: 6 s
+Core acquisition time:
+12.652272701263428
+
+
+Total acquisition time:
+12.95307183265686
+
+
+
+
+
+Requested exposure time: 0.5 s
+Core acquisition time:
+1.6754534244537354
+
+
+Total acquisition time:
+1.9170916080474854
+
+
+
+
+
+Time between overall acquisition start and core start:
+0.03007984161376953
+0.024063825607299805   (3s acq)
+0.02306079864501953    (6s acq)
+0.023056983947753906    (0.5s acq)
+
+Time between overall acquisition core and overall acquisition end (here is where you build the acq object and such): 
+0.2667090892791748
+0.2737274169921875		(3s acq)
+0.2777383327484131    (6s acq)
+0.2185811996459961   (0.5s acq)
+
+
+Conclusions:
+Time required to complete the whole acquisition is:  2 * exposure_time + 0.94, most of this extra time is from after the core acquisition
+
+Time required to complete the core acquisition is:  2 * exposure_time + 0.66
+Assume half of this 0.66 hapens before and half after, no way to tell.
+
+Once we call acquisition(), we should wait (0.025 + 0.33 + exposure_time) before we start tilting. 

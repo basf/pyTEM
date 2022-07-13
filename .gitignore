@@ -1,6 +1,16 @@
-/Testing_Interface/data/
-/Testing_Interface/TEMInferace Testing Log.xlsx
+# Test and calibration data
+/test/interface/data/
+/test/interface/TEMInferace Testing Log.xlsx
 /Testing_Interface/~$TEMInferace Testing Log.xlsx
-/Testing_Interface/Image_Shift_Calibration/Calibration_Data/
-/Testing_Interface/Image_Shift_Calibration/~$Image Shift Calibration.xlsx
-/Testing_Interface/test_images/
+/test/interface/Image_Shift_Calibration/Calibration_Data/
+/test/interface/Image_Shift_Calibration/~$Image Shift Calibration.xlsx
+/test/interface/test_images/
+
+# Distribution/packaging
+/build/
+/pyTEM.egg-info/
+/pytem_dependencies/
+
+# Other
+.idea/workspace.xml
+/test/micro_ed/check_message_ordering.py
