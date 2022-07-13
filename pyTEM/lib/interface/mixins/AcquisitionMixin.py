@@ -693,17 +693,102 @@ def acquisition_testing():
 def acquisition_series_testing():
     """
     Test the acquisition series method.
-    :return:
     """
-    pass
+    out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
+    print("out_dir: " + str(out_dir))
+
+    requested_exposure_time = 1  # s
+
+    interface = AcquisitionInterface()
+    available_cameras = interface.get_available_cameras()
+    interface.print_camera_capabilities(available_cameras[0])
+
+
+    """ Perform an acquisition series with no multitasking """
+    print("\n\n## Performing an acquisition series with no multitasking ##")
+    acq_series = interface.acquisition_series(num=3, camera_name="BM-Ceta",
+                                              exposure_time=requested_exposure_time,
+                                              sampling='1k',
+                                              blanker_optimization=False,
+                                              tilt_bounds=None,
+                                              verbose=True)
+
+    print("Length of the obtained series: " + str(acq_series.length()))
+    print("Showing the first image in the obtained series:")
+    print(acq_series[0].get_image())
+    acq_series[0].show_image()
+
+    out_file_ = out_dir / "test_series_no_multitasking.mrc"
+    print("Saving series as " + str(out_file_))
+    acq_series.save_as_mrc(out_file=out_file_)
+
+
+    """ Perform an acquisition with blanker optimization but no tilting """
+    print("\n\n## Performing an acquisition with blanking optimization but no tilting ##")
+    acq_series = interface.acquisition_series(num=3, camera_name="BM-Ceta",
+                                              exposure_time=requested_exposure_time,
+                                              sampling='1k',
+                                              blanker_optimization=True,
+                                              tilt_bounds=None,
+                                              verbose=True)
+
+    print("Length of the obtained series: " + str(acq_series.length()))
+    print("Showing the first image in the obtained series:")
+    print(acq_series[0].get_image())
+    acq_series[0].show_image()
+
+    out_file_ = out_dir / "test_series_only_blanker_optimization.mrc"
+    print("Saving series as " + str(out_file_))
+    acq_series.save_as_mrc(out_file=out_file_)
+
+
+    """ Perform an acquisition with tilting but no blanker optimization """
+    print("\n\n## Performing an acquisition with titling (-2 deg -> 2 deg) but no blanker optimization ##")
+
+    tilt_bounds = np.ararray([-2, -1, 0, 1, 2])
+
+    acq_series = interface.acquisition_series(num=len(tilt_bounds - 1), camera_name="BM-Ceta",
+                                              exposure_time=requested_exposure_time,
+                                              sampling='1k',
+                                              blanker_optimization=False,
+                                              tilt_bounds=tilt_bounds,
+                                              verbose=True)
+
+    print("Length of the obtained series: " + str(acq_series.length()))
+    print("Showing the first image in the obtained series:")
+    print(acq_series[0].get_image())
+    acq_series[0].show_image()
+
+    out_file_ = out_dir / "test_series_only_tilting.mrc"
+    print("Saving series as " + str(out_file_))
+    acq_series.save_as_mrc(out_file=out_file_)
+
+
+
+    """ Perform an acquisition with both tilting and blanker optimization """
+    print("\n\n## Performing an acquisition with titling (-2 deg -> 2 deg) AND blanker optimization "
+          "(with dummy shifts) ##")
+    tilt_bounds = np.ararray([-2, -1, 0, 1, 2])
+    shifts_ = np.full(shape=len(tilt_bounds - 1), dtype=(float, 2), fill_value=0.0)
+
+    acq_series = interface.acquisition_series(num=len(tilt_bounds - 1), camera_name="BM-Ceta",
+                                              exposure_time=requested_exposure_time,
+                                              sampling='1k',
+                                              blanker_optimization=False,
+                                              tilt_bounds=tilt_bounds,
+                                              shifts=shifts_,
+                                              verbose=True)
+
+    print("Length of the obtained series: " + str(acq_series.length()))
+    print(acq_series[0].get_image())
+    acq_series[0].show_image()
+
+    out_file_ = out_dir / "test_series_blanking_and_tilting.mrc"
+    print("Saving series as " + str(out_file_))
+    acq_series.save_as_mrc(out_file=out_file_)
 
 
 if __name__ == "__main__":
 
     acquisition_testing()
-
-    # out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
-    # print("out_dir: " + str(out_dir))
-    # out_file_ = out_dir / "test_image.tif"
-    # print("Saving the image as " + str(out_file_))
-    # test_acq.save_as_tif(out_file=out_file_)
+    # acquisition_series_testing()
