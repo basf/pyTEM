@@ -45,6 +45,7 @@ def blanker_tilt_control(num_acquisitions: int,
         len(tilt_bounds) should equal num_acquisitions + 1
         Doesn't need to be evenly spaced, the tilt speed will adapt for each individual acquisition.
         We will ensure we are at the starting angle (tilt_bounds[0]) before performing the first acquisition.
+        Upon return the stage is left at the final destination -> tilt_bounds[-1].
         If None, or an array of length 0, then no tilting is performed.
 
     :param verbose: (optional; default is False):
@@ -52,7 +53,7 @@ def blanker_tilt_control(num_acquisitions: int,
 
     :return: None.
     """
-    if num_acquisitions < 0:
+    if num_acquisitions <= 0:
         raise Exception("Error: blanker_tilt_control() requires we perform at least one acquisition.")
 
     if len(barriers) != num_acquisitions:
@@ -72,6 +73,8 @@ def blanker_tilt_control(num_acquisitions: int,
 
             # Ensure we are at the starting tilt angle.
             if not math.isclose(interface.get_stage_position_alpha(), tilt_bounds[0], abs_tol=0.01):
+                if verbose:
+                    print("Moving the stage to the start angle, \u03B1=" + str(tilt_bounds[0]))
                 interface.set_stage_position_alpha(alpha=tilt_bounds[0], speed=0.25, movement_type="go")
         else:
             raise Exception("Error: The length of the non-empty tilt_bounds array (" + str(len(tilt_bounds))
