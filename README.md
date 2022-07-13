@@ -130,7 +130,7 @@ Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you 
 2. Download the whole ```pyTEM``` project directory,
 3. Navigate to the pyTEM folder, 
 4. Run ```setup.py``` with the ```bdist_wheel``` setuptools command. 
- Example: ```python setup.py bdist_wheel --universal```
+ Example: ```python setup.py bdist_wheel```
 
 # Contribution & Contact Info
 
