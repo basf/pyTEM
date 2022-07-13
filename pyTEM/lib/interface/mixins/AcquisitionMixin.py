@@ -13,7 +13,7 @@ import comtypes.client as cc
 import numpy as np
 import multiprocessing as mp
 
-from typing import List, Tuple, Union, Any
+from typing import List, Tuple, Union
 from numpy.typing import ArrayLike
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
@@ -59,7 +59,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                            readout_area: int = None,
                            blanker_optimization: bool = True,
                            tilt_bounds: Union[ArrayLike, None] = None,
-                           shifts: Any = None,
+                           shifts: np.ndarray = None,
                            verbose: bool = False
                            ) -> AcquisitionSeries:
         """
