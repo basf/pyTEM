@@ -13,22 +13,33 @@ import comtypes.client as cc
 import numpy as np
 import multiprocessing as mp
 
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Any
 from numpy.typing import ArrayLike
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
+    # Mixins
+    from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
+    from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
+    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
     from pyTEM.lib.interface.mixins.StageMixin import StageMixin
+    from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
+
+    # Other library imports
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.interface.Acquisition import Acquisition
-    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface, BeamBlankerMixin
     from pyTEM.lib.interface.blanker_tilt_control import blanker_tilt_control
 except Exception as ImportException:
     raise ImportException
 
 
-class AcquisitionMixin(BeamBlankerMixin, StageMixin):
+class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image shifts
+                       ScreenMixin,         # So we can make sure the screen is retracted while acquiring
+                       BeamBlankerMixin,    # So we can control the blanker - needed to eliminate necessary dose
+                       StageMixin,          # So we can provide tilt-while-acquiring functionality
+                       VacuumMixin          # So we can make sure the column valve is open while acquiring
+                       ):
     """
     Microscope image acquisition controls.
 
@@ -48,10 +59,14 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
                            readout_area: int = None,
                            blanker_optimization: bool = True,
                            tilt_bounds: Union[ArrayLike, None] = None,
+                           shifts: Any = None,
                            verbose: bool = False
                            ) -> AcquisitionSeries:
         """
         Perform (and return the results of) an acquisition series.
+
+        If they are not already, the column valve will be opened and the screen retracted. They will be returned to
+         the position in which the were found upon completion of the series.
 
         # TODO: This method remains untested.
 
@@ -74,7 +89,12 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
                 - 0: full-size
                 - 1: half-size
                 - 2: quarter-size
-
+        :param shifts: np.array of float tuples (optional; default is None):
+            An array of tuples of the form (x, y) where x and y are the image shifts (in microns) to apply for the
+             corresponding acquisition. If None, no image shifts will be applied.
+            If provided, len(shifts) should equal num
+            While there are other applications, image shifts can be used to compensation for lateral image shift while
+             tilting or moving.
         :param verbose: (optional; default is False):
            Print out extra information. Useful for debugging.
 
@@ -106,10 +126,24 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
         :return: AcquisitionSeries:
             An acquisition series.
         """
-        # Make sure the beam is blank while we set up
+        if num <= 0:
+            raise Exception("Error: acquisition_series() requires we perform at least one acquisition.")
+
+        if shifts is not None:
+            if len(shifts) != num:
+                raise Exception("Error: The shifts array passed to acquisition_series() has a length of "
+                                + str(shifts) + ", but it should have a length of num=" + str(num) + ".")
+
+        # Make sure the beam is blank, column valve is open, and the screen is removed.
         user_had_beam_blanked = self.beam_is_blank()
         if not user_had_beam_blanked:
             self.blank_beam()
+        user_column_valve_position = self.get_column_valve_position()
+        if user_column_valve_position == "closed":
+            self.open_column_valve()
+        user_screen_position = self.get_screen_position()
+        if user_screen_position == "inserted":
+            self.retract_screen()
 
         # Find out if we are tilting
         tilting = False  # Assume we are not tilting
@@ -161,6 +195,10 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
 
         acq_series = AcquisitionSeries()
         for i in range(num):
+
+            if shifts is not None:
+                # Apply the requested image shift
+                self.set_image_shift(x=shifts[i, 0], y=shifts[i, 1])
 
             # Set up the acquisition
             acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
@@ -229,7 +267,11 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
             # We are now done multitasking, collect the beam blanker processes before returning.
             blanker_tilt_process.join()
 
-        # Leave the blanker the same way we found it.
+        # Housekeeping: Leave the blanker, column value, and screen the way they were when we started.
+        if user_column_valve_position == "closed":
+            self.close_column_valve()
+        if user_screen_position == "inserted":
+            self.insert_screen()
         if not user_had_beam_blanked:
             self.unblank_beam()
 
@@ -251,6 +293,9 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
          method may take longer, this core time is the time required by the underlying Thermo Fisher acquisition
          command, and is the closest we can get to the actual acquisition time (the actual time the camera is recording
          useful information).
+
+        If they are not already, the column valve will be opened and the screen retracted. They will be returned to
+         the position in which the were found upon completion of the series.
 
          # TODO: This method remains untested.
 
@@ -308,10 +353,16 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
             Acquisition: A single acquisition.
             (float, float): The core acquisition start and end times.
         """
-        # Make sure the beam is blank while we set up the acquisition
+        # Make sure the beam is blank, column valve is open, and the screen is removed.
         user_had_beam_blanked = self.beam_is_blank()
         if not user_had_beam_blanked:
             self.blank_beam()
+        user_column_valve_position = self.get_column_valve_position()
+        if user_column_valve_position == "closed":
+            self.open_column_valve()
+        user_screen_position = self.get_screen_position()
+        if user_screen_position == "inserted":
+            self.retract_screen()
 
         acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
         supported_cameras = acquisition.SupportedCameras
@@ -394,7 +445,11 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
         else:
             self.blank_beam()
 
-        # Leave the blanker the same way we found it.
+        # Housekeeping: Leave the blanker, column value, and screen the way they were when we started.
+        if user_column_valve_position == "closed":
+            self.close_column_valve()
+        if user_screen_position == "inserted":
+            self.insert_screen()
         if not user_had_beam_blanked:
             self.unblank_beam()
 
@@ -503,20 +558,27 @@ class AcquisitionInterface(AcquisitionMixin):
             raise e
 
 
-if __name__ == "__main__":
-
+def acquisition_testing():
+    """
+    Test the acquisition() method.
+    :return: None
+    """
     requested_exposure_time = 1  # s
 
-    acq_interface = AcquisitionInterface()
-    available_cameras = acq_interface.get_available_cameras()
-    acq_interface.print_camera_capabilities(available_cameras[0])
+    interface = AcquisitionInterface()
+    available_cameras = interface.get_available_cameras()
+    interface.print_camera_capabilities(available_cameras[0])
 
-    print("\nPerforming an acquisition...")
+
+    """ Perform an acquisition with no multitasking """
+    print("\n\n## Performing an acquisition with no multitasking ##")
     overall_start_time = time.time()
-    test_acq, (core_acq_start, core_acq_end) = acq_interface.acquisition(camera_name="BM-Ceta", sampling='1k',
-                                                                         exposure_time=requested_exposure_time,
-                                                                         blanker_optimization=True, verbose=True,
-                                                                         tilt_destination=None)
+    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
+                                                                     exposure_time=requested_exposure_time,
+                                                                     sampling='1k',
+                                                                     blanker_optimization=False,
+                                                                     tilt_destination=None,
+                                                                     verbose=True)
     overall_stop_time = time.time()
 
     print("\nRequested Exposure time: " + str(requested_exposure_time))
@@ -535,6 +597,110 @@ if __name__ == "__main__":
 
     print(test_acq.get_image())
     test_acq.show_image()
+
+
+    """ Perform an acquisition with blanker optimization but no tilting """
+    print("\n\n## Performing an acquisition with blanking optimization but no tilting ##")
+    overall_start_time = time.time()
+    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
+                                                                     exposure_time=requested_exposure_time,
+                                                                     sampling='1k',
+                                                                     blanker_optimization=True,
+                                                                     tilt_destination=None,
+                                                                     verbose=True)
+    overall_stop_time = time.time()
+
+    print("\nRequested Exposure time: " + str(requested_exposure_time))
+
+    print("\nCore acquisition started at: " + str(core_acq_start))
+    print("Core acquisition returned at: " + str(core_acq_end))
+    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
+
+    print("\nOverall acquisition() method call started at: " + str(overall_start_time))
+    print("Overall acquisition() method returned at: " + str(overall_stop_time))
+    print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
+
+    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
+    print("Time between when the core acquisition finished and when acquisition() returned: "
+          + str(overall_stop_time - core_acq_end))
+
+    print(test_acq.get_image())
+    test_acq.show_image()
+
+
+    """ Perform an acquisition with tilting but no blanker optimization """
+    print("\n\n## Performing an acquisition with titling (0 deg -> 2 deg) but no blanker optimization ##")
+    interface.set_stage_position_alpha(alpha=0)
+
+    overall_start_time = time.time()
+    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
+                                                                     exposure_time=requested_exposure_time,
+                                                                     sampling='1k',
+                                                                     blanker_optimization=True,
+                                                                     tilt_destination=2,
+                                                                     verbose=True)
+    overall_stop_time = time.time()
+
+    print("\nRequested Exposure time: " + str(requested_exposure_time))
+
+    print("\nCore acquisition started at: " + str(core_acq_start))
+    print("Core acquisition returned at: " + str(core_acq_end))
+    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
+
+    print("\nOverall acquisition() method call started at: " + str(overall_start_time))
+    print("Overall acquisition() method returned at: " + str(overall_stop_time))
+    print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
+
+    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
+    print("Time between when the core acquisition finished and when acquisition() returned: "
+          + str(overall_stop_time - core_acq_end))
+
+    print(test_acq.get_image())
+    test_acq.show_image()
+
+
+    """ Perform an acquisition with both tilting and blanker optimization """
+    print("\n\n## Performing an acquisition with titling (0 deg -> 2 deg) AND blanker optimization ##")
+    interface.set_stage_position_alpha(alpha=0)
+
+    overall_start_time = time.time()
+    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
+                                                                     exposure_time=requested_exposure_time,
+                                                                     sampling='1k',
+                                                                     blanker_optimization=True,
+                                                                     tilt_destination=2,
+                                                                     verbose=True)
+    overall_stop_time = time.time()
+
+    print("\nRequested Exposure time: " + str(requested_exposure_time))
+
+    print("\nCore acquisition started at: " + str(core_acq_start))
+    print("Core acquisition returned at: " + str(core_acq_end))
+    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
+
+    print("\nOverall acquisition() method call started at: " + str(overall_start_time))
+    print("Overall acquisition() method returned at: " + str(overall_stop_time))
+    print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
+
+    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
+    print("Time between when the core acquisition finished and when acquisition() returned: "
+          + str(overall_stop_time - core_acq_end))
+
+    print(test_acq.get_image())
+    test_acq.show_image()
+
+
+def acquisition_series_testing():
+    """
+    Test the acquisition series method.
+    :return:
+    """
+    pass
+
+
+if __name__ == "__main__":
+
+    acquisition_testing()
 
     # out_dir = package_directory.parent.resolve() / "test" / "interface" / "test_images"
     # print("out_dir: " + str(out_dir))
