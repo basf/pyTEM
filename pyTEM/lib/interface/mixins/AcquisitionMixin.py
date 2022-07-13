@@ -3,6 +3,7 @@
  Date:    Summer 2022
 """
 
+import math
 import time
 import pathlib
 import sys
@@ -12,7 +13,8 @@ import comtypes.client as cc
 import numpy as np
 import multiprocessing as mp
 
-from typing import List, Tuple
+from typing import List, Tuple, Union
+from numpy.typing import ArrayLike
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
@@ -39,13 +41,13 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
         pass
 
     def acquisition_series(self,
-                           camera_name: str,
                            num: int,
+                           camera_name: str,
                            exposure_time: float = 0,
                            sampling: str = None,
                            readout_area: int = None,
                            blanker_optimization: bool = True,
-                           tilt_destinations: float = None,
+                           tilt_bounds: Union[ArrayLike, None] = None,
                            verbose: bool = False
                            ) -> AcquisitionSeries:
         """
@@ -54,39 +56,182 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
         # TODO: This method remains untested.
 
         :param num: int:
-            The number of acquisitions in the series.
+            The number of acquisitions to perform.
         :param camera_name: str:
-            The name of the camera you want use. For a list of available cameras, please use the
-             get_available_cameras() method.
+            The name of the camera you want use.
+            For a list of available cameras, please use the get_available_cameras() method.
         :param exposure_time: float:
             Exposure time, in seconds. Please expose responsibly.
         :param sampling: str:
             One of:
-            - '4k' for 4k images (4096 x 4096; sampling=1)
-            - '2k' for 2k images (2048 x 2048; sampling=2)
-            - '1k' for 1k images (1024 x 1024; sampling=3)
-            - '0.5k' for 05.k images (512 x 512; sampling=8)
-        :param readout_area: int (optional, default is 0):
+                - '4k' for 4k images (4096 x 4096; sampling=1)
+                - '2k' for 2k images (2048 x 2048; sampling=2)
+                - '1k' for 1k images (1024 x 1024; sampling=3)
+                - '0.5k' for 05.k images (512 x 512; sampling=8)
+        :param readout_area: int (optional, default is zero):
              Sets the area to be read from the camera sensor; the area is defined around the center of the sensor,
-             horizontally as well as vertically. Basically this will chop the image (like extra binning). One of:
-            - 0: full-size
-            - 1: half-size
-            - 2: quarter-size
+              horizontally as well as vertically. Basically this will chop the image (like extra binning). One of:
+                - 0: full-size
+                - 1: half-size
+                - 2: quarter-size
 
-        :param tilt_destinations: # TODO
-        :param blanker_optimization:
+        :param verbose: (optional; default is False):
+           Print out extra information. Useful for debugging.
 
-         :param verbose: (optional; default is False):
-            Print out extra information. Useful for debugging.
+        This function provides the following optional controls by means of multitasking. Utilizing either of these
+         functionalities results in the spawning of a separate parallel process.
+
+        :param blanker_optimization: bool (optional; default is True):
+            When we call the core Thermo Fisher acquisition command, the camera is blind for
+             one interval of exposure_time and then records for the next interval of exposure_time. Therefore the full
+             acquisition takes 2 * exposure_time + some communication delays. In order to minimize sample exposure
+             (material are often beam sensitive), we control the blanker in a parallel process where we only unblank
+             when the camera is actually recording.
+            This optional beam blanker control can be controlled via this
+             optional parameter. One of:
+                True: Minimize dose by means of blanking while the camera is not actually recording.
+                False: Proceed without optimized blanker control, the beam will be unblanked for the full
+                        2 * exposure_time + some communication delays.
+
+        :param tilt_bounds: array of float (optional; default is None):
+            An array of alpha start-stop values for the tilt acquisition(s), in degrees.
+            len(tilt_bounds) should equal num + 1
+            Doesn't need to be evenly spaced, the tilt speed will adapt for each individual acquisition.
+            This method takes care of ensuring we are at the starting angle (tilt_bounds[0]) before performing the
+             first acquisition.
+            Notice that when tilting, exposure time is really more of an integration time.
+            Upon return the stage is left at the final destination -> tilt_bounds[-1].
+            If None, or an array of length 0, then no tilting is performed.
 
         :return: AcquisitionSeries:
             An acquisition series.
         """
+        # Make sure the beam is blank while we set up
+        user_had_beam_blanked = self.beam_is_blank()
+        if not user_had_beam_blanked:
+            self.blank_beam()
+
+        # Find out if we are tilting
+        tilting = False  # Assume we are not tilting
+        if tilt_bounds is not None:
+            # Then we expect an array, either of length 0 or num_acquisitions + 1.
+            if len(tilt_bounds) == 0:
+                pass
+            if len(tilt_bounds) == num + 1:
+                tilting = True  # We need to tilt.
+
+                # Ensure we are at the starting tilt angle.
+                if not math.isclose(self.get_stage_position_alpha(), tilt_bounds[0], abs_tol=0.01):
+                    if verbose:
+                        print("Moving the stage to the start angle, \u03B1=" + str(tilt_bounds[0]))
+                    self.set_stage_position_alpha(alpha=tilt_bounds[0], speed=0.25, movement_type="go")
+            else:
+                raise Exception("Error: The length of the non-empty tilt_bounds array (" + str(len(tilt_bounds))
+                                + ") received by blanker_tilt_control() is inconsistent with the requested number of "
+                                  "requested acquisitions (" + str(num) + ").")
+
+        # Blanker optimization and tilting while acquiring both require multitasking.
+        multitasking_required = blanker_optimization or tilting
+        blanker_tilt_process, barriers = None, None  # Warning suppression
+        if multitasking_required:
+            # Then we either need to optimize the blanker or tilt while acquiring. Either way, we need to spawn a
+            #  parallel process.
+
+            # Create an array of barriers that can be used to keep the blanking/tilting process synchronized with the
+            #  main thread.
+            barriers = np.full(shape=num, fill_value=np.nan)
+            for i in range(len(barriers)):
+                barriers[i] = mp.Barrier(2)  # 1 for the main process + 1 for the blanker/tilt process = 2
+
+            if tilting is None:
+                tilt_bounds = None  # No tilting
+
+            if verbose:
+                print("This acquisition series requires multitasking, creating an separate blanking/tilting process.")
+
+            blanker_tilt_args = {'num_acquisitions': num, 'barriers': barriers, 'exposure_time': exposure_time,
+                                 'blanker_optimization': blanker_optimization, 'tilt_bounds': tilt_bounds,
+                                 'verbose': verbose}
+            blanker_tilt_process = mp.Process(target=blanker_tilt_control, kwargs=blanker_tilt_args)
+
+            if verbose:
+                print("Starting the blanking/tilting process.")
+
+            blanker_tilt_process.start()
+
         acq_series = AcquisitionSeries()
         for i in range(num):
-            acq, (_, _) = self.acquisition(camera_name=camera_name, sampling=sampling,
-                                           exposure_time=exposure_time, readout_area=readout_area)
+
+            # Set up the acquisition
+            acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
+            supported_cameras = acquisition.SupportedCameras
+
+            # Try and select the requested camera
+            try:
+                acquisition.Camera = supported_cameras[[c.name for c in supported_cameras].index(str(camera_name))]
+            except ValueError:
+                raise Exception("Unable to perform acquisition because the requested camera (" + str(camera_name) + ") "
+                                "could not be selected. Please use the get_available_cameras() method to get a list of "
+                                "the available cameras.")
+
+            # Configure camera settings
+            camera_settings = acquisition.CameraSettings
+
+            camera_settings.ReadoutArea = readout_area
+
+            supported_samplings = acquisition.CameraSettings.Capabilities.SupportedBinnings
+            if sampling == '4k':
+                camera_settings.Binning = supported_samplings[0]  # 4k images (4096 x 4096)
+            elif sampling == '2k':
+                camera_settings.Binning = supported_samplings[1]  # 2k images (2048 x 2048)
+            elif sampling == '1k':
+                camera_settings.Binning = supported_samplings[2]  # 1k images (1024 x 1024)
+            elif sampling == '0.5k':
+                camera_settings.Binning = supported_samplings[3]  # 0.5k images (512 x 512)
+            else:
+                print('Unknown sampling Type. Proceeding with the default sampling.')
+
+            min_supported_exposure_time, max_supported_exposure_time = self.get_exposure_time_range(camera_name)
+            if min_supported_exposure_time < exposure_time < max_supported_exposure_time:
+                camera_settings.ExposureTime = exposure_time
+            else:
+                raise Exception("Unable to perform acquisition because the requested exposure time (" +
+                                str(exposure_time) + ") is not in the supported range of "
+                                + str(min_supported_exposure_time) + " to " + str(max_supported_exposure_time)
+                                + " seconds. ")
+
+            if multitasking_required:
+                barriers[i].wait()  # Wait for the blanker/tilt process.
+            else:
+                # No multitasking required, just unblank ourselves
+                self.unblank_beam()
+
+            # Actually perform an acquisition
+            core_acquisition_start_time = time.time()
+            acq = acquisition.Acquire()
+            core_acquisition_end_time = time.time()
+
+            if multitasking_required:
+                pass
+            else:
+                # No multitasking required, we have to re-blank the beam ourselves.
+                self.blank_beam()
+
             acq_series.append(acq=acq)
+
+            if verbose:
+                print("\nAcquisition #: " + str(i))
+                print("Core acquisition started at: " + str(core_acquisition_start_time))
+                print("Core acquisition returned at: " + str(core_acquisition_end_time))
+                print("Core acquisition time: " + str(core_acquisition_end_time - core_acquisition_start_time))
+
+        if multitasking_required:
+            # We are now done multitasking, collect the beam blanker processes before returning.
+            blanker_tilt_process.join()
+
+        # Leave the blanker the same way we found it.
+        if not user_had_beam_blanked:
+            self.unblank_beam()
 
         return acq_series
 
@@ -106,6 +251,8 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
          method may take longer, this core time is the time required by the underlying Thermo Fisher acquisition
          command, and is the closest we can get to the actual acquisition time (the actual time the camera is recording
          useful information).
+
+         # TODO: This method remains untested.
 
         :param camera_name: str:
             The name of the camera you want use.
@@ -155,6 +302,7 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
              current location to the provided tilt_destination over the course of the acquisition. Tilt speed is
              determined automatically from the exposure_time (which when tilting is really more of an integration time).
             Upon return the stage is left at the tilt_destination.
+            If None, then no tilting is performed.
 
         :return:
             Acquisition: A single acquisition.
@@ -232,15 +380,21 @@ class AcquisitionMixin(BeamBlankerMixin, StageMixin):
             blanker_tilt_process.start()
             barrier.wait()  # Wait for the blanker/tilt process to initialize.
 
-        # Actually perform the acquisition
+        else:
+            # No multitasking required, just unblank ourselves.
+            self.unblank_beam()
+
+        # Actually perform the acquisition.
         core_acquisition_start_time = time.time()
         acq = acquisition.Acquire()
         core_acquisition_end_time = time.time()
 
         if multitasking_required:
             blanker_tilt_process.join()
+        else:
+            self.blank_beam()
 
-        # Leave the blanker the same way we found it
+        # Leave the blanker the same way we found it.
         if not user_had_beam_blanked:
             self.unblank_beam()
 
