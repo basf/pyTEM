@@ -195,6 +195,9 @@ class AcquisitionSeries:
     def __iter__(self):
         return AcquisitionSeriesIterator(self)
 
+    def __getitem__(self, i):
+        return self.__acquisitions[i]
+
 
 if __name__ == "__main__":
     acq_series = AcquisitionSeries()
