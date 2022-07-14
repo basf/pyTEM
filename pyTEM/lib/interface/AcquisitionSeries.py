@@ -130,7 +130,7 @@ class AcquisitionSeries:
         :return: Acquisition:
             The acquisition at the provided index.
         """
-        return self.__acquisitions[idx]
+        return self[idx]
 
     def set_acquisition(self, acq: Acquisition, idx: int) -> None:
         """
@@ -212,14 +212,8 @@ class AcquisitionSeries:
         if out_file[-4:] != ".mrc":
             out_file = out_file + ".mrc"
 
-        # Stack all the images into a 3D array
-        image_stack = np.empty(shape=(self.length(), self.image_shape()[0], self.image_shape()[1]),
-                               dtype=self.image_dtype())
-        for i, acq in enumerate(self.__acquisitions):
-            image_stack[i] = acq.get_image()
-
         with mrcfile.new(out_file, overwrite=True) as mrc:
-            mrc.set_data(image_stack)
+            mrc.set_data(self.get_image_stack())  # Write image data
             # Until we know how to build our own extended header, just use a stock one  # TODO: Write metadata to header
             mrc.set_extended_header(get_stock_mrc_extended_header())
         warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
