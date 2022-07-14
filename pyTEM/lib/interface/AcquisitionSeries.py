@@ -82,6 +82,15 @@ class AcquisitionSeries:
             raise Exception("Error: Unable to append to AcquisitionSeries, either the provided argument is not of type "
                             "Acquisition, the image is the wrong shape, or the image uses the wrong datatype.")
 
+    def is_empty(self):
+        """
+        :return: True if the acquisition series is empty (contains 0 acquisitions), False otherwise.
+        """
+        if self.length() >= 1:
+            return False  # Not empty
+        else:
+            return True
+
     def length(self) -> int:
         """
         :return: int:
@@ -95,7 +104,7 @@ class AcquisitionSeries:
             Image shape, in pixels.
             The image shape is determined by the shape of the first image in the series.
         """
-        if self.length() > 0:
+        if not self.is_empty():
             return self.get_acquisition(idx=0).image_shape()
 
         else:
@@ -107,7 +116,7 @@ class AcquisitionSeries:
             The image datatype.
             The first image in the series is used as for reference.
         """
-        if self.length() > 0:
+        if not self.is_empty():
             ref_image = self.get_acquisition(idx=0).get_image()  # Use the first image as reference
             return type(ref_image[0][0])
 
@@ -148,6 +157,29 @@ class AcquisitionSeries:
         """
         for acq in self.__acquisitions:
             acq.downsample()
+
+    def get_image_stack(self) -> np.ndarray:
+        """
+        Build and return an 3-dimensional images stack array with the images in the series.
+        :return: np.ndarray:
+            A 3-dimensional numpy array containing a stack of the all the images in the series.
+        """
+        if self.length() > 1:
+
+            # Preallocate
+            number_images = self.length()
+            image_shape = np.shape(self[0].get_image())
+            image_stack_arr = np.full(shape=(number_images, image_shape[0], image_shape[1]), fill_value=np.nan)
+
+            # Loop through and actually fill in the stack
+            for i, acq in enumerate(self):
+                image_stack_arr[i] = acq.get_image()
+
+            return image_stack_arr
+
+        else:
+            raise Exception("Error: get_image_stack() needs at least 2 acquisitions in the AcquisitionSeries in "
+                            "order to generate an image stack.")
 
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
@@ -209,11 +241,13 @@ if __name__ == "__main__":
     acq_series.append(Acquisition(None))
     acq_series.append(Acquisition(None))
 
+    image_stack_arr_ = acq_series.get_image_stack()
+    print(np.shape(image_stack_arr_))
+
     acq_series.downsample()
 
-    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
-              / "interface" / "test_images"
-    out_file_ = out_dir / "mrc_test_stack.mrc"
+    image_stack_arr_ = acq_series.get_image_stack()
+    print(np.shape(image_stack_arr_))
 
     print(acq_series.get_acquisition(idx=0).get_metadata())
 
@@ -222,4 +256,7 @@ if __name__ == "__main__":
         print(c)
         print(acq_)
 
-    acq_series.save_as_mrc(out_file=out_file_)
+    # out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
+    #           / "interface" / "test_images"
+    # out_file_ = out_dir / "mrc_test_stack.mrc"
+    # acq_series.save_as_mrc(out_file=out_file_)
