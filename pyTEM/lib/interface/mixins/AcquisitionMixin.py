@@ -13,7 +13,7 @@ import numpy as np
 import multiprocessing as mp
 
 from typing import List, Tuple, Union
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
@@ -60,6 +60,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                            blanker_optimization: bool = True,
                            tilt_bounds: Union[ArrayLike, None] = None,
                            shifts: np.ndarray = None,
+                           alphas: NDArray[float] = None,
                            verbose: bool = False
                            ) -> AcquisitionSeries:
         """
@@ -92,9 +93,14 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         :param shifts: np.array of float tuples (optional; default is None):
             An array of tuples of the form (x, y) where x and y are the image shifts (in microns) to apply for the
              corresponding acquisition. If None, no image shifts will be applied.
-            If provided, len(shifts) should equal num
+            If provided, len(shifts) must equal num.
             While there are other applications, image shifts can be used to compensation for lateral image shift while
              tilting or moving.
+        :param alphas: np.array of floats (optional; default is None):
+            An array of alpha tilt angles at which to perform the acquisitions. These are angles we tilt to and then
+             stop and acquire. If you want to acquire and tilt simultaneously, please use tilt_bounds.
+            If provided, len(shifts) must equal num.
+            One of alphas and tilt_bounds must be None.
         :param verbose: (optional; default is False):
            Print out extra information. Useful for debugging.
 
@@ -120,7 +126,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
              first acquisition.
             Notice that when tilting, exposure time is really more of an integration time.
             Upon return the stage is left at the final destination -> tilt_bounds[-1].
-            If None, or an array of length 0, then no tilting is performed.
+            If None, or an array of length 0, then no tilting is performed. One of alphas and tilt_bounds must be None.
 
         :return: AcquisitionSeries:
             An acquisition series.
@@ -128,10 +134,45 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         if num <= 0:
             raise Exception("Error: acquisition_series() requires we perform at least one acquisition.")
 
+        # Convert empty lists -> None
+        if not shifts:
+            shifts = None
+        if not alphas:
+            alphas = None
+
+        # Check array lengths
         if shifts is not None:
             if len(shifts) != num:
                 raise Exception("Error: The shifts array passed to acquisition_series() has a length of "
                                 + str(shifts) + ", but it should have a length of num=" + str(num) + ".")
+        if alphas is not None:
+            if len(alphas) != num:
+                raise Exception("Error: The alphas array passed to acquisition_series() has a length of "
+                                + str(alphas) + ", but it should have a length of num=" + str(num) + ".")
+
+        # Find out if we are tilting
+        tilting = False  # Assume we are not tilting
+        if tilt_bounds is not None:
+            # Then we expect an array, either of length 0 or num_acquisitions + 1.
+            if not tilt_bounds:
+                pass  # Empty list
+
+            if len(tilt_bounds) == num + 1:
+                tilting = True  # We need to tilt.
+
+            else:
+                raise Exception("Error: The length of the non-empty tilt_bounds array (" + str(len(tilt_bounds))
+                                + ") received by acquisition_series() is inconsistent with the requested number of "
+                                  "requested acquisitions (" + str(num) + ").")
+
+        if tilting and alphas is not None:
+            raise Exception("Error: acquisition_series() cannot take stationary images at alphas if also "
+                            "tilting while acquiring. One of alphas and tilt_bounds should be None.")
+
+        blanker_process, tilt_process, barriers = None, None, None  # Warning suppression
+
+        if verbose:
+            print("Performing a series acquisition...")
 
         # Make sure the beam is blank, column valve is open, and the screen is removed.
         user_had_beam_blanked = self.beam_is_blank()
@@ -143,23 +184,6 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         user_screen_position = self.get_screen_position()
         if user_screen_position == "inserted":
             self.retract_screen()
-
-        # Find out if we are tilting
-        tilting = False  # Assume we are not tilting
-        if tilt_bounds is not None:
-            # Then we expect an array, either of length 0 or num_acquisitions + 1.
-            if len(tilt_bounds) == 0:
-                pass
-
-            if len(tilt_bounds) == num + 1:
-                tilting = True  # We need to tilt.
-
-            else:
-                raise Exception("Error: The length of the non-empty tilt_bounds array (" + str(len(tilt_bounds))
-                                + ") received by acquisition_series() is inconsistent with the requested number of "
-                                  "requested acquisitions (" + str(num) + ").")
-
-        blanker_process, tilt_process, barriers = None, None, None  # Warning suppression
 
         if blanker_optimization or tilting:
             # We need an array of barriers that can be used to keep the blanking/tilting processes synchronized with
@@ -202,6 +226,10 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
             if shifts is not None:
                 # Apply the requested image shift
                 self.set_image_shift(x=shifts[i, 0], y=shifts[i, 1])
+
+            if alphas is not None:
+                # Apply the requested alpha tilt
+                self.set_stage_position_alpha(alpha=alphas[i], speed=0.25)
 
             # Set up the acquisition
             acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
@@ -360,6 +388,9 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
             Acquisition: A single acquisition.
             (float, float): The core acquisition start and end times.
         """
+        if verbose:
+            print("Performing an acquisition...")
+
         # Make sure the beam is blank, column valve is open, and the screen is removed.
         user_had_beam_blanked = self.beam_is_blank()
         if not user_had_beam_blanked:
