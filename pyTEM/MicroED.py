@@ -149,6 +149,7 @@ class MicroED:
             if use_shift_corrections:
                 # Compute the image shifts required to keep the currently centered section of the specimen centered at
                 #  all alpha tilt angles.
+                # TODO: Update obtain_shifts() to use Interface's acquisition_series()
                 shifts_at_samples = obtain_shifts(microscope=self.microscope, alphas=samples, verbose=verbose,
                                                   camera_name=acquisition_properties.camera_name,
                                                   exposure_time=shift_calibration_exposure_time)
@@ -166,7 +167,7 @@ class MicroED:
 
             # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode
 
-            # Go ahead and actually perform the tilt series.
+            # We have everything we need, go ahead and actually perform the tilt series.
             acq_stack = self.microscope.acquisition_series(num=len(alpha_arr) - 1, camera_name=camera_name,
                                                            exposure_time=integration_time, sampling=sampling,
                                                            blanker_optimization=True, tilt_bounds=alpha_arr,
