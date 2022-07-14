@@ -69,9 +69,13 @@ class MicroED:
         This involves:
          1. prompting the user for the required information,
          2. automatically computing compensatory image shifts,
-         3. performing any of the requested post-processing (e.g. downsampling),
-         4. running the tilt series,
+         3. running the tilt series,
+         4. performing any of the requested post-processing (e.g. downsampling),
          5. saving the results to file at the location of the users choosing.
+
+         # TODO: Break this into separate smaller methods to enable batch processing where we perform steps 1 & 2 for a
+            series of particles, and then perform steps 3, 4, and 5 for all the particles. Upon exception, jump to the
+            next particle (if safe to do so).
 
         :param verbose: bool:
             Print out extra information. Useful for debugging.
@@ -85,6 +89,7 @@ class MicroED:
         # In order to minimize sample destruction, we want to expose as little as possible. However, during image shift
         #  calibration, we need to expose for long enough that we get usable images.
         shift_calibration_exposure_time = 0.25  # s
+        shift_calibration_sampling = '1k'  # Lower resolution is faster but less precise
 
         try:
             # Display welcome and initialization messages
@@ -149,10 +154,9 @@ class MicroED:
             if use_shift_corrections:
                 # Compute the image shifts required to keep the currently centered section of the specimen centered at
                 #  all alpha tilt angles.
-                # TODO: Update obtain_shifts() to use Interface's acquisition_series()
-                shifts_at_samples = obtain_shifts(microscope=self.microscope, alphas=samples, verbose=verbose,
-                                                  camera_name=acquisition_properties.camera_name,
-                                                  exposure_time=shift_calibration_exposure_time)
+                shifts_at_samples = obtain_shifts(microscope=self.microscope, alphas=samples, camera_name=camera_name,
+                                                  sampling=shift_calibration_sampling, batch_wise=False,
+                                                  exposure_time=shift_calibration_exposure_time, verbose=verbose)
 
                 shifts = build_full_shift_array(alphas=acquisition_properties.alphas, samples=samples,
                                                 shifts_at_samples=shifts_at_samples, kind="linear",
