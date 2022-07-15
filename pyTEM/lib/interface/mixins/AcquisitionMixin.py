@@ -106,6 +106,12 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
 
         This function provides the following optional controls by means of multitasking. Utilizing either of these
          functionalities results in the spawning of a separate parallel process to handle it.
+        # TODO: Eliminate the additional runtime caused by process creation and interface creation (maybe by switching
+            to threading, or perhaps creating the parallel process right when the user first connects to the microscope
+            and grabbing barriers from a Manager).
+            Illumination controls (including beam blanker controls) can only be called from the thread in which they
+            were marshalled, so right now we just perform all multitasking with a separate process. Maybe could use
+            pythoncom.CoMarshalInterThreadInterfaceInStream() to sort the issue.
 
         :param blanker_optimization: bool (optional; default is True):
             When we call the core Thermo Fisher acquisition command, the camera is blind for
@@ -319,14 +325,9 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                     blanker_optimization: bool = True,
                     tilt_destination: float = None,
                     verbose: bool = False
-                    ) -> Tuple[Acquisition, Tuple[float, float]]:
+                    ) -> Acquisition:
         """
         Perform (and return the results of) a single acquisition.
-
-        Also, we return a tuple with the start and end epochs of the core acquisition. While this whole acquisition()
-         method may take longer, this core time is the time required by the underlying Thermo Fisher acquisition
-         command, and is the closest we can get to the actual acquisition time (the actual time the camera is recording
-         useful information).
 
         If they are not already, the column valve will be opened and the screen retracted. They will be returned to
          the position in which the were found upon completion of the series.
@@ -353,17 +354,12 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
 
         :param verbose: (optional; default is False):
            Print out extra information. Useful for debugging.
+           One of the things printed is the core time required by the underlying Thermo Fisher acquisition command -
+            this is the closest we can get to the actual acquisition time (the actual time the camera is recording
+            useful information).
 
-        This function provides the following optional controls by means of multiprocessing. Utilizing either of these
-         functionalities significantly increase runtime because we have to wait for a separate parallel process (a new
-         instance of the Python interpreter) to spawn and we have to initialize a new microscope interface in that
-         process.
-         # TODO: Eliminate the additional runtime caused by process creation and interface creation (maybe by switching
-            to threading, sharing an single interface across processes/threads, or creating the parallel process right
-            when the user first connects to the microscope).
-            Illumination controls (including beam blanker controls) can only be called from the thread in which they
-            were marshalled, so right now we just perform all multitasking with a separate process. Maybe could use
-            pythoncom.CoMarshalInterThreadInterfaceInStream() to sort the issue.
+        This function provides the following optional controls by means of multitasking. Utilizing either of these
+         functionalities results in the spawning of a separate parallel process to handle it.
 
         :param blanker_optimization: bool (optional; default is True):
             When we call the core Thermo Fisher acquisition command, the camera is blind for
@@ -377,7 +373,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                         2 * exposure_time + some communication delays.
 
         :param tilt_destination: float (optional; default is None):
-            The angle to which you would like to tilt to over the duration of the acquisition.
+            The angle to which you would like to tilt to over the duration of the acquisition, in degrees.
             If provided, then acquire-while-tilting functionality is enabled and the stage will tilt from its
              current location to the provided tilt_destination over the course of the acquisition. Tilt speed is
              determined automatically from the exposure_time (which when tilting is really more of an integration time).
@@ -386,129 +382,23 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
 
         :return:
             Acquisition: A single acquisition.
-            (float, float): The core acquisition start and end times.
         """
         if verbose:
             print("Performing an acquisition...")
 
-        # Make sure the beam is blank, column valve is open, and the screen is removed.
-        user_had_beam_blanked = self.beam_is_blank()
-        if not user_had_beam_blanked:
-            self.blank_beam()
-        user_column_valve_position = self.get_column_valve_position()
-        if user_column_valve_position == "closed":
-            self.open_column_valve()
-        user_screen_position = self.get_screen_position()
-        if user_screen_position == "inserted":
-            self.retract_screen()
-
-        acquisition = self._tem_advanced.Acquisitions.CameraSingleAcquisition
-        supported_cameras = acquisition.SupportedCameras
-
-        # Try and select the requested camera
-        try:
-            acquisition.Camera = supported_cameras[[c.name for c in supported_cameras].index(str(camera_name))]
-        except ValueError:
-            raise Exception("Unable to perform acquisition because the requested camera (" + str(camera_name) + ") "
-                            "could not be selected. Please use the get_available_cameras() method to get a list of "
-                            "the available cameras.")
-
-        # Configure camera settings
-        camera_settings = acquisition.CameraSettings
-
-        camera_settings.ReadoutArea = readout_area
-
-        supported_samplings = acquisition.CameraSettings.Capabilities.SupportedBinnings
-        if sampling == '4k':
-            camera_settings.Binning = supported_samplings[0]  # 4k images (4096 x 4096)
-        elif sampling == '2k':
-            camera_settings.Binning = supported_samplings[1]  # 2k images (2048 x 2048)
-        elif sampling == '1k':
-            camera_settings.Binning = supported_samplings[2]  # 1k images (1024 x 1024)
-        elif sampling == '0.5k':
-            camera_settings.Binning = supported_samplings[3]  # 0.5k images (512 x 512)
-        else:
-            print('Unknown sampling Type. Proceeding with the default sampling.')
-
-        min_supported_exposure_time, max_supported_exposure_time = self.get_exposure_time_range(camera_name)
-        if min_supported_exposure_time < exposure_time < max_supported_exposure_time:
-            camera_settings.ExposureTime = exposure_time
-        else:
-            raise Exception("Unable to perform acquisition because the requested exposure time (" +
-                            str(exposure_time) + ") is not in the supported range of "
-                            + str(min_supported_exposure_time) + " to " + str(max_supported_exposure_time)
-                            + " seconds. ")
-
-        blanker_process, tilt_process, barrier = None, None, None  # Warning suppression
-        tilting = tilt_destination is not None  # Convenience
-
-        if blanker_optimization or tilting:
-            # We need a barrier that can be used to keep the blanking/tilting processes synchronized with
-            #  the main thread.
-            barrier = mp.Barrier(1 + blanker_optimization + tilting)  # 1 party for each process
-
-        if blanker_optimization:
-            # Then we need to spawn a parallel process from which we control the blanker.
-            if verbose:
-                print("The user has requested we optimize the beam blanker, creating an separate blanking process...")
-
-            blanker_args = {'num_acquisitions': 1, 'barriers': [barrier], 'exposure_time': exposure_time,
-                            'verbose': verbose}
-            blanker_process = mp.Process(target=blanker_control, kwargs=blanker_args)
-
-            if verbose:
-                print("Starting the blanking process...")
-
-            blanker_process.start()
-
-        if tilting:
-            # Then we need to spawn a parallel process from which we can tilt
-            if verbose:
-                print("This acquisition series requires tilting, creating an separate tilt process...")
-
+        if tilt_destination is not None:
+            # Tilt from the current location to the provided tilt_destination
             tilt_bounds = [self.get_stage_position_alpha(), tilt_destination]
-            tilt_args = {'num_acquisitions': 1, 'barriers': [barrier], 'integration_time': exposure_time,
-                         'tilt_bounds': tilt_bounds, 'verbose': verbose}
-            tilt_process = mp.Process(target=tilt_control, kwargs=tilt_args)
+        else:
+            # No tilting
+            tilt_bounds = None
 
-            if verbose:
-                print("Starting the tilt process...")
+        single_acq_series = self.acquisition_series(num=1, camera_name=camera_name, exposure_time=exposure_time,
+                                                    sampling=sampling, readout_area=readout_area,
+                                                    blanker_optimization=blanker_optimization, tilt_bounds=tilt_bounds,
+                                                    shifts=None, alphas=None, verbose=verbose)
 
-            tilt_process.start()
-
-        if not blanker_optimization:
-            # No separate blanker control, we have to unblank ourselves
-            self.unblank_beam()
-
-        if blanker_optimization or tilting:
-            barrier.wait()  # Wait for the blanker and/or tilt process(es) to synchronize.
-
-        # Actually perform the acquisition.
-        core_acquisition_start_time = time.time()
-        acq = acquisition.Acquire()
-        core_acquisition_end_time = time.time()
-
-        if not blanker_optimization:
-            # No separate blanker control, we have to re-blank ourselves
-            self.blank_beam()
-
-        if blanker_optimization:
-            # Collect the beam blanker process.
-            blanker_process.join()
-
-        if tilting:
-            # Collect the tilting process
-            tilt_process.join()
-
-        # Housekeeping: Leave the blanker, column value, and screen the way they were when we started.
-        if user_column_valve_position == "closed":
-            self.close_column_valve()
-        if user_screen_position == "inserted":
-            self.insert_screen()
-        if not user_had_beam_blanked:
-            self.unblank_beam()
-
-        return Acquisition(acq), (core_acquisition_start_time, core_acquisition_end_time)
+        return single_acq_series[0]
 
     def print_camera_capabilities(self, camera_name: str) -> None:
         """
@@ -629,27 +519,15 @@ def acquisition_testing():
     """ Perform an acquisition with no multitasking """
     print("\n\n## Performing an acquisition with no multitasking ##")
     overall_start_time = time.time()
-    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
-                                                                     exposure_time=requested_exposure_time,
-                                                                     sampling='1k',
-                                                                     blanker_optimization=False,
-                                                                     tilt_destination=None,
-                                                                     verbose=True)
+    test_acq = interface.acquisition(camera_name="BM-Ceta", exposure_time=requested_exposure_time, sampling='1k',
+                                     blanker_optimization=False, tilt_destination=None, verbose=True)
     overall_stop_time = time.time()
 
     print("\nRequested Exposure time: " + str(requested_exposure_time))
 
-    print("\nCore acquisition started at: " + str(core_acq_start))
-    print("Core acquisition returned at: " + str(core_acq_end))
-    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
-
     print("\nOverall acquisition() method call started at: " + str(overall_start_time))
     print("Overall acquisition() method returned at: " + str(overall_stop_time))
     print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
-
-    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
-    print("Time between when the core acquisition finished and when acquisition() returned: "
-          + str(overall_stop_time - core_acq_end))
 
     print(test_acq.get_image())
     test_acq.show_image()
@@ -658,27 +536,15 @@ def acquisition_testing():
     """ Perform an acquisition with blanker optimization but no tilting """
     print("\n\n## Performing an acquisition with blanking optimization but no tilting ##")
     overall_start_time = time.time()
-    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
-                                                                     exposure_time=requested_exposure_time,
-                                                                     sampling='1k',
-                                                                     blanker_optimization=True,
-                                                                     tilt_destination=None,
-                                                                     verbose=True)
+    test_acq = interface.acquisition(camera_name="BM-Ceta", exposure_time=requested_exposure_time, sampling='1k',
+                                     blanker_optimization=True, tilt_destination=None, verbose=True)
     overall_stop_time = time.time()
 
     print("\nRequested Exposure time: " + str(requested_exposure_time))
 
-    print("\nCore acquisition started at: " + str(core_acq_start))
-    print("Core acquisition returned at: " + str(core_acq_end))
-    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
-
     print("\nOverall acquisition() method call started at: " + str(overall_start_time))
     print("Overall acquisition() method returned at: " + str(overall_stop_time))
     print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
-
-    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
-    print("Time between when the core acquisition finished and when acquisition() returned: "
-          + str(overall_stop_time - core_acq_end))
 
     print(test_acq.get_image())
     test_acq.show_image()
@@ -689,27 +555,15 @@ def acquisition_testing():
     interface.set_stage_position_alpha(alpha=0)
 
     overall_start_time = time.time()
-    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
-                                                                     exposure_time=requested_exposure_time,
-                                                                     sampling='1k',
-                                                                     blanker_optimization=True,
-                                                                     tilt_destination=2,
-                                                                     verbose=True)
+    test_acq = interface.acquisition(camera_name="BM-Ceta", exposure_time=requested_exposure_time, sampling='1k',
+                                     blanker_optimization=False, tilt_destination=2, verbose=True)
     overall_stop_time = time.time()
 
     print("\nRequested Exposure time: " + str(requested_exposure_time))
 
-    print("\nCore acquisition started at: " + str(core_acq_start))
-    print("Core acquisition returned at: " + str(core_acq_end))
-    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
-
     print("\nOverall acquisition() method call started at: " + str(overall_start_time))
     print("Overall acquisition() method returned at: " + str(overall_stop_time))
     print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
-
-    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
-    print("Time between when the core acquisition finished and when acquisition() returned: "
-          + str(overall_stop_time - core_acq_end))
 
     print(test_acq.get_image())
     test_acq.show_image()
@@ -720,27 +574,15 @@ def acquisition_testing():
     interface.set_stage_position_alpha(alpha=0)
 
     overall_start_time = time.time()
-    test_acq, (core_acq_start, core_acq_end) = interface.acquisition(camera_name="BM-Ceta",
-                                                                     exposure_time=requested_exposure_time,
-                                                                     sampling='1k',
-                                                                     blanker_optimization=True,
-                                                                     tilt_destination=2,
-                                                                     verbose=True)
+    test_acq = interface.acquisition(camera_name="BM-Ceta", exposure_time=requested_exposure_time, sampling='1k',
+                                     blanker_optimization=True, tilt_destination=2, verbose=True)
     overall_stop_time = time.time()
 
     print("\nRequested Exposure time: " + str(requested_exposure_time))
 
-    print("\nCore acquisition started at: " + str(core_acq_start))
-    print("Core acquisition returned at: " + str(core_acq_end))
-    print("Core acquisition time: " + str(core_acq_end - core_acq_start))
-
     print("\nOverall acquisition() method call started at: " + str(overall_start_time))
     print("Overall acquisition() method returned at: " + str(overall_stop_time))
     print("Total overall time spent in acquisition(): " + str(overall_stop_time - overall_start_time))
-
-    print("\nTime between the acquisition() method call and core start: " + str(core_acq_start - overall_start_time))
-    print("Time between when the core acquisition finished and when acquisition() returned: "
-          + str(overall_stop_time - core_acq_end))
 
     print(test_acq.get_image())
     test_acq.show_image()
