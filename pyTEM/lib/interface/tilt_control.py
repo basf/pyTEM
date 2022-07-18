@@ -77,8 +77,9 @@ def tilt_control(num_acquisitions: int, barriers: ArrayLike, integration_time: f
 
         barriers[i].wait()  # Synchronize with the main process.
 
-        # Wait while the camera is blind.
-        time.sleep(integration_time)
+        # Wait while the camera is blind. Notice we wait a little longer than the integration time, this is because
+        #  the acquisition command takes a little longer to issue than the tilt command.
+        time.sleep(0.03 + integration_time)
 
         # Perform tilt. This blocks the program for the full integration time so no need to sleep.
         tilt_start_time = time.time()

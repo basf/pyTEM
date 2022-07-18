@@ -20,7 +20,6 @@ try:
     from pyTEM.Interface import Interface
 
     from pyTEM.lib.micro_ed.exit_script import exit_script
-    from pyTEM.lib.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
     from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
         display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
         display_good_bye_message, display_initialization_message, have_user_center_particle
@@ -69,9 +68,13 @@ class MicroED:
         This involves:
          1. prompting the user for the required information,
          2. automatically computing compensatory image shifts,
-         3. performing any of the requested post-processing (e.g. downsampling),
-         4. running the tilt series,
+         3. running the tilt series,
+         4. performing any of the requested post-processing (e.g. downsampling),
          5. saving the results to file at the location of the users choosing.
+
+         # TODO: Break this into separate smaller methods to enable batch processing where we perform steps 1 & 2 for a
+            series of particles, and then perform steps 3, 4, and 5 for all the particles. Upon exception, jump to the
+            next particle (if safe to do so).
 
         :param verbose: bool:
             Print out extra information. Useful for debugging.
@@ -85,6 +88,7 @@ class MicroED:
         # In order to minimize sample destruction, we want to expose as little as possible. However, during image shift
         #  calibration, we need to expose for long enough that we get usable images.
         shift_calibration_exposure_time = 0.25  # s
+        shift_calibration_sampling = '1k'  # Lower resolution is faster but less precise
 
         try:
             # Display welcome and initialization messages
@@ -149,9 +153,9 @@ class MicroED:
             if use_shift_corrections:
                 # Compute the image shifts required to keep the currently centered section of the specimen centered at
                 #  all alpha tilt angles.
-                shifts_at_samples = obtain_shifts(microscope=self.microscope, alphas=samples, verbose=verbose,
-                                                  camera_name=acquisition_properties.camera_name,
-                                                  exposure_time=shift_calibration_exposure_time)
+                shifts_at_samples = obtain_shifts(microscope=self.microscope, alphas=samples, camera_name=camera_name,
+                                                  sampling=shift_calibration_sampling, batch_wise=False,
+                                                  exposure_time=shift_calibration_exposure_time, verbose=verbose)
 
                 shifts = build_full_shift_array(alphas=acquisition_properties.alphas, samples=samples,
                                                 shifts_at_samples=shifts_at_samples, kind="linear",
@@ -166,7 +170,7 @@ class MicroED:
 
             # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode
 
-            # Go ahead and actually perform the tilt series.
+            # We have everything we need, go ahead and actually perform the tilt series.
             acq_stack = self.microscope.acquisition_series(num=len(alpha_arr) - 1, camera_name=camera_name,
                                                            exposure_time=integration_time, sampling=sampling,
                                                            blanker_optimization=True, tilt_bounds=alpha_arr,

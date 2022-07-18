@@ -3,18 +3,24 @@
  Date:    Summer 2022
 """
 
+# Required to type hint that a method is returning an instance of the enclosing class.
+from __future__ import annotations
+
 import pathlib
 import sys
 import warnings
 import mrcfile
 
-from typing import Union, Tuple
 import numpy as np
+import hyperspy.api as hs
+
+from typing import Union, Tuple
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
     from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
+    from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
     from pyTEM.lib.interface.Acquisition import Acquisition
 except Exception as ImportException:
     raise ImportException
@@ -69,11 +75,11 @@ class AcquisitionSeries:
              of those in the series.
         :return: None.
         """
-        if self.length() == 0 and isinstance(acq, Acquisition):
-            # This will be the first image in the series
+        if self.is_empty() and isinstance(acq, Acquisition):
+            # This will be the first image in the series.
             self.__acquisitions.append(acq)
 
-        # If it is not the first image, we have to check to make sure shape and datatype match
+        # If it is not the first image, we have to check to make sure shape and datatype match.
         elif isinstance(acq, Acquisition) \
                 and acq.image_shape() == self.image_shape() and acq.image_dtype() == self.image_dtype():
             self.__acquisitions.append(acq)
@@ -81,6 +87,15 @@ class AcquisitionSeries:
         else:
             raise Exception("Error: Unable to append to AcquisitionSeries, either the provided argument is not of type "
                             "Acquisition, the image is the wrong shape, or the image uses the wrong datatype.")
+
+    def is_empty(self):
+        """
+        :return: True if the acquisition series is empty (contains 0 acquisitions), False otherwise.
+        """
+        if self.length() >= 1:
+            return False  # Not empty
+        else:
+            return True
 
     def length(self) -> int:
         """
@@ -95,7 +110,7 @@ class AcquisitionSeries:
             Image shape, in pixels.
             The image shape is determined by the shape of the first image in the series.
         """
-        if self.length() > 0:
+        if not self.is_empty():
             return self.get_acquisition(idx=0).image_shape()
 
         else:
@@ -107,7 +122,7 @@ class AcquisitionSeries:
             The image datatype.
             The first image in the series is used as for reference.
         """
-        if self.length() > 0:
+        if not self.is_empty():
             ref_image = self.get_acquisition(idx=0).get_image()  # Use the first image as reference
             return type(ref_image[0][0])
 
@@ -121,7 +136,7 @@ class AcquisitionSeries:
         :return: Acquisition:
             The acquisition at the provided index.
         """
-        return self.__acquisitions[idx]
+        return self[idx]
 
     def set_acquisition(self, acq: Acquisition, idx: int) -> None:
         """
@@ -148,6 +163,66 @@ class AcquisitionSeries:
         """
         for acq in self.__acquisitions:
             acq.downsample()
+
+    def get_image_stack(self, dtype: type = None) -> np.ndarray:
+        """
+        Build and return an 3-dimensional images stack array with the images in the series.
+        :param dtype: type (optional; default is None):
+            The datatype to use. If omitted or None, then the datatype defaults to the series' current image datatype as
+             found with image_dtype().
+        :return: np.ndarray:
+            A 3-dimensional numpy array containing a stack of the all the images in the series.
+        """
+        if self.length() > 1:
+
+            # Preallocate
+            number_images = self.length()
+            image_shape = np.shape(self[0].get_image())
+            if dtype is None:
+                dtype = self.image_dtype()
+            image_stack_arr = np.full(shape=(number_images, image_shape[0], image_shape[1]), fill_value=np.nan,
+                                      dtype=dtype)
+
+            # Loop through and actually fill in the stack.
+            for i, acq in enumerate(self):
+                image_stack_arr[i] = acq.get_image()
+
+            return image_stack_arr
+
+        else:
+            raise Exception("Error: get_image_stack() requires the AcquisitionSeries contains at least 2 acquisitions "
+                            "in order to generate an image stack. Use "
+                            "AcquisitionSeries.get_acquisition(idx=0).get_image() to get an array of the lone "
+                            "first image in the series.")
+
+    def align(self) -> AcquisitionSeries:
+        """
+        Align the images in the acquisition series.
+
+        Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase correlation
+         algorithm based on the following paper:
+            Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
+                Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+
+        :return: AcquisitionSeries:
+            A new acquisition series containing the aligned images.
+        """
+        turn_off_hyperspy_warnings()
+
+        # Build a Hyperspy signal from the image stack, align it, and convert it back to a numpy array.
+        image_stack = hs.signals.Signal2D(self.get_image_stack())
+        image_stack.align2D()  # In-place.
+        image_stack = np.asarray(image_stack)
+
+        # Build a new acquisition series with the results.
+        result = AcquisitionSeries()
+        for i in range(self.length()):
+            # Build a new acquisition with the aligned image and old metadata and add it to the series.
+            new_acq = Acquisition(image_stack[i])
+            new_acq._set_metadata(metadata=self[i].get_metadata())
+            result.append(new_acq)
+
+        return result
 
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
@@ -180,14 +255,8 @@ class AcquisitionSeries:
         if out_file[-4:] != ".mrc":
             out_file = out_file + ".mrc"
 
-        # Stack all the images into a 3D array
-        image_stack = np.empty(shape=(self.length(), self.image_shape()[0], self.image_shape()[1]),
-                               dtype=self.image_dtype())
-        for i, acq in enumerate(self.__acquisitions):
-            image_stack[i] = acq.get_image()
-
         with mrcfile.new(out_file, overwrite=True) as mrc:
-            mrc.set_data(image_stack)
+            mrc.set_data(self.get_image_stack())  # Write image data
             # Until we know how to build our own extended header, just use a stock one  # TODO: Write metadata to header
             mrc.set_extended_header(get_stock_mrc_extended_header())
         warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
@@ -209,11 +278,13 @@ if __name__ == "__main__":
     acq_series.append(Acquisition(None))
     acq_series.append(Acquisition(None))
 
+    image_stack_arr_ = acq_series.get_image_stack()
+    print(np.shape(image_stack_arr_))
+
     acq_series.downsample()
 
-    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
-              / "interface" / "test_images"
-    out_file_ = out_dir / "mrc_test_stack.mrc"
+    image_stack_arr_ = acq_series.get_image_stack()
+    print(np.shape(image_stack_arr_))
 
     print(acq_series.get_acquisition(idx=0).get_metadata())
 
@@ -222,4 +293,11 @@ if __name__ == "__main__":
         print(c)
         print(acq_)
 
-    acq_series.save_as_mrc(out_file=out_file_)
+    new_series = acq_series.align()
+
+    print(new_series)
+
+    # out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
+    #           / "interface" / "test_images"
+    # out_file_ = out_dir / "mrc_test_stack.mrc"
+    # acq_series.save_as_mrc(out_file=out_file_)

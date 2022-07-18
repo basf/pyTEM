@@ -147,6 +147,11 @@ class Acquisition:
                         if isinstance(self.get_metadata()[key], DictionaryTreeBrowser):
                             self.get_metadata()[key] = dict(self.get_metadata()[key])
 
+            elif isinstance(args[0], np.ndarray):
+                # Initialize from array.
+                self.__image = args[0]
+                self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
                 # Notice that we load as a 16-bit image.
@@ -160,7 +165,7 @@ class Acquisition:
 
         if self.__image.ndim != 2:
             raise Exception("The Acquisition class is only meant for single 2D images. For image stacks, please use "
-                            "the AcquisitionSeries class for image stacks.")
+                            "the AcquisitionSeries class.")
 
     def _set_image(self, image: ArrayLike) -> None:
         """
