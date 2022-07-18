@@ -244,7 +244,7 @@ if isinstance(in_file, str):
         exit()  # We are done here
 
     elif out_file[-4:] == ".tif" or out_file[-5:] == ".tiff":
-        raise NotImplementedError("We don't know how to use TIFF files yet!")
+        raise NotImplementedError("We don't know how to deal with TIFF stacks yet!")
 
     else:
         raise Exception("File type unknown.")
@@ -258,11 +258,11 @@ else:
 acq_series = acq_series.align()
 
 # Save to file.
-if out_file[-4:] != ".mrc":
+if out_file[-4:] == ".mrc":
     acq_series.save_as_mrc(out_file=out_file)
 
 elif out_file[-4:] == ".tif" or out_file[-5:] == ".tiff":
     acq_series.save_as_tif(out_file=out_file)
 
 else:
-    raise Exception("Error: Out file type not recognized.")
+    raise Exception("Error: Out file type not recognized: " + str(out_file))
