@@ -160,7 +160,7 @@ class Acquisition:
 
         if self.__image.ndim != 2:
             raise Exception("The Acquisition class is only meant for single 2D images. For image stacks, please use "
-                            "the AcquisitionSeries class for image stacks.")
+                            "the AcquisitionSeries class.")
 
     def _set_image(self, image: ArrayLike) -> None:
         """
