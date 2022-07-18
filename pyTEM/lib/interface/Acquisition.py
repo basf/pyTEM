@@ -147,6 +147,11 @@ class Acquisition:
                         if isinstance(self.get_metadata()[key], DictionaryTreeBrowser):
                             self.get_metadata()[key] = dict(self.get_metadata()[key])
 
+            elif isinstance(args[0], np.ndarray):
+                # Initialize from array.
+                self.__image = args[0]
+                self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
                 # Notice that we load as a 16-bit image.
