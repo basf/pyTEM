@@ -20,7 +20,7 @@ package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().p
 sys.path.append(str(package_directory))
 try:
     from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
-    from pyTEM.lib.micro_ed.turn_off_hyperspy_warnings import turn_off_hyperspy_warnings
+    from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
     from pyTEM.lib.interface.Acquisition import Acquisition
 except Exception as ImportException:
     raise ImportException
