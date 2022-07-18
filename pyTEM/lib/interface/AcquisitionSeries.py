@@ -69,11 +69,11 @@ class AcquisitionSeries:
              of those in the series.
         :return: None.
         """
-        if self.length() == 0 and isinstance(acq, Acquisition):
-            # This will be the first image in the series
+        if self.is_empty() and isinstance(acq, Acquisition):
+            # This will be the first image in the series.
             self.__acquisitions.append(acq)
 
-        # If it is not the first image, we have to check to make sure shape and datatype match
+        # If it is not the first image, we have to check to make sure shape and datatype match.
         elif isinstance(acq, Acquisition) \
                 and acq.image_shape() == self.image_shape() and acq.image_dtype() == self.image_dtype():
             self.__acquisitions.append(acq)
@@ -158,9 +158,12 @@ class AcquisitionSeries:
         for acq in self.__acquisitions:
             acq.downsample()
 
-    def get_image_stack(self) -> np.ndarray:
+    def get_image_stack(self, dtype: type = None) -> np.ndarray:
         """
         Build and return an 3-dimensional images stack array with the images in the series.
+        :param dtype: type (optional; default is None):
+            The datatype to use. If omitted or None, then the datatype defaults to the series' current image datatype as
+             found with image_dtype().
         :return: np.ndarray:
             A 3-dimensional numpy array containing a stack of the all the images in the series.
         """
@@ -169,17 +172,22 @@ class AcquisitionSeries:
             # Preallocate
             number_images = self.length()
             image_shape = np.shape(self[0].get_image())
-            image_stack_arr = np.full(shape=(number_images, image_shape[0], image_shape[1]), fill_value=np.nan)
+            if dtype is None:
+                dtype = self.image_dtype()
+            image_stack_arr = np.full(shape=(number_images, image_shape[0], image_shape[1]), fill_value=np.nan,
+                                      dtype=dtype)
 
-            # Loop through and actually fill in the stack
+            # Loop through and actually fill in the stack.
             for i, acq in enumerate(self):
                 image_stack_arr[i] = acq.get_image()
 
             return image_stack_arr
 
         else:
-            raise Exception("Error: get_image_stack() needs at least 2 acquisitions in the AcquisitionSeries in "
-                            "order to generate an image stack.")
+            raise Exception("Error: get_image_stack() requires the AcquisitionSeries contains at least 2 acquisitions "
+                            "in order to generate an image stack. Use "
+                            "AcquisitionSeries.get_acquisition(idx=0).get_image() to get an array of the lone "
+                            "first image in the series.")
 
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
