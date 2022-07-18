@@ -20,7 +20,6 @@ try:
     from pyTEM.Interface import Interface
 
     from pyTEM.lib.micro_ed.exit_script import exit_script
-    from pyTEM.lib.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
     from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
         display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
         display_good_bye_message, display_initialization_message, have_user_center_particle
