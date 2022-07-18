@@ -75,21 +75,24 @@ class GetInOutFile:
             leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
             self.in_file = filedialog.askopenfilename()
 
-            # Update the in_file label with the currently selected file.
-            in_file_label.config(text="In file: " + self.in_file)
-            in_file_label.configure(foreground="black")
+            # Make sure we actually got an in file and the user didn't cancel
+            if self.in_file not in {"", " "}:
+                # Update the in_file label with the currently selected file.
+                in_file_label.config(text="In file: " + self.in_file)
+                in_file_label.configure(foreground="black")
 
-            # Suggest an outfile directory based on the input directory.
-            self.out_directory = os.path.dirname(self.in_file)
-            out_directory_label.config(text=self.out_directory + "/")
+                # Suggest an outfile directory based on the input directory.
+                self.out_directory = os.path.dirname(self.in_file)
+                out_directory_label.config(text=self.out_directory + "/")
 
-            # Suggest an out file to have the same name as the in file.
-            suggested_out_file_name, _ = os.path.splitext(os.path.basename(self.in_file))
-            out_file_name_entry_box.delete(0, tk.END)
-            out_file_name_entry_box.insert(0, str(suggested_out_file_name) + "_aligned")
+                # Suggest an out file to have the same name as the in file.
+                suggested_out_file_name, _ = os.path.splitext(os.path.basename(self.in_file))
+                out_file_name_entry_box.delete(0, tk.END)
+                out_file_name_entry_box.insert(0, str(suggested_out_file_name) + "_aligned")
 
-            # As long as we have an in-file, we are now okay to go ahead with the alignment.
-            go_button.config(state=tk.NORMAL)
+                # As long as we have an in-file, we are now okay to go ahead with the alignment.
+                go_button.config(state=tk.NORMAL)
+
             leaf.destroy()
 
         def get_multiple_in_files(*args):
@@ -105,32 +108,39 @@ class GetInOutFile:
             leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
             self.in_file = filedialog.askopenfilenames()
 
-            # Update the in_file label with the currently selected list of files.
-            if len(self.in_file) == 1:
-                in_file_label.config(text="In file:" + "\n" + self.in_file[0])
-            elif len(self.in_file) == 2:
-                in_file_label.config(text="In files:" + "\n" + self.in_file[0] + "\n" + self.in_file[1])
-            else:
-                # Just print out the first and last file.
-                in_file_label.config(text="In files:" + "\n" + self.in_file[0]
-                                          + "\n" + "*" + "\n" + "*" + "\n" + "*"
-                                          + "\n" + self.in_file[-1])
-            in_file_label.configure(foreground="black")
+            # Make sure we actually got an in file and the user didn't cancel
+            if self.in_file not in {"", " "}:
+                # Update the in_file label with the currently selected list of files.
+                if len(self.in_file) == 1:
+                    in_file_label.config(text="In file:" + "\n" + self.in_file[0])
+                elif len(self.in_file) == 2:
+                    in_file_label.config(text="In files:" + "\n" + self.in_file[0] + "\n" + self.in_file[1])
+                else:
+                    # Just print out the first and last file.
+                    in_file_label.config(text="In files:" + "\n" + self.in_file[0]
+                                              + "\n" + "*" + "\n" + "*" + "\n" + "*"
+                                              + "\n" + self.in_file[-1])
+                in_file_label.configure(foreground="black")
 
-            # Suggest an outfile directory based on first input file.
-            self.out_directory = os.path.dirname(self.in_file[0])
-            out_directory_label.config(text=self.out_directory + "/")
+                # Suggest an outfile directory based on first input file.
+                self.out_directory = os.path.dirname(self.in_file[0])
+                out_directory_label.config(text=self.out_directory + "/")
 
-            # Suggest an out file name based on the first file in the series.
-            suggested_out_file_name, _ = os.path.splitext(os.path.basename(self.in_file[0]))
-            out_file_name_entry_box.delete(0, tk.END)
-            out_file_name_entry_box.insert(0, str(suggested_out_file_name) + "_aligned")
+                # Suggest an out file name based on the first file in the series.
+                suggested_out_file_name, _ = os.path.splitext(os.path.basename(self.in_file[0]))
+                out_file_name_entry_box.delete(0, tk.END)
+                out_file_name_entry_box.insert(0, str(suggested_out_file_name) + "_aligned")
 
-            # As long as we have an in-file, we are now okay to go ahead with the alignment.
-            go_button.config(state=tk.NORMAL)
+                # As long as we have an in-file, we are now okay to go ahead with the alignment.
+                go_button.config(state=tk.NORMAL)
+
             leaf.destroy()
 
         def change_out_directory(*args):
+            """
+            Change/update the out directory.
+            :return: None, but the out_directory attribute is updated with the new out directory of the users choosing.
+            """
             leaf = tk.Tk()
             leaf.title("Please select an out directory.")
             add_basf_icon_to_tkinter_window(leaf)
