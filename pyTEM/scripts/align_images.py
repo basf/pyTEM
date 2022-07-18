@@ -1,0 +1,182 @@
+"""
+ Author:  Michael Luciuk
+ Date:    Summer 2022
+
+
+Read in an image stack, align the images, and save the results back to file.
+
+Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase correlation
+algorithm based on the following paper:
+    Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
+     Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+"""
+
+import sys
+import pathlib
+
+import tkinter as tk
+
+from tkinter import ttk, filedialog
+from typing import Tuple, Union
+
+from mrcfile import mrcfile
+from pathlib import Path
+
+# Add the pyTEM package directory to path
+
+package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
+sys.path.append(str(package_directory))
+try:
+    from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
+    from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
+except Exception as ImportException:
+    raise ImportException
+
+
+class GetInOutFile:
+
+    def __init__(self):
+        self.in_file = ""
+        self.out_directory = str(Path.home())
+
+    def run(self) -> Tuple[Union[str, Tuple[str]], str]:
+        """
+        Get the in and out file paths.
+
+        :return:
+            in_file: str of tuple of strings: Path(s) to the file(s) containing the image(s) that the user wants to
+                       read in and align.
+            out_file: str: Path to the destination in which the user wants to store the aligned file.
+        """
+
+        root = tk.Tk()
+        style = ttk.Style()
+
+        window_width = 500
+        label_font = None  # default
+        label_font_size = 12
+
+        root.title("Align Images")
+        add_basf_icon_to_tkinter_window(root)
+
+        def get_single_in_file(*args):
+            leaf = tk.Tk()
+            leaf.title("Please select a single file containing an image stack you would like to align.")
+            add_basf_icon_to_tkinter_window(leaf)
+            leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
+
+            self.in_file = filedialog.askopenfilename()
+            in_file_label.config(text="In file: " + self.in_file)
+            in_file_label.configure(foreground="black")
+            go_button.config(state=tk.NORMAL)
+            leaf.destroy()
+
+        def get_multiple_in_files(*args):
+            leaf = tk.Tk()
+            leaf.title("Please select the images you would like to align.")
+            add_basf_icon_to_tkinter_window(leaf)
+            leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
+
+            self.in_file = filedialog.askopenfilenames()
+            if len(self.in_file) == 1:
+                in_file_label.config(text="In file:" + "\n" + self.in_file[0])
+            elif len(self.in_file) == 2:
+                in_file_label.config(text="In files:" + "\n" + self.in_file[0] + "\n" + self.in_file[1])
+            else:
+                # Just print out the files and last
+                in_file_label.config(text="In files:" + "\n" + self.in_file[0] + "\n" + "***" + "\n" + self.in_file[1])
+
+            in_file_label.configure(foreground="black")
+            go_button.config(state=tk.NORMAL)
+            leaf.destroy()
+
+        def change_out_directory(*args):
+            leaf = tk.Tk()
+            leaf.title("Please select an out directory.")
+            add_basf_icon_to_tkinter_window(leaf)
+            leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
+
+            self.out_directory = filedialog.askdirectory()
+            out_directory_label.configure(text=self.out_directory + "/")
+            leaf.destroy()
+
+        in_file_message = ttk.Label(root, text="Which images would you like to align?",
+                                    justify='center', font=(label_font, label_font_size), wraplength=window_width)
+        in_file_message.grid(column=0, columnspan=3, row=0, padx=5, pady=5)
+
+        # Create a button that, when clicked, will prompt the user to select a single file containing the image
+        #  stack that would like to align.
+        single_in_file_button = ttk.Button(root, text="Select Single In File",
+                                           command=lambda: get_single_in_file(), style="big.TButton")
+        single_in_file_button.grid(column=0, columnspan=3, row=1, padx=5, pady=5)
+
+        # Create a button that, when clicked, will prompt the user to select the images they would like to align.
+        multiple_in_file_button = ttk.Button(root, text="Select Multiple In Files",
+                                             command=lambda: get_multiple_in_files(), style="big.TButton")
+        multiple_in_file_button.grid(column=0, columnspan=3, row=2, padx=5, pady=5)
+
+        # Display the in file
+        in_file_label = ttk.Label(root, text="No files selected.", justify='center', font=(label_font, label_font_size),
+                                  wraplength=window_width)
+        in_file_label.configure(foreground="red")
+        in_file_label.grid(column=0, columnspan=3, row=3, padx=5, pady=5)
+
+        out_file_message = ttk.Label(root, text="Where would you like to save the results?", justify='center',
+                                     font=(label_font, label_font_size), wraplength=window_width)
+        out_file_message.grid(column=0, columnspan=3, row=4, sticky='w', padx=5, pady=5)
+
+        # Create a button that, when clicked, will update the out_file directory
+        out_file_button = ttk.Button(root, text="Update Out Directory", command=lambda: change_out_directory(),
+                                     style="big.TButton")
+        out_file_button.grid(column=0, columnspan=3, row=5, padx=5, pady=5)
+
+        # Label the filename box with the out directory
+        out_directory_label = ttk.Label(root, text=self.out_directory + "\\")
+        out_directory_label.grid(column=0, row=6, sticky="e", padx=5, pady=5)
+
+        # Create an entry box for the user to enter the out file name.
+        out_file_name = tk.StringVar()
+        out_file_name_entry_box = ttk.Entry(root, textvariable=out_file_name)
+        out_file_name_entry_box.insert(0, "aligned_series")  # Default value
+        out_file_name_entry_box.grid(column=1, row=6, padx=5, pady=5)
+
+        # Add a dropdown menu to get the file extension
+        file_extension_options = ['.mrc', '.tif']
+        file_extension = tk.StringVar()
+        file_extension_menu = ttk.OptionMenu(root, file_extension, file_extension_options[0], *file_extension_options)
+        file_extension_menu.grid(column=2, row=6, sticky="w", padx=5, pady=5)
+
+        # Create go and exit buttons
+        go_button = ttk.Button(root, text="Go", command=lambda: root.destroy(), style="big.TButton")
+        go_button.grid(column=0, columnspan=3, row=7, padx=5, pady=5)
+        go_button.config(state=tk.DISABLED)
+        exit_button = ttk.Button(root, text="Quit", command=lambda: sys.exit(), style="big.TButton")
+        exit_button.grid(column=0, columnspan=3, row=8, padx=5, pady=5)
+
+        style.configure('big.TButton', font=(None, 10), foreground="blue4")
+        root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+
+        root.mainloop()
+
+        # Build and return the complete path
+        out_path = self.out_directory + "/" + str(out_file_name.get()) + str(file_extension.get())
+        return self.in_file, out_path
+
+
+acq_series = AcquisitionSeries()
+print("Here we go..")
+in_file, out_file = GetInOutFile().run()
+# filename = filedialog.askopenfilename(title='Open a file')
+
+if isinstance(in_file, str):
+    print("In file: " + in_file)
+else:
+    print("Multiple in files...")
+print("Out file: " + out_file)
+
+# with mrcfile.open(in_file) as mrc:
+#     self.__image = mrc.data
+#     # TODO: Figure out how to read in metadata from MRC file header
+#     warnings.warn("We haven't learned how to read MRC file headers yet, so the returned "
+#                   "Acquisition object has no metadata!")
+#     self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
