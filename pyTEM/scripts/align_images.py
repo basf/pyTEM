@@ -3,7 +3,8 @@
  Date:    Summer 2022
 
 
-Read in an image stack, align the images, and save the results back to file.
+Read in some images (possibly from a stack, possibly from a bunch of single image files), align the images, and save
+ the results back to file.
 
 Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase correlation
 algorithm based on the following paper:
@@ -11,6 +12,7 @@ algorithm based on the following paper:
      Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
 """
 
+import os
 import sys
 import pathlib
 
@@ -23,7 +25,6 @@ from mrcfile import mrcfile
 from pathlib import Path
 
 # Add the pyTEM package directory to path
-
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
@@ -34,6 +35,9 @@ except Exception as ImportException:
 
 
 class GetInOutFile:
+    """
+    Get the in and out file info from the user.
+    """
 
     def __init__(self):
         self.in_file = ""
@@ -44,8 +48,8 @@ class GetInOutFile:
         Get the in and out file paths.
 
         :return:
-            in_file: str of tuple of strings: Path(s) to the file(s) containing the image(s) that the user wants to
-                       read in and align.
+            in_file: str or tuple of strings: Path(s) to the file(s) containing the image(s) or image stack that the
+                        user wants to read in and align.
             out_file: str: Path to the destination in which the user wants to store the aligned file.
         """
 
@@ -60,33 +64,69 @@ class GetInOutFile:
         add_basf_icon_to_tkinter_window(root)
 
         def get_single_in_file(*args):
+            """
+            Have the user select a single file.
+            :return: None, but the in_file attribute is updated with the path to the selected file (as a string).
+            """
+            # Open file explorer, prompting the user to select a file.
             leaf = tk.Tk()
             leaf.title("Please select a single file containing an image stack you would like to align.")
             add_basf_icon_to_tkinter_window(leaf)
             leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
-
             self.in_file = filedialog.askopenfilename()
+
+            # Update the in_file label with the currently selected file.
             in_file_label.config(text="In file: " + self.in_file)
             in_file_label.configure(foreground="black")
+
+            # Suggest an outfile directory based on the input directory.
+            self.out_directory = os.path.dirname(self.in_file)
+            out_directory_label.config(text=self.out_directory + "/")
+
+            # Suggest an out file to have the same name as the in file.
+            suggested_out_file_name, _ = os.path.splitext(os.path.basename(self.in_file))
+            out_file_name_entry_box.delete(0, tk.END)
+            out_file_name_entry_box.insert(0, str(suggested_out_file_name) + "_aligned")
+
+            # As long as we have an in-file, we are now okay to go ahead with the alignment.
             go_button.config(state=tk.NORMAL)
             leaf.destroy()
 
         def get_multiple_in_files(*args):
+            """
+            Have the user select multiple files.
+            :return: None, but the in_file attribute is updated with the path to the selected files (as a tuple of
+                        strings)
+            """
+            # Open file explorer, prompting the user to select some files.
             leaf = tk.Tk()
             leaf.title("Please select the images you would like to align.")
             add_basf_icon_to_tkinter_window(leaf)
             leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
-
             self.in_file = filedialog.askopenfilenames()
+
+            # Update the in_file label with the currently selected list of files.
             if len(self.in_file) == 1:
                 in_file_label.config(text="In file:" + "\n" + self.in_file[0])
             elif len(self.in_file) == 2:
                 in_file_label.config(text="In files:" + "\n" + self.in_file[0] + "\n" + self.in_file[1])
             else:
-                # Just print out the files and last
-                in_file_label.config(text="In files:" + "\n" + self.in_file[0] + "\n" + "***" + "\n" + self.in_file[1])
-
+                # Just print out the first and last file.
+                in_file_label.config(text="In files:" + "\n" + self.in_file[0]
+                                          + "\n" + "*" + "\n" + "*" + "\n" + "*"
+                                          + "\n" + self.in_file[-1])
             in_file_label.configure(foreground="black")
+
+            # Suggest an outfile directory based on first input file.
+            self.out_directory = os.path.dirname(self.in_file[0])
+            out_directory_label.config(text=self.out_directory + "/")
+
+            # Suggest an out file name based on the first file in the series.
+            suggested_out_file_name, _ = os.path.splitext(os.path.basename(self.in_file[0]))
+            out_file_name_entry_box.delete(0, tk.END)
+            out_file_name_entry_box.insert(0, str(suggested_out_file_name) + "_aligned")
+
+            # As long as we have an in-file, we are now okay to go ahead with the alignment.
             go_button.config(state=tk.NORMAL)
             leaf.destroy()
 
@@ -123,7 +163,7 @@ class GetInOutFile:
 
         out_file_message = ttk.Label(root, text="Where would you like to save the results?", justify='center',
                                      font=(label_font, label_font_size), wraplength=window_width)
-        out_file_message.grid(column=0, columnspan=3, row=4, sticky='w', padx=5, pady=5)
+        out_file_message.grid(column=0, columnspan=3, row=4, padx=5, pady=5)
 
         # Create a button that, when clicked, will update the out_file directory
         out_file_button = ttk.Button(root, text="Update Out Directory", command=lambda: change_out_directory(),
@@ -137,7 +177,6 @@ class GetInOutFile:
         # Create an entry box for the user to enter the out file name.
         out_file_name = tk.StringVar()
         out_file_name_entry_box = ttk.Entry(root, textvariable=out_file_name)
-        out_file_name_entry_box.insert(0, "aligned_series")  # Default value
         out_file_name_entry_box.grid(column=1, row=6, padx=5, pady=5)
 
         # Add a dropdown menu to get the file extension
