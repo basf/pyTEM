@@ -339,6 +339,13 @@ class GetTiltRange:
                   + " and then briefly unblanking.")
         else:
             self.microscope.set_stage_position_alpha(alpha=alpha, speed=0.5)
+
+            # Sometimes, if the allowable tilt range is not properly configured, the user might be able to enter an
+            #  angle that is unreachable
+            if not math.isclose(alpha, self.microscope.get_stage_position_alpha(), abs_tol=0.01):
+                raise Exception("Error: We don't seem to be able to reach the requested tilt angle.")
+
+            # Quickly unblank for a moment so the user can confirm the tilt angle is okay.
             self.microscope.unblank_beam()
             self.microscope.blank_beam()
 
@@ -814,16 +821,25 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_int
 
 if __name__ == "__main__":
 
+    # Try to connect to a microscope
+    try:
+        scope = Interface()
+        print("Microscope connection established successfully.")
+    except BaseException as e:
+        warnings.warn("MicroED was unable to connect to a microscope, try (re)connecting with MicroED.connect(). "
+                      "\nError details:" + str(e))
+        scope = None
+
     """ Test getting tilt range info """
-    # # Restore default numpy print options
+    # Restore default numpy print options
     # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
     #                     threshold=1000, formatter=None)
-    # arr = get_tilt_range(microscope=None)
-    # print("Here is the final alpha array received from get_tilt_range():")
-    # print(arr)
+    arr = get_tilt_range(microscope=scope)
+    print("Here is the final alpha array received from get_tilt_range():")
+    print(arr)
 
     """ Test getting camera parameters"""
-    # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=None)
+    # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=scope)
     # print("Camera name: " + camera_name_)
     # print("Integration time: " + str(integration_time_))
     # print("Sampling: " + sampling_)
@@ -834,8 +850,8 @@ if __name__ == "__main__":
     # print(out_file)
 
     """ Test getting shift correction samples """
-    use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=None, tilt_start=-30,
-                                                                                   tilt_stop=30, exposure_time=0.25)
-    print("Use shift: " + str(use_shift_corrections))
-    print("Samples: " + str(samples__))
-    print("Interpolation scope: " + str(interpolation_scope_))
+    # use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=scope, tilt_start=-30,
+    #                                                                                tilt_stop=30, exposure_time=0.25)
+    # print("Use shift: " + str(use_shift_corrections))
+    # print("Samples: " + str(samples__))
+    # print("Interpolation scope: " + str(interpolation_scope_))
