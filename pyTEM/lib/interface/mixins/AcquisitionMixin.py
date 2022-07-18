@@ -114,12 +114,13 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
 
         :param blanker_optimization: bool (optional; default is True):
             When we call the core Thermo Fisher acquisition command, the camera is blind for
-             one interval of exposure_time and then records for the next interval of exposure_time. Therefore the full
+             one interval of exposure_time and then records for the next interval of exposure_time. Therefore, the full
              acquisition takes 2 * exposure_time + some communication delays. In order to minimize sample exposure
              (material are often beam sensitive), we can opt to control the blanker in a parallel process where we
              only unblank when the camera is actually recording.
             One of:
-                True: Minimize dose by means of blanking while the camera is not actually recording.
+                True: Minimize dose by means of blanking while the camera is not actually recording. The beam is only
+                 unblanked for exposure_time + 0.05 seconds for each image.
                 False: Proceed without optimized blanker control, the beam will be unblanked for the full
                         2 * exposure_time + some communication delays.
 
@@ -366,7 +367,8 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
              (material are often beam sensitive), we can opt to control the blanker in a parallel process where we
              only unblank when the camera is actually recording.
             One of:
-                True: Minimize dose by means of blanking while the camera is not actually recording.
+                True: Minimize dose by means of blanking while the camera is not actually recording. The beam is only
+                 unblanked for exposure_time + 0.05 seconds for each image.
                 False: Proceed without optimized blanker control, the beam will be unblanked for the full
                         2 * exposure_time + some communication delays.
 

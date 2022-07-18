@@ -18,6 +18,10 @@ def blanker_control(num_acquisitions: int, barriers: ArrayLike, exposure_time: f
      This function is to be run in a parallel thread or process while an acquisition (or acquisition series) is being
       performed from the main thread/process.
 
+    To ensure beam is unblanked in time, we unblank 0.025 seconds early. And to ensure the beam remains unblanked for
+     the whole time the camera is recording, we re-blank 0.025 seconds late. This means the beam is unblanked for
+     exposure_time + 0.05 seconds.
+
     :param num_acquisitions: int:
         The number of acquisitions to perform. Must be at least 1.
     :param barriers: Array of mp.Barrier:
@@ -50,23 +54,27 @@ def blanker_control(num_acquisitions: int, barriers: ArrayLike, exposure_time: f
 
         barriers[i].wait()  # Synchronize with the main thread/process.
 
-        # Wait while the camera is blind.
-        time.sleep(exposure_time)
+        # Wait while the camera is blind. Notice we wait a little longer than the integration time, this is because
+        #  the acquisition command takes a little longer to issue than the unblank command. We should wait about an
+        #  extra 0.45 seconds, but we unblank 0.025 seconds early to ensure the beam is unblanked in time.
+        time.sleep(0.425 + exposure_time)
 
         # Unblank while the acquisition is active.
-        interface.unblank_beam()
         beam_unblank_time = time.time()
+        interface.unblank_beam()  # Command takes 0.15 s
 
         # Wait while the camera is recording.
-        time.sleep(exposure_time)
+        # Notice we wait a little extra just to be sure the beam is unblanked for whole time the camera is recording.
+        time.sleep(0.025 + exposure_time)
 
         # Re-blank the beam.
-        interface.blank_beam()
         beam_reblank_time = time.time()
+        interface.blank_beam()  # Command takes 0.15 s
 
         if verbose:
             print("-- Timing results from blanker_control() for acquisition #" + str(i) + " --")
 
-            print("\nUnblanked the beam at: " + str(beam_unblank_time))
-            print("Re-blanked the beam at: " + str(beam_reblank_time))
-            print("Total time spent with the beam unblanked: " + str(beam_reblank_time - beam_unblank_time))
+            print("\nIssued the command to unblanked the beam at: " + str(beam_unblank_time))
+            print("Issued the command to re-blanked the beam at: " + str(beam_reblank_time))
+            # Extra 0.15 for unblank command + 0.05 extra unblanked time
+            print("Total time spent with the beam unblanked: " + str(beam_reblank_time - beam_unblank_time - 0.20))
