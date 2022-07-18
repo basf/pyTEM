@@ -3,18 +3,24 @@
  Date:    Summer 2022
 """
 
+# Required to type hint that a method is returning an instance of the enclosing class.
+from __future__ import annotations
+
 import pathlib
 import sys
 import warnings
 import mrcfile
 
-from typing import Union, Tuple
 import numpy as np
+import hyperspy.api as hs
+
+from typing import Union, Tuple
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
     from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
+    from pyTEM.lib.micro_ed.turn_off_hyperspy_warnings import turn_off_hyperspy_warnings
     from pyTEM.lib.interface.Acquisition import Acquisition
 except Exception as ImportException:
     raise ImportException
@@ -189,6 +195,35 @@ class AcquisitionSeries:
                             "AcquisitionSeries.get_acquisition(idx=0).get_image() to get an array of the lone "
                             "first image in the series.")
 
+    def align(self) -> AcquisitionSeries:
+        """
+        Align the images in the acquisition series.
+
+        Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase correlation
+         algorithm based on the following paper:
+            Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
+                Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+
+        :return: AcquisitionSeries:
+            A new acquisition series containing the aligned images.
+        """
+        turn_off_hyperspy_warnings()
+
+        # Build a Hyperspy signal from the image stack, align it, and convert it back to a numpy array.
+        image_stack = hs.signals.Signal2D(self.get_image_stack())
+        image_stack.align2D()  # In-place.
+        image_stack = np.asarray(image_stack)
+
+        # Build a new acquisition series with the results.
+        result = AcquisitionSeries()
+        for i in range(self.length()):
+            # Build a new acquisition with the aligned image and old metadata and add it to the series.
+            new_acq = Acquisition(image_stack[i])
+            new_acq._set_metadata(metadata=self[i].get_metadata())
+            result.append(new_acq)
+
+        return result
+
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
         Save the acquisition as a TIFF file.
@@ -257,6 +292,10 @@ if __name__ == "__main__":
     for c, acq_ in enumerate(acq_series):
         print(c)
         print(acq_)
+
+    new_series = acq_series.align()
+
+    print(new_series)
 
     # out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
     #           / "interface" / "test_images"
