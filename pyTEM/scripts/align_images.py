@@ -15,19 +15,20 @@ algorithm based on the following paper:
 import os
 import sys
 import pathlib
+import mrcfile
 
 import tkinter as tk
+import numpy as np
 
 from tkinter import ttk, filedialog
 from typing import Tuple, Union
-
-from mrcfile import mrcfile
 from pathlib import Path
 
 # Add the pyTEM package directory to path
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
 try:
+    from pyTEM.lib.interface.Acquisition import Acquisition
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
     from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 except Exception as ImportException:
@@ -156,12 +157,12 @@ class GetInOutFile:
 
         # Create a button that, when clicked, will prompt the user to select a single file containing the image
         #  stack that would like to align.
-        single_in_file_button = ttk.Button(root, text="Select Single In File",
+        single_in_file_button = ttk.Button(root, text="Select Single In File (Image Stack)",
                                            command=lambda: get_single_in_file(), style="big.TButton")
         single_in_file_button.grid(column=0, columnspan=3, row=1, padx=5, pady=5)
 
         # Create a button that, when clicked, will prompt the user to select the images they would like to align.
-        multiple_in_file_button = ttk.Button(root, text="Select Multiple In Files",
+        multiple_in_file_button = ttk.Button(root, text="Select Multiple In Files (Single Image Files)",
                                              command=lambda: get_multiple_in_files(), style="big.TButton")
         multiple_in_file_button.grid(column=0, columnspan=3, row=2, padx=5, pady=5)
 
@@ -212,20 +213,56 @@ class GetInOutFile:
         return self.in_file, out_path
 
 
+# Preallocate.
 acq_series = AcquisitionSeries()
-print("Here we go..")
+
+# Get the in and out file info from the user.
 in_file, out_file = GetInOutFile().run()
-# filename = filedialog.askopenfilename(title='Open a file')
 
 if isinstance(in_file, str):
-    print("In file: " + in_file)
-else:
-    print("Multiple in files...")
-print("Out file: " + out_file)
+    # Then we have a single file, assume it is an image stack.
 
-# with mrcfile.open(in_file) as mrc:
-#     self.__image = mrc.data
-#     # TODO: Figure out how to read in metadata from MRC file header
-#     warnings.warn("We haven't learned how to read MRC file headers yet, so the returned "
-#                   "Acquisition object has no metadata!")
-#     self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+    if in_file[-4:] == ".mrc":
+        # Then it is an MRC file (probably).
+        with mrcfile.open(in_file, permissive=True) as mrc:
+            image_stack_arr = mrc.data
+            extended_header = mrc.extended_header
+
+        # Load the images into an acquisition series object.
+        images = np.shape(image_stack_arr)[0]
+        for i in range(images):
+            acq_series.append(Acquisition(image_stack_arr[i]))
+
+        # Go ahead and actually perform the alignment
+        acq_series = acq_series.align()
+
+        # Save the results to file.
+        with mrcfile.new(out_file, overwrite=True) as mrc:
+            mrc.set_data(acq_series.get_image_stack())
+            mrc.set_extended_header(extended_header)
+
+        exit()  # We are done here
+
+    elif out_file[-4:] == ".tif" or out_file[-5:] == ".tiff":
+        raise NotImplementedError("We don't know how to use TIFF files yet!")
+
+    else:
+        raise Exception("File type unknown.")
+
+else:
+    # We have a bunch of single images in separate files.
+    for file in in_file:
+        acq_series.append(Acquisition(file))
+
+# Go ahead and perform the alignment using AcquisitionSeries' align() method.
+acq_series = acq_series.align()
+
+# Save to file.
+if out_file[-4:] != ".mrc":
+    acq_series.save_as_mrc(out_file=out_file)
+
+elif out_file[-4:] == ".tif" or out_file[-5:] == ".tiff":
+    acq_series.save_as_tif(out_file=out_file)
+
+else:
+    raise Exception("Error: Out file type not recognized.")
