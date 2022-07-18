@@ -157,8 +157,11 @@ def obtain_shifts(microscope: Interface,
 
     else:
         # Just go ahead and take all the calibration images at once.
+
         # We need to take our first image at zero degrees, this is where the user has centered the particle.
         alphas = np.insert(arr=alphas, obj=0, values=0)
+        if verbose:
+            print("Obtaining shifts for the following alphas: " + str(alphas))
 
         # Perform a series acquisition
         acq_series = microscope.acquisition_series(num=len(alphas), camera_name=camera_name,
@@ -169,10 +172,11 @@ def obtain_shifts(microscope: Interface,
         # Compute image shifts from the results of the series acquisition.
         image_stack_arr = acq_series.get_image_stack()
         image_stack = hs.signals.Signal2D(image_stack_arr)
-        batch_shifts = image_stack.estimate_shift2D()  # in pixels
+        batch_shifts = image_stack.estimate_shift2D().astype('float64')  # in pixels
 
-        # The first shift corresponds to the reference image, so we will throw it away.
+        # The first alpha/shift corresponds to the 0 deg reference image, throw it away.
         shifts = np.delete(batch_shifts, 0, axis=0)
+        alphas = np.delete(alphas, 0)
 
         # Obtain the pixel size from the first acquisition
         metadata = acq_series[0].get_metadata()
@@ -183,7 +187,7 @@ def obtain_shifts(microscope: Interface,
             print("pixel-size x: " + str(pixel_size_x) + " um")
             print("pixel-size y: " + str(pixel_size_y) + " um")
 
-        # Multiply by the pixel size to obtain shifts in um
+        # Multiply by the pixel size to obtain shifts in micrometers.
         # Notice that image shifts are the negative of the pixel shifts found with hyperspy.
         shifts[:, 0] = -pixel_size_x * shifts[:, 0]
         shifts[:, 1] = -pixel_size_y * shifts[:, 1]
@@ -264,10 +268,9 @@ def _complete_one_sign(microscope: Interface,
         An array of tuples of the form (x, y) where x and y are the required image shifts (in microns) required to
          align the image at the corresponding tilt.
     """
-
-    # Preallocate
+    # Preallocate.
     this_signs_image_shifts = np.full(shape=len(this_signs_alphas), dtype=(float, 2), fill_value=np.nan)
-    current_index = 0  # We will start filling in this_signs_image_shifts at the beginning
+    current_index = 0  # We will start filling in this_signs_image_shifts at the beginning.
 
     number_of_batches = math.ceil(len(this_signs_alphas) / max_images_per_batch)
     alpha_batches = np.array_split(this_signs_alphas, number_of_batches)
@@ -308,7 +311,7 @@ def _complete_one_sign(microscope: Interface,
         if verbose:
             print("\nHyperspy Image stack: " + str(image_stack))
 
-        batch_shifts = image_stack.estimate_shift2D()
+        batch_shifts = image_stack.estimate_shift2D().astype('float64')  # in pixels
         # The first shift corresponds to the reference image, so we will throw it away.
         batch_shifts = np.delete(batch_shifts, 0, axis=0)
         if verbose:
@@ -340,8 +343,8 @@ if __name__ == "__main__":
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 
-    start_alpha = -30
-    stop_alpha = 30
+    start_alpha = -3
+    stop_alpha = 3
     step_alpha = 1
 
     exp_time = 0.25
@@ -357,9 +360,8 @@ if __name__ == "__main__":
     print("\nObtaining shifts all in one go (not batch-wise)...")
     found_shifts = obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
                                  exposure_time=exp_time, batch_wise=False, verbose=True)
-    print(found_shifts)
 
-    print("\nObtaining shifts batch-wise...")
-    found_shifts = obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
-                                 exposure_time=exp_time, batch_wise=True, verbose=True)
-    print(found_shifts)
+    # print("\nObtaining shifts batch-wise...")
+    # found_shifts = obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
+    #                              exposure_time=exp_time, batch_wise=True, verbose=True)
+    # print(found_shifts)
