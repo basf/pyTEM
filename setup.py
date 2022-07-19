@@ -30,4 +30,9 @@ setup(
                       'pathlib',
                       'Pillow',
                       ],
+    entry_points='''
+                [console_scripts]
+                align_images=scripts.align_images:align_images
+                bulk_carbon_analysis=scripts.bulk_carbon_analysis:align_images
+            ''',
 )
