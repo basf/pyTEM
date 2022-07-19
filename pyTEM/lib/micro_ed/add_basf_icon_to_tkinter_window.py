@@ -3,25 +3,17 @@
  Date:    Summer 2022
 """
 
-import pathlib
+import os
 import tkinter as tk
-from tkinter import TclError
+BASEDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def add_basf_icon_to_tkinter_window(root: tk.Tk) -> None:
     """
-    Add the BASF ico to root.
+    Add the BASF ico to Tkinter window.
     :param root: tkinter window:
         The tkinter window of which you want to add the BASF icon.
     :return: None.
     """
-    try:
-        # Calling from within pyTEM
-        root.iconbitmap(pathlib.Path().resolve() / "lib" / "micro_ed" / "ico" / "BASF.ico")
-    except TclError:
-        try:
-            # Calling from within pyTEM.lib
-            root.iconbitmap(pathlib.Path().resolve().parent.resolve() / "micro_ed" / "ico" / "BASF.ico")
-        except TclError:
-            # Calling from somewhere in test
-            root.iconbitmap(pathlib.Path().resolve().parent.resolve().parent.resolve() / "pyTEM" / "lib" / "micro_ed" / "ico" / "BASF.ico")
+    path_to_ico = os.path.join(BASEDIR, "ico/BASF.ico")
+    root.iconbitmap(path_to_ico)
