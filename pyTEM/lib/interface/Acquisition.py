@@ -114,11 +114,17 @@ class Acquisition:
             if isinstance(args[0], str) or isinstance(args[0], pathlib.Path):
                 # Try to load from file
 
-                # Because mrcfile.validate() prints a lot of stuff that is not helpful in this context, temporarily
-                #  redirect stdout
-                devnull = open(os.devnull, 'w')
-                with RedirectStdStreams(stdout=devnull, stderr=devnull):
-                    mrc_file = mrcfile.validate(args[0])
+                # First, check to see if it is an MRC file.
+                try:
+                    # Because mrcfile.validate() prints a lot of stuff that is not helpful in this context, temporarily
+                    #  redirect stdout
+                    devnull = open(os.devnull, 'w')
+                    with RedirectStdStreams(stdout=devnull, stderr=devnull):
+                        mrc_file = mrcfile.validate(args[0])
+                except BaseException as e:
+                    mrc_file = False
+                    warnings.warn("Error ignored in Acquisition() while trying to check if the input file was an "
+                                  "MRC file: " + str(e))
 
                 if mrc_file:
                     # Then it is an MRC file, open with mrcfile
@@ -127,7 +133,7 @@ class Acquisition:
                         # TODO: Figure out how to read in metadata from MRC file header
                         warnings.warn("We haven't learned how to read MRC file headers yet, so the returned "
                                       "Acquisition object has no metadata!")
-                        self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+                        self.__metadata = {}
 
                 else:
                     # Let's see if it is something hyperspy can load
@@ -150,7 +156,7 @@ class Acquisition:
             elif isinstance(args[0], np.ndarray):
                 # Initialize from array.
                 self.__image = args[0]
-                self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+                self.__metadata = {}
 
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
