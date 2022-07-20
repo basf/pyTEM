@@ -11,7 +11,7 @@ import sys
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from scipy.signal import find_peaks
+from scipy.signal import argrelextrema
 
 # Add the pyTEM package directory to path
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
@@ -103,13 +103,13 @@ def obtain_shifts(microscope: Interface,
     # Start with the no tilt and no image shift
     if verbose:
         print("\nZeroing the stage position and image shift in preparation for negative tilt shift obtainment...")
-    microscope.set_stage_position(alpha=0, speed=0.5)  # Zero the stage tilt
+    microscope.set_stage_position(alpha=0, speed=0.25)  # Zero the stage tilt
     microscope.set_image_shift(x=0, y=0)  # Zero the image shift
 
     if batch_wise:
         # Compute shifts in batches. Limiting the number of images per batch can help make sure the image doesn't
         #  change too much, and also helps limit our RAM usage.
-        max_images_per_batch = 10
+        max_images_per_batch = 5
 
         if verbose:
             print("Computing correctional shifts batch-wise in batches of " + str(max_images_per_batch) + ".")
@@ -188,9 +188,12 @@ def obtain_shifts(microscope: Interface,
             print("pixel-size y: " + str(pixel_size_y) + " um")
 
         # Multiply by the pixel size to obtain shifts in micrometers.
-        # Notice that image shifts are the negative of the pixel shifts found with hyperspy.
-        shifts[:, 0] = -pixel_size_x * shifts[:, 0]
-        shifts[:, 1] = -pixel_size_y * shifts[:, 1]
+        # Notice that the required image shifts are the negative of the pixel shifts found with hyperspy (converting
+        #  to a Hyperspy signal already took care of the y-inversion for us). Also, notice that somewhere x and y
+        #  directions got switched so just switch them back.
+        y_shifts_in_pixels = shifts[:, 0].copy()
+        shifts[:, 0] = -1 * pixel_size_x * shifts[:, 1]
+        shifts[:, 1] = pixel_size_y * y_shifts_in_pixels
 
     # Housekeeping: Leave the blanker, column value, and screen the way they were when we started.
     if user_column_valve_position == "closed":
@@ -200,29 +203,46 @@ def obtain_shifts(microscope: Interface,
     if not user_had_beam_blanked:
         microscope.unblank_beam()
 
-    # To get an idea of whether we were successful, analyse the number of peaks in the resultant shifts array.
-    # Ideally, these image shifts should be monotonic. However, sometimes they are choppy, indicating a failure in the
-    #  shift estimation.
-    x_peaks, _ = find_peaks(shifts[:, 0])
-    y_peaks, _ = find_peaks(shifts[:, 1])
+    # Re-zero the image shift and stage tilt
+    microscope.set_image_shift(x=0, y=0)
+    microscope.set_stage_position_alpha(alpha=0, speed=0.25)
+
+    # To get an idea of whether we were successful, analyse the number of local optima in the resultant shifts array.
+    # Ideally, these image shifts should be monotonic. However, sometimes they are choppy. This choppiness indicates
+    #  a failure in the shift estimations.
+    local_minima_x = argrelextrema(shifts[:, 0], np.less)[0]
+    local_maxima_x = argrelextrema(shifts[:, 0], np.greater)[0]
+    optima_x = np.concatenate((local_minima_x, local_maxima_x))
+    local_minima_y = argrelextrema(shifts[:, 1], np.less)[0]
+    local_maxima_y = argrelextrema(shifts[:, 1], np.greater)[0]
+    optima_y = np.concatenate((local_minima_y, local_maxima_y))
 
     if verbose:
-        print("\nAnalysing the number of peaks to assess the quality of the results...")
-        print("Number of peaks in x-shifts array: " + str(x_peaks))
-        print("Number of peaks in y-shifts array: " + str(y_peaks))
+        print("\nAnalysing the number of optima to assess the quality of the results...")
+        print("Number of optima in x-shifts array: " + str(len(optima_x)))
+        print("Number of optima in y-shifts array: " + str(len(optima_y)))
 
         # Put the results in a dataframe for easy viewing
         df = pd.DataFrame({'alpha': alphas, 'x-shift': shifts[:, 0], 'y-shift': shifts[:, 1]})
         print("\nObtained shifts:")
         print(df.to_string())  # .to_string() is required to see the whole dataframe
 
-    if len(x_peaks) > 2 or len(y_peaks) > 2:
+    if len(optima_x) > 2 or len(optima_y) > 2:
         # Then our automated correctional shift determination was probably unsuccessful.
-        warnings.warn("Based on the number of peaks, it is unlikely that the automated correctional shift "
-                      "determination was unsuccessful. Please ensure the specimen is at the eucentric height. "
-                      "If there is lots of movement, you may need to try determining the required shifts batch-wise "
-                      "(batch_wise=True).")
-        raise Exception("obtain_shifts(): Automated shift alignment failed, unsafe to proceed.")
+
+        if batch_wise:
+            # Then there isn't really much else we can do... just return None.
+            warnings.warn("Based on the number of local optima in the obtained shifts, it is unlikely that the "
+                          "batch-wise automated correctional shift determination was successful. Returning None...")
+            shifts = None
+
+        else:
+            # Try recomputing batch-wise.
+            warnings.warn("Based on the number of local optima in the obtained shifts, it is unlikely that the "
+                          "automated correctional shift determination was successful. Re-trying batch-wise...")
+            # Try re-computing batch-wise, this might work better if there is significant particle drift
+            shifts = obtain_shifts(microscope=microscope, alphas=alphas, camera_name=camera_name, sampling=sampling,
+                                   exposure_time=exposure_time, verbose=verbose, batch_wise=True)
 
     return shifts
 
@@ -321,8 +341,8 @@ def _complete_one_sign(microscope: Interface,
         # Log the rest of shifts in the array, make sure to multiply by the pixel size so the result is in microns.
         for j in range(np.shape(batch_shifts)[0]):
             # Image shifts are the negative of the pixel shifts found with hyperspy.
-            this_signs_image_shifts[current_index] = (-pixel_size_x * (batch_shifts[j][0]) + reference_image_shift[0],
-                                                      -pixel_size_y * (batch_shifts[j][1]) + reference_image_shift[1])
+            this_signs_image_shifts[current_index] = (-pixel_size_x * (batch_shifts[j][1]) + reference_image_shift[0],
+                                                      pixel_size_y * (batch_shifts[j][0]) + reference_image_shift[1])
             current_index = current_index + 1
 
         # Advance the image shift so the specimen is centered at the most extreme tilt of the batch
@@ -343,9 +363,9 @@ if __name__ == "__main__":
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 
-    start_alpha = -3
-    stop_alpha = 3
-    step_alpha = 1
+    start_alpha = -15
+    stop_alpha = 15
+    step_alpha = 2
 
     exp_time = 0.25
     sampling_ = '1k'
@@ -358,10 +378,9 @@ if __name__ == "__main__":
     print("\nAlphas at which shifts will be computed: " + str(middle_alphas))
 
     print("\nObtaining shifts all in one go (not batch-wise)...")
-    found_shifts = obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
-                                 exposure_time=exp_time, batch_wise=False, verbose=True)
+    obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
+                  exposure_time=exp_time, batch_wise=False, verbose=True)
 
     # print("\nObtaining shifts batch-wise...")
-    # found_shifts = obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
-    #                              exposure_time=exp_time, batch_wise=True, verbose=True)
-    # print(found_shifts)
+    # obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
+    #               exposure_time=exp_time, batch_wise=True, verbose=True)
