@@ -526,7 +526,7 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
          through the quit button on the message box.
 
     :return: str:
-        The out directory where the microED acquisition results will be saved.
+        The out path where the MicroED acquisition results will be saved.
     """
 
     # First we will create a pop-up warning the user they are about to have to select an out directory.
@@ -602,7 +602,7 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     root.mainloop()
 
     # Build and return the complete path
-    out_path = out_dir + str(file_name.get()) + str(file_extension.get())
+    out_path = out_dir + "/" + str(file_name.get()) + str(file_extension.get())
     return out_path
 
 
@@ -831,23 +831,27 @@ if __name__ == "__main__":
         scope = None
 
     """ Test getting tilt range info """
-    # Restore default numpy print options
-    # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
-    #                     threshold=1000, formatter=None)
-    arr = get_tilt_range(microscope=scope)
-    print("Here is the final alpha array received from get_tilt_range():")
-    print(arr)
+    # # Restore default numpy print options
+    # # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
+    # #                     threshold=1000, formatter=None)
+    # arr = get_tilt_range(microscope=scope)
+    # print("Here is the final alpha array received from get_tilt_range():")
+    # print(arr)
 
-    """ Test getting camera parameters"""
+    """ Test getting camera parameters """
     # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=scope)
     # print("Camera name: " + camera_name_)
     # print("Integration time: " + str(integration_time_))
     # print("Sampling: " + sampling_)
     # print("Downsampling: " + str(downsample_))
 
-    """ Test getting out file"""
-    # out_file = get_out_file(None)
-    # print(out_file)
+    """ Test getting out file """
+    import os
+    out_file = get_out_file(None)
+    print("Full out file: " + str(out_file))
+    file_name_base, file_extension = os.path.splitext(out_file)
+    print("File name: " + str(file_name_base))
+    print("File extension: " + str(file_extension))
 
     """ Test getting shift correction samples """
     # use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=scope, tilt_start=-30,
