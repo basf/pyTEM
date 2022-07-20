@@ -212,7 +212,11 @@ class AcquisitionSeries:
 
         # Build a Hyperspy signal from the image stack, align it, and convert it back to a numpy array.
         image_stack = hs.signals.Signal2D(self.get_image_stack())
-        image_stack.align2D()  # In-place.
+        if self.length() > 20:
+            # For large series perform the image alignment step in parallel.
+            image_stack.align2D(parallel=True)  # In-place.
+        else:
+            image_stack.align2D()  # In-place.
         image_stack = np.asarray(image_stack, dtype=self.image_dtype())
 
         # Build a new acquisition series with the results.
