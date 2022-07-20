@@ -105,7 +105,7 @@ class Acquisition:
             # Just return a random image, this is helpful for testing.
             self.__image = np.random.random((1024, 1024))  # A random 1k image.
             self.__image = (65535 * self.__image).astype(np.int16)  # Covert to 16-bit
-            self.__metadata = {'PixelSize': (1, 1)}  # Pixel size metadata required to save image as tif.
+            self.__metadata = {}
             warnings.warn("The Acquisition() constructor received None. The returned Acquisition object contains a "
                           "random 1k image with no metadata.")
             return
@@ -299,16 +299,17 @@ class Acquisition:
 
         :param out_file: str or path:
             Out file path (where you want to save the file).
-            Optionally, you can include the .tif extension, otherwise it will be added automatically.
+            Optionally, you can include the .tif or .tiff extension, otherwise .tif will be added automatically.
 
         :return: None.
         """
         out_file = str(out_file)  # Encase we received a path.
 
         # In case we are missing the .tif extension, add it on.
-        if out_file[-4:] != ".tif":
+        if out_file[-4:] != ".tif" and out_file[-5:] != ".tiff":
             out_file = out_file + ".tif"
 
+        # Try to determine the image resolution.
         try:
             # The TIFF types of the XResolution and YResolution tags are RATIONAL (5) which is defined in the TIFF
             #  specification as "two LONGs: the first represents the numerator of a fraction; the second, the
@@ -319,16 +320,17 @@ class Acquisition:
             pixel_size_y_in_cm = float(self.get_metadata()['YResolution'][1] / self.get_metadata()['YResolution'][0])
         except KeyError:
             try:
-                # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object
+                # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object.
                 pixel_size_x_in_cm = float(100 * self.get_metadata()['PixelSize'][0])  # m -> cm
                 pixel_size_y_in_cm = float(100 * self.get_metadata()['PixelSize'][1])  # m -> cm
             except KeyError:
-                # Give up
-                warnings.warn("save_as_tif() could not determine the pixel size.")
-                pixel_size_x_in_cm = 1
-                pixel_size_y_in_cm = 1
+                # Give up.
+                warnings.warn("save_as_tif() could not determine the pixel size, resolution not set.")
+                tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(),
+                                 photometric='minisblack')
+                return
 
-        tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(),
+        tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(), photometric='minisblack',
                          resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'))
 
     def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
@@ -391,17 +393,18 @@ if __name__ == "__main__":
 
     out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
                 / "interface" / "test_images"
-    in_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
-    # in_file_ = out_dir / "cat.jpeg"
-    out_file_ = out_dir / "header_test.mrc"
+    # in_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
+    in_file_ = out_dir / "cat.jpeg"
+    out_file_ = out_dir / "cat_rewrite.tif"
     # acq = Acquisition(out_file_)
 
-    acq = Acquisition(None)
+    acq = Acquisition(in_file_)
     print(acq.get_metadata())
     print(acq.get_image().dtype)
     acq.show_image()
 
-    acq.save_as_mrc(out_file=out_file_)
+    # acq.save_as_mrc(out_file=out_file_)
+    acq.save_as_tif(out_file=out_file_)
 
     # img = acq.get_image()
     # print(np.shape(img))
