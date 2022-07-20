@@ -15,6 +15,7 @@ import numpy as np
 import hyperspy.api as hs
 
 from typing import Union, Tuple
+from tifffile import tifffile
 
 package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
 sys.path.append(str(package_directory))
@@ -233,13 +234,49 @@ class AcquisitionSeries:
         """
         Save the acquisition as a TIFF file.
 
+        Metadata (including resolution) is based on the first image in the series.
+
         :param out_file: str or path:
             Out file path (where you want to save the file).
-            Optionally, you can include the .tif extension, otherwise it will be added automatically.
+            Optionally, you can include the .tif or .tiff extension, otherwise .tif will be added automatically.
 
         :return: None.
         """
-        raise NotImplementedError  # TODO: (save images as 16-byte TIFF)
+        out_file = str(out_file)  # Encase we received a path.
+
+        if self.length() < 0:
+            raise Exception("AcquisitionSeries.save_as_tif() requires at least one image exists in the series.")
+
+        # In case we are missing the .tif extension, add it on.
+        if out_file[-4:] != ".tif" and out_file[-5:] != ".tiff":
+            out_file = out_file + ".tif"
+
+        # Try to determine the image resolution.
+        try:
+            # The TIFF types of the XResolution and YResolution tags are RATIONAL (5) which is defined in the TIFF
+            #  specification as "two LONGs: the first represents the numerator of a fraction; the second, the
+            #  denominator."
+            # If the required TIFF XResolution and YResolution tags already exist, then go ahead and use them.
+            # Notice we are computing the inverse here and will invert back when we save.
+            pixel_size_x_in_cm = float(self[0].get_metadata()['XResolution'][1] /
+                                       self[0].get_metadata()['XResolution'][0])
+            pixel_size_y_in_cm = float(self[0].get_metadata()['YResolution'][1] /
+                                       self[0].get_metadata()['YResolution'][0])
+        except KeyError:
+            try:
+                # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object.
+                pixel_size_x_in_cm = float(100 * self[0].get_metadata()['PixelSize'][0])  # m -> cm
+                pixel_size_y_in_cm = float(100 * self[0].get_metadata()['PixelSize'][1])  # m -> cm
+            except KeyError:
+                # Give up.
+                warnings.warn("save_as_tif() could not determine the pixel size, resolution not set.")
+                tifffile.imwrite(out_file, data=self.get_image_stack(), metadata=self[0].get_metadata(),
+                                 photometric='minisblack')
+                return
+
+        tifffile.imwrite(out_file, data=self.get_image_stack(), metadata=self[0].get_metadata(),
+                         resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'),
+                         photometric='minisblack')
 
     def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
         """
@@ -266,10 +303,10 @@ class AcquisitionSeries:
             mrc.set_extended_header(get_stock_mrc_extended_header())
         warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
 
-    def __iter__(self):
+    def __iter__(self) -> AcquisitionSeriesIterator:
         return AcquisitionSeriesIterator(self)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i) -> Acquisition:
         return self.__acquisitions[i]
 
 
@@ -289,23 +326,29 @@ if __name__ == "__main__":
     image_stack_arr_ = acq_series.get_image_stack()
     print(np.shape(image_stack_arr_))
 
-    acq_series.downsample()
+    # acq_series.downsample()
 
     image_stack_arr_ = acq_series.get_image_stack()
     print(np.shape(image_stack_arr_))
 
     print(acq_series.get_acquisition(idx=0).get_metadata())
 
-    print("\nTesting iteration:")
-    for c, acq_ in enumerate(acq_series):
-        print(c)
-        print(acq_)
+    # print("\nTesting iteration:")
+    # for c, acq_ in enumerate(acq_series):
+    #     print(c)
+    #     print(acq_)
 
-    new_series = acq_series.align()
+    # new_series = acq_series.align()
+    # print(new_series)
 
-    print(new_series)
-
+    # print("Saving as MRC:")
     # out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
     #           / "interface" / "test_images"
     # out_file_ = out_dir / "mrc_test_stack.mrc"
     # acq_series.save_as_mrc(out_file=out_file_)
+
+    print("Saving as TIF:")
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
+              / "interface" / "test_images"
+    out_file_ = out_dir / "tif_test_stack.tif"
+    acq_series.save_as_tif(out_file=out_file_)
