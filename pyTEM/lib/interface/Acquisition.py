@@ -139,12 +139,20 @@ class Acquisition:
                     # Let's see if it is something hyperspy can load
                     image = hs.load(args[0])
                     self.__image = image.data
-                    self.__metadata = dict(image.original_metadata)
+                    try:
+                        self.__metadata = dict(image.original_metadata)
+                    except BaseException as e:
+                        self.__metadata = {}
+                        warnings.warn("Error ignored while trying to extract metadata from in file: " + str(e))
 
                     # If the file was generated from an Acquisition object, then a bunch of metadata will be in
                     #  the ImageDescription field as a string, and we need to turn it back into a dictionary.
-                    if 'ImageDescription' in self.__metadata.keys():
-                        self.__metadata['ImageDescription'] = eval(self.__metadata['ImageDescription'])
+                    try:
+                        if 'ImageDescription' in self.__metadata.keys():
+                            self.__metadata['ImageDescription'] = eval(self.__metadata['ImageDescription'])
+                    except BaseException as e:
+                        warnings.warn("Error ignored in Acquisition() while trying to extract metadata from the "
+                                      "ImageDescription field: " + str(e))
 
                     # Make sure that we convert all hyperspy DictionaryTreeBrowser objects to normal dictionaries
                     #  because DictionaryTreeBrowser objects are not JSON serializable
