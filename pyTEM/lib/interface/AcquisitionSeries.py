@@ -66,6 +66,7 @@ class AcquisitionSeries:
 
     def __init__(self):
         self.__acquisitions = []
+        # TODO: Initialize from MRC, TIFF, and nd.array.
 
     def append(self, acq: Acquisition) -> None:
         """
@@ -212,7 +213,7 @@ class AcquisitionSeries:
         # Build a Hyperspy signal from the image stack, align it, and convert it back to a numpy array.
         image_stack = hs.signals.Signal2D(self.get_image_stack())
         image_stack.align2D()  # In-place.
-        image_stack = np.asarray(image_stack)
+        image_stack = np.asarray(image_stack, dtype=self.image_dtype())
 
         # Build a new acquisition series with the results.
         result = AcquisitionSeries()
@@ -269,6 +270,9 @@ class AcquisitionSeries:
 
 
 if __name__ == "__main__":
+    """
+    Testing.
+    """
     acq_series = AcquisitionSeries()
     acq_series.append(Acquisition(None))
 
