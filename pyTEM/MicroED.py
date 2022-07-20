@@ -81,13 +81,11 @@ class MicroED:
         """
         if self.microscope is None:
             raise Exception("Error: Unable to run MicroED for there is no microscope connection.")
-        else:
-            # To reduce dose, keep the microscope blanked whenever possible.
-            self.microscope.blank_beam()
 
         # In order to minimize sample destruction, we want to expose as little as possible. However, during image shift
         #  calibration, we need to expose for long enough that we get usable images.
-        shift_calibration_exposure_time = 0.25  # s
+        # TODO: Find the lowest exposure time that still allows for reliable calibration
+        shift_calibration_exposure_time = 0.25  # seconds
         shift_calibration_sampling = '1k'  # Lower resolution is faster but less precise
 
         try:
@@ -109,7 +107,7 @@ class MicroED:
             if self.microscope.get_projection_mode() != "imaging":
                 self.microscope.set_projection_mode("imaging")
             self.microscope.set_image_shift(x=0, y=0)  # Zero the image shift
-            self.microscope.set_stage_position(alpha=0)  # Zero the stage tilt
+            self.microscope.set_stage_position(alpha=0, speed=0.25)  # Zero the stage tilt
             self.microscope.normalize()
             self.microscope.unblank_beam()
 
@@ -140,11 +138,6 @@ class MicroED:
             # Get the out path (where in the file system should we save the results?)
             out_file = get_out_file(microscope=self.microscope)
 
-            # Store all the acquisition properties in a AcquisitionSeriesProperties object, this just makes it easier
-            #  and safer to pass around all things acquisition
-            acquisition_properties = AcquisitionSeriesProperties(camera_name=camera_name, alpha_arr=alpha_arr,
-                                                                 integration_time=integration_time, sampling=sampling)
-
             # Fnd out if the user wants to use the automated image alignment functionality, and if so which angles they
             #  would like to sample and which interpolation strategy they would like to use to obtain the rest.
             use_shift_corrections, samples, interpolation_scope = \
@@ -152,18 +145,28 @@ class MicroED:
                                       exposure_time=shift_calibration_exposure_time)
             if use_shift_corrections:
                 # Compute the image shifts required to keep the currently centered section of the specimen centered at
-                #  all alpha tilt angles.
+                #  all alpha tilt angles. While alpha_arr is a complete array of alpha start-stop values, we need to
+                # compute alphas - the interval midpoints which the correctional shifts will be based.
+                alpha_step = alpha_arr[1] - alpha_arr[0]
+                alphas = alpha_arr[0:-1] + alpha_step / 2
+
+                # Sample at the requested tilt angles.
                 shifts_at_samples = obtain_shifts(microscope=self.microscope, alphas=samples, camera_name=camera_name,
                                                   sampling=shift_calibration_sampling, batch_wise=False,
                                                   exposure_time=shift_calibration_exposure_time, verbose=verbose)
-
-                shifts = build_full_shift_array(alphas=acquisition_properties.alphas, samples=samples,
-                                                shifts_at_samples=shifts_at_samples, kind="linear",
-                                                interpolation_scope=interpolation_scope, verbose=verbose)
+                if shifts_at_samples is None:
+                    # We will proceed without compensatory image shifts, just make shifts all zero
+                    warnings.warn("Automatic shift alignment failed :( proceeding without compensatory image shifts.")
+                    shifts = np.full(shape=len(alpha_arr) - 1, dtype=(float, 2), fill_value=0.0)
+                else:
+                    # Go on and interpolate the rest.
+                    shifts = build_full_shift_array(alphas=alphas, samples=samples, shifts_at_samples=shifts_at_samples,
+                                                    kind="linear", interpolation_scope=interpolation_scope,
+                                                    verbose=verbose)
 
             else:
                 # We will proceed without compensatory image shifts, just make shifts all zero
-                shifts = np.full(shape=len(acquisition_properties.alphas), dtype=(float, 2), fill_value=0.0)
+                shifts = np.full(shape=len(alpha_arr) - 1, dtype=(float, 2), fill_value=0.0)
 
             # Confirm they are happy, and have them insert the aperture/beam stop.
             display_start_message(microscope=self.microscope)
