@@ -16,7 +16,7 @@ try:
     from pyTEM.Interface import Interface
     from pyTEM.lib.interface.Acquisition import Acquisition
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-    from test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
+    from pyTEM.test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
 except Exception as ImportException:
     raise ImportException
 

@@ -4,7 +4,7 @@ import pathlib
 
 import matplotlib  # import matplotlib for the GUI backend HyperSpy needs
 
-from Testing_Interface import convert_images
+from pyTEM.test.interface.hyperspy_test import convert_images
 
 matplotlib.rcParams["backend"] = "Agg"
 

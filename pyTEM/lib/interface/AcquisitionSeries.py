@@ -17,8 +17,13 @@ import hyperspy.api as hs
 from typing import Union, Tuple
 from tifffile import tifffile
 
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
-sys.path.append(str(package_directory))
+# If not already, add pyTEM to path
+pytem_directory = pathlib.Path(__file__).resolve()
+for i in range(4):
+    pytem_directory = pytem_directory.parent.resolve()
+if str(pytem_directory) not in sys.path:
+    sys.path.append(str(pytem_directory))
+
 try:
     from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
     from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
@@ -354,8 +359,8 @@ if __name__ == "__main__":
     # out_file_ = out_dir / "mrc_test_stack.mrc"
     # acq_series.save_as_mrc(out_file=out_file_)
 
-    print("Saving as TIF:")
-    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
-              / "interface" / "test_images"
-    out_file_ = out_dir / "tif_test_stack.tif"
-    acq_series.save_as_tif(out_file=out_file_)
+    # print("Saving as TIF:")
+    # out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
+    #           / "interface" / "test_images"
+    # out_file_ = out_dir / "tif_test_stack.tif"
+    # acq_series.save_as_tif(out_file=out_file_)

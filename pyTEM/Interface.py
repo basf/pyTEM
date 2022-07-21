@@ -7,7 +7,7 @@ This is BASF's in-house TEM scripting interface. Bolted directly on top of a COM
 
 This is not a complete interface in that it does not provide access to all the functionality of the underlying Thermo
  Fisher Scientific and FEI scripting interface. However, it provides access to all basic microscope functions as well
- as all those required by other pyTEM automation scripts.
+ as all those required by other pyTEM automation pyTEM_scripts.
 """
 
 import math

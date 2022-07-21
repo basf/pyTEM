@@ -17,7 +17,7 @@ sys.path.append(str(package_directory))
 try:
     from pyTEM.Interface import Interface
     from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-    from test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
+    from pyTEM.test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
     from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface
 except Exception as ImportException:
     raise ImportException

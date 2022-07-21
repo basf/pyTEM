@@ -1,10 +1,9 @@
 # Test and calibration data
-/test/interface/data/
-/test/interface/TEMInferace Testing Log.xlsx
-/Testing_Interface/~$TEMInferace Testing Log.xlsx
-/test/interface/Image_Shift_Calibration/Calibration_Data/
-/test/interface/Image_Shift_Calibration/~$Image Shift Calibration.xlsx
-/test/interface/test_images/
+/pyTEM/test/interface/data/
+/pyTEM/test/interface/TEMInferace Testing Log.xlsx
+/pyTEM/test/interface/Image_Shift_Calibration/Calibration_Data/
+/pyTEM/test/interface/Image_Shift_Calibration/Image Shift Calibration.xlsx
+/pyTEM/test/interface/test_images/
 
 # Distribution/packaging
 /build/
@@ -13,4 +12,4 @@
 
 # Other
 .idea/workspace.xml
-/test/micro_ed/check_message_ordering.py
+/pyTEM/test/micro_ed/check_message_ordering.py
