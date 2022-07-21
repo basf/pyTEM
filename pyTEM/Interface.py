@@ -11,35 +11,24 @@ This is not a complete interface in that it does not provide access to all the f
 """
 
 import math
-import pathlib
-import sys
 import warnings
 
 import numpy as np
 import comtypes.client as cc
 
-# Add the pyTEM package directory to path
-package_directory = pathlib.Path().resolve()
-sys.path.append(str(package_directory))
+# Mixins
+from pyTEM.lib.interface.mixins.AcquisitionMixin import AcquisitionMixin
+from pyTEM.lib.interface.mixins.MagnificationMixin import MagnificationMixin
+from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
+from pyTEM.lib.interface.mixins.BeamShiftMixin import BeamShiftMixin
+from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
+from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
+from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
+from pyTEM.lib.interface.mixins.StageMixin import StageMixin
+from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
 
-try:
-    # Mixins
-    from pyTEM.lib.interface.mixins.AcquisitionMixin import AcquisitionMixin
-    from pyTEM.lib.interface.mixins.MagnificationMixin import MagnificationMixin
-    from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
-    from pyTEM.lib.interface.mixins.BeamShiftMixin import BeamShiftMixin
-    from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
-    from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
-    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
-    from pyTEM.lib.interface.mixins.StageMixin import StageMixin
-    from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
-
-    # Other library imports
-    from pyTEM.lib.interface.pascal_to_log import pascal_to_log
-    from pyTEM.lib.interface.StagePosition import StagePosition
-
-except Exception as ImportException:
-    raise ImportException
+# Other library imports
+from pyTEM.lib.interface.StagePosition import StagePosition
 
 
 class Interface(AcquisitionMixin,    # Microscope acquisition controls, including those for taking images.

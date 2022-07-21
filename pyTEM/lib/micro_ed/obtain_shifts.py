@@ -5,21 +5,13 @@
 
 import math
 import warnings
-import pathlib
-import sys
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 from scipy.signal import argrelextrema
 
-# Add the pyTEM package directory to path
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
-sys.path.append(str(package_directory))
-try:
-    from pyTEM.Interface import Interface
-except Exception as ImportException:
-    raise ImportException
+from pyTEM.Interface import Interface
 
 try:
     import matplotlib  # import matplotlib for the GUI backend HyperSpy needs

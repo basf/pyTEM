@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import pathlib
-import sys
 import warnings
 import mrcfile
 
@@ -17,20 +16,10 @@ import hyperspy.api as hs
 from typing import Union, Tuple
 from tifffile import tifffile
 
-# If not already, add pyTEM to path
-pytem_directory = pathlib.Path(__file__).resolve()
-for i in range(4):
-    pytem_directory = pytem_directory.parent.resolve()
-if str(pytem_directory) not in sys.path:
-    sys.path.append(str(pytem_directory))
-
-try:
-    from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
-    from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
-    from pyTEM.lib.interface.make_dict_jsonable import make_dict_jsonable
-    from pyTEM.lib.interface.Acquisition import Acquisition
-except Exception as ImportException:
-    raise ImportException
+from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
+from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
+from pyTEM.lib.interface.make_dict_jsonable import make_dict_jsonable
+from pyTEM.lib.interface.Acquisition import Acquisition
 
 
 class AcquisitionSeriesIterator:
@@ -339,8 +328,8 @@ if __name__ == "__main__":
     #
     # print(acq_series.get_acquisition(idx=0).get_metadata())
 
-    in_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
-              / "interface" / "test_images"
+    in_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() \
+        / "test" / "interface" / "test_images"
     acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 14.tif"))
     acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 13.tif"))
     acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 12.tif"))

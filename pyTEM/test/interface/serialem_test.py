@@ -19,9 +19,6 @@ ScriptMonospaceFont Consolas
 EnableExternalPython 1
 """
 
-import sys
-
-sys.path.append(str("C:/Program Files/SerialEM/PythonModules"))
 import serialem as sem
 
 print("\nHere is a list of the available serialEM commands:")

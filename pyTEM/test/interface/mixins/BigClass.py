@@ -1,11 +1,5 @@
-import pathlib
-import sys
-
 from HelperMixIn1 import HelperMixIn1
 from HelperMixIn2 import HelperMixIn2
-
-# package_directory = pathlib.Path().resolve().parent.resolve()
-# sys.path.append(str(package_directory))
 
 
 class BigClass(HelperMixIn1, HelperMixIn2):

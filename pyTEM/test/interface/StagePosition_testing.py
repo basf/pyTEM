@@ -3,8 +3,6 @@
 Some manual testing of the StagePosition class
 """
 
-import sys
-sys.path.append('T:/Michael L/pyTEM')
 from pyTEM.lib.interface.StagePosition import StagePosition
 
 

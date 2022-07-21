@@ -3,22 +3,14 @@
  Date:    Summer 2022
 """
 
-import pathlib
 import time
-import sys
 
 import numpy as np
 from threading import Thread
 
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
-sys.path.append(str(package_directory))
-try:
-    from pyTEM.Interface import Interface
-    from pyTEM.lib.interface.Acquisition import Acquisition
-    from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-    from pyTEM.test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
-except Exception as ImportException:
-    raise ImportException
+from pyTEM.Interface import Interface
+from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
+from pyTEM.test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
 
 
 def perform_tilt_series(microscope: Interface, acquisition_properties: AcquisitionSeriesProperties,

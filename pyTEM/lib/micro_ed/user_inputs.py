@@ -16,18 +16,11 @@ from typing import Union, Tuple
 import numpy as np
 import tkinter as tk
 
-# Add the pyTEM package directory to path
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve()
-sys.path.append(str(package_directory))
-try:
-    from pyTEM.Interface import Interface
-    from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
-    from pyTEM.lib.micro_ed.exit_script import exit_script
-    from pyTEM.lib.micro_ed.messages import get_automated_alignment_message, display_message
-    from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
-    from pyTEM.lib.micro_ed.closest_number import closest_number
-except Exception as ImportException:
-    raise ImportException
+from pyTEM.Interface import Interface
+from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
+from pyTEM.lib.micro_ed.exit_script import exit_script
+from pyTEM.lib.micro_ed.messages import get_automated_alignment_message, display_message
+from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
 
 
 class GetTiltRange:

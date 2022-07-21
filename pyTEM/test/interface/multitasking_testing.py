@@ -3,24 +3,15 @@
  Date:    Summer 2022
 """
 
-import pathlib
-import sys
 import threading
 import time
 
 import numpy as np
 from pathos.helpers import mp
 
-package_directory = pathlib.Path().resolve().parent.resolve().parent.resolve().parent.resolve().parent.resolve()
-print(package_directory)
-sys.path.append(str(package_directory))
-try:
-    from pyTEM.Interface import Interface
-    from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-    from pyTEM.test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
-    from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface
-except Exception as ImportException:
-    raise ImportException
+from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
+from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface
+
 
 # https://stackoverflow.com/questions/3246525/why-cant-i-create-a-com-object-in-a-new-thread-in-python
 

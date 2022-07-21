@@ -1,8 +1,7 @@
 """
 Some manual testing of the pyTEM stage stuff - getting and setting the stage position, etc.
 """
-import sys
-sys.path.append('T:/Michael L/pyTEM')
+
 from pyTEM.Interface import Interface
 talos = Interface()
 

@@ -8,28 +8,19 @@ This is BASF's in-house micro-crystal electron diffraction (MicroED) automated i
 
 import os
 import warnings
-import pathlib
-import sys
 
 import numpy as np
 
-# Add the pyTEM package directory to path
-package_directory = pathlib.Path().resolve().parent.resolve()
-sys.path.append(str(package_directory))
-try:
-    from pyTEM.Interface import Interface
+from pyTEM.Interface import Interface
 
-    from pyTEM.lib.micro_ed.exit_script import exit_script
-    from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
-        display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
-        display_good_bye_message, display_initialization_message, have_user_center_particle
-    from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
-    from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
-        shift_correction_info
-    from pyTEM.lib.micro_ed.build_full_shifts_array import build_full_shift_array
-
-except Exception as ImportException:
-    raise ImportException
+from pyTEM.lib.micro_ed.exit_script import exit_script
+from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
+    display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
+    display_good_bye_message, display_initialization_message, have_user_center_particle
+from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
+from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
+    shift_correction_info
+from pyTEM.lib.micro_ed.build_full_shifts_array import build_full_shift_array
 
 
 class MicroED:

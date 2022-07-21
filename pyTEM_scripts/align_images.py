@@ -3,33 +3,13 @@
  Date:    Summer 2022
 """
 
-import sys
-import pathlib
 import mrcfile
 
 import numpy as np
 
-
-# If not already, add pyTEM to path
-pytem_directory = pathlib.Path(__file__).resolve().parent.resolve().parent.resolve()
-print("pytem_directory: " + str(pytem_directory))
-for i in range(4):
-    pytem_directory = pytem_directory.parent.resolve()
-if str(pytem_directory) not in sys.path:
-    print("Adding pytem_directory to path")
-    sys.path.append(str(pytem_directory))
-else:
-    print("pytem already on path")
-
-
-for p in sys.path:
-    print(p)
-try:
-    from pyTEM.lib.interface.Acquisition import Acquisition
-    from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-    from pyTEM_scripts.lib.GetInOutFile import GetInOutFile
-except Exception as ImportException:
-    raise ImportException
+from pyTEM.lib.interface.Acquisition import Acquisition
+from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
+from pyTEM_scripts.lib.GetInOutFile import GetInOutFile
 
 
 def align_images():
