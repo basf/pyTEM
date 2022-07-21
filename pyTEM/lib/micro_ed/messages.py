@@ -25,10 +25,11 @@ def display_welcome_message(microscope: Union[Interface, None]) -> None:
             "service to Ludwigshafen am Rhein."
     message = "Welcome to BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging " \
               "script. MicroED allows fast, high resolution 3D structure determination of small chemical " \
-              "compounds biological macromolecules! You can exit the script any time using the exit buttons on the " \
-              "pop-up message boxes, or by hitting Ctrl-C on your keyboard. " \
+              "compounds and biological macromolecules! " \
+              "\n\nYou can exit the script any time using the exit buttons " \
+              "on the pop-up message boxes, or by hitting Ctrl-C on your keyboard. " \
               "\n\nPlease click the Continue button to get started!"
-    display_message(title=title, message=message, microscope=microscope, position="centered")
+    display_message_centered(title=title, message=message, microscope=microscope)
 
 
 def display_initialization_message(microscope: Union[Interface, None]) -> None:
@@ -48,11 +49,11 @@ def display_initialization_message(microscope: Union[Interface, None]) -> None:
               "\n - Zero the \u03B1 tilt." \
               "\n - Normalize all lenses." \
               "\n - Unblank the beam." \
-              "\n\nIf a chosen particle has already been identified, you may want to reduce the illumination and " \
+              "\n\nIf a particle has already been chosen, you may want to reduce the illumination or " \
               "move the stage such that it will not be illuminated once, upon completion of the initialization " \
               "process, we unblank the beam." \
               "\n\nOnce you are ready to start the initialization procedure, please click the Continue button."
-    display_message(title=title, message=message, microscope=microscope, position="centered")
+    display_message_centered(title=title, message=message, microscope=microscope)
 
 
 def have_user_center_particle(microscope: Union[Interface, None], dummy_particle: bool = False) -> None:
@@ -69,34 +70,41 @@ def have_user_center_particle(microscope: Union[Interface, None], dummy_particle
 
     :return: None.
     """
-    microscope.unblank_beam()
+    if microscope is not None:
+        microscope.unblank_beam()
     while True:
         if dummy_particle:
             title = "We are now inviting our business and first-class customers to gate 7 for priority boarding."
             message = "Using the microscope control panel, please select a magnification in the SA range and center " \
                       "the microscope on some dummy particle. Don't worry about over-exposing the particle, this is " \
-                      "the not the particle we are going to analyse. For best results, please choose a dummy " \
-                      "particle at approximately the same y-location as (and preferably near to) the particle you " \
-                      "want to analyse." \
+                      "the not the particle we are going to analyse." \
+                      "\n\nFor best results, please choose a dummy particle at approximately the same y-location as " \
+                      "(and preferably near to) the particle you want to analyse." \
                       "\n\nPlease do not adjust the stage tilt nor the image shift. " \
                       "\n\nOnce the dummy particle is centered, please click the Continue button."
+            display_message_out_of_the_way(title=title, message=message, microscope=microscope, window_height=325)
         else:
             title = "Our flight is now ready for departure, we wish you all an enjoyable flight."
-            message = "Using the microscope control panel, please (still with a magnification in the SA range) " \
+            message = "Using the microscope control panel, please (with a magnification in the SA range) " \
                       "center the microscope on the particle of interest. " \
                       "\n\nPlease do not adjust the stage tilt nor the image shift. " \
                       "\n\nOnce the particle is centered, please click the Continue button and the blanker will be " \
                       "enabled automatically."
-        display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
+            display_message_out_of_the_way(title=title, message=message, microscope=microscope, window_height=215)
 
-        # Confirm that we are in the correct magnification range (at the time of writing image shift is only
-        #  calibrated for magnifications in the SA range)
-        if microscope.get_projection_submode() == "SA":
-            break  # Magnification is okay
+        if microscope is not None:
+            # Confirm that we are in the correct magnification range (at the time of writing image shift is only
+            #  calibrated for magnifications in the SA range)
+            if microscope.get_projection_submode() == "SA":
+                break  # Magnification is okay
+            else:
+                warnings.warn("Currently we are in the " + str(microscope.get_projection_submode())
+                              + " magnification range, please select a magnification in the SA range.")
         else:
-            warnings.warn("Currently we are in the " + str(microscope.get_projection_submode())
-                          + " magnification range, please select a magnification in the SA range.")
-    microscope.blank_beam()
+            break  # No microscope connection.
+
+    if microscope is not None:
+        microscope.blank_beam()
     return None
 
 
@@ -112,23 +120,86 @@ def display_eucentric_height_message(microscope: Union[Interface, None]) -> None
               "microscope to the eucentric height. That is, please find and select the z-height where tilting the " \
               "specimen leads to a minimal lateral movement of the image." \
               "\n\nOnce at eucentric height, re-center on the dummy particle and click the Continue button."
-    display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
+    display_message_out_of_the_way(title=title, message=message, microscope=microscope, window_height=215)
 
 
 def display_insert_and_align_sad_aperture_message(microscope: Union[Interface, None]) -> None:
     """
     Display the insert and align aperture message.
+
+    To improve the changes of the user actual aligning and remembering to remove the aperture, check boxes are
+     provided, both of which need to be checked before the continue button becomes active.
+
     :param microscope: pyTEM Interface (or None):
            A microscope interface, needed to return the microscope to a safe state if the user exits the script
             through the quit button on the message box.
     """
     title = "In order to expedite the boarding process, please be seated as quickly as possible after stowing your " \
             "carry-on items."
-    message = "Please, using your microscope's UI and the microscope control panel, insert and align the required " \
-              "selected area diffraction (SAD) aperture." \
-              "\n\nOnce the SAD aperture is aligned, please remove it." \
-              "\n\nOnce the SAD aperture has been removed, please click the continue button."
-    display_message(title=title, message=message, microscope=microscope, position="out-of-the-way")
+    upper_message = "Please, using your microscope's UI and the microscope control panel, insert and align the " \
+                    "required selected area diffraction (SAD) aperture." \
+                    "\n\nOnce the SAD aperture is aligned, please remove it."
+    lower_message = "Once the SAD aperture has aligned and removed, please click the continue button."
+
+    root = tk.Tk()
+    style = ttk.Style()
+
+    root.title(title)
+    add_basf_icon_to_tkinter_window(root)
+
+    window_width = 650
+
+    # Display the first part of the message
+    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width, font=(None, 15), justify='center')
+    upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
+
+    def check_if_aperture_is_aligned_and_removed() -> None:
+        """
+        Check to see, if both the aperture aligned and removed check boxes have been checked then we can go ahead and
+         enable the continue button.
+        """
+        if aperture_aligned.get() and aperture_removed.get():
+            continue_button.config(state=tk.NORMAL)
+        else:
+            continue_button.config(state=tk.DISABLED)
+
+    # Create a checkbutton for aperture aligned.
+    aperture_aligned = tk.BooleanVar()
+    aperture_aligned.set(False)
+    aperture_aligned_checkbutton = ttk.Checkbutton(root, text="SAD Aperture Aligned", variable=aperture_aligned,
+                                                   command=check_if_aperture_is_aligned_and_removed,
+                                                   style="big.TCheckbutton")
+    aperture_aligned_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=(5, 0))
+
+    # Create a checkbutton for aperture removed.
+    aperture_removed = tk.BooleanVar()
+    aperture_removed.set(False)
+    aperture_removed_checkbutton = ttk.Checkbutton(root, text="SAD Aperture Removed", variable=aperture_removed,
+                                                   command=check_if_aperture_is_aligned_and_removed,
+                                                   style="big.TCheckbutton")
+    aperture_removed_checkbutton.grid(column=0, columnspan=2, row=2, padx=5, pady=(0, 5))
+
+    # Display the other part of the message
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    lower_message.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
+
+    # Create continue and exit buttons
+    continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, row=4, sticky="e", padx=5, pady=5)
+    check_if_aperture_is_aligned_and_removed()  # Disabled until aperture has been aligned and removed.
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=1, row=4, sticky="w", padx=5, pady=5)
+
+    style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+
+    # Display the message box up in the top right-hand corner
+    root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=270,
+                                                    x=int(0.65 * root.winfo_screenwidth()),
+                                                    y=int(0.025 * root.winfo_screenheight())))
+
+    root.mainloop()
 
 
 def get_automated_alignment_message() -> Tuple[str, str]:
@@ -148,7 +219,7 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     """
     Display the start message.
 
-    To improve the changes of the user actual inserting the aperture and beam stop, check boxes are provided, both of
+    To improve the changes of the user actual inserting the aperture and beam-stop, check boxes are provided, both of
      which need to be checked before the continue button becomes active.
 
     :param microscope: pyTEM Interface (or None):
@@ -157,7 +228,7 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     """
     title = "Flight attendants, prepare doors for departure and cross-check."
     upper_message = "We are now ready to perform a MicroED tilt series acquisition! " \
-                    "\n\nPlease insert the desired SAD aperture and the beam stop. "
+                    "\n\nPlease insert the desired SAD aperture and (if required) the beam-stop. "
     lower_message = "Please refrain from touching the microscope controls for the duration of the experiment. If at " \
                     "any point you need to stop the experiment, please hit Ctrl-C on your keyboard. " \
                     "\n\nUpon pressing continue, the automated acquisition series will begin!"
@@ -171,12 +242,12 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     window_width = 650
 
     # Display the first part of the message
-    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width, font=(None, 15), justify='center')
+    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
     upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
     def check_if_aperture_and_beam_stop_are_inserted() -> None:
         """
-        Check to see, if both the aperture and beam stop check boxes have been checked then we can go ahead and enable
+        Check to see, if both the aperture and beam-stop check boxes have been checked then we can go ahead and enable
          the continue button.
         """
         if aperture_inserted.get() and beam_stop_inserted.get():
@@ -192,16 +263,17 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
                                                     style="big.TCheckbutton")
     aperture_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=(5, 0))
 
-    # Create a checkbutton for beam stop inserted.
+    # Create a checkbutton for beam-stop inserted.
     beam_stop_inserted = tk.BooleanVar()
     beam_stop_inserted.set(False)
-    beam_stop_inserted_checkbutton = ttk.Checkbutton(root, text="Beam-Stop Inserted", variable=beam_stop_inserted,
+    beam_stop_inserted_checkbutton = ttk.Checkbutton(root, text="Beam-Stop Inserted (or not required)",
+                                                     variable=beam_stop_inserted,
                                                      command=check_if_aperture_and_beam_stop_are_inserted,
                                                      style="big.TCheckbutton")
     beam_stop_inserted_checkbutton.grid(column=0, columnspan=2, row=2, padx=5, pady=(0, 5))
 
     # Display the other part of the message
-    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width, font=(None, 15), justify='center')
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
     lower_message.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
 
     # Create continue and exit buttons
@@ -234,7 +306,7 @@ def display_end_message(microscope: Union[Interface, None], out_file: str) -> No
     message = "We have now completed the MicroED tilt acquisition series!" \
               "\n\nYour images can be found in " + str(out_file) + \
               "\n\n\u03B1 stage tilt, beam shift, and image shift will be zeroed upon script termination."
-    display_message(title=title, message=message, microscope=microscope, position="centered")
+    display_message_centered(title=title, message=message, microscope=microscope)
 
 
 def display_good_bye_message(microscope: Union[Interface, None]):
@@ -244,12 +316,15 @@ def display_good_bye_message(microscope: Union[Interface, None]):
     title = "Thank you for flying with Air TEM, we hope to see you again soon!"
     message = "Thank you for using BASF's in house MicroED automated imaging script. Please report any issues on " \
               "GitHub: https://github.com/mrl280/pyTEM/issues."
-    display_message(title=title, message=message, microscope=microscope, position="centered")
+    display_message_centered(title=title, message=message, microscope=microscope)
 
 
-def display_message(title: str, message: str, microscope: Union[Interface, None], position: str = "centered") -> None:
+def display_message_centered(title: str, message: str, microscope: Union[Interface, None]) -> None:
     """
-    Display a simple message box with 'continue' and 'exit' buttons at the bottom.
+    Display a simple message box with 'Continue' and 'Quit' buttons at the bottom.
+
+    Message is displayed on the centered on the screen, which is useful when you need the users full attention,
+     and don't want them fiddling around with the microscope in the background.
 
     :param message: str:
         The message to display.
@@ -260,11 +335,51 @@ def display_message(title: str, message: str, microscope: Union[Interface, None]
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
          through the quit button on the message box.
 
-    :param position: str:
-        The position of the message box, one of:
-        - "centered" (useful when you need the users full attention, and don't want them fiddling around with the
-                      microscope in the background)
-        - "out-of-the-way" (useful when you need the user to adjust the microscope in the background before confirming)
+    :return: None.
+    """
+    root = tk.Tk()
+    style = ttk.Style()
+
+    root.title(title)
+    add_basf_icon_to_tkinter_window(root)
+
+    window_width = 650
+    message = ttk.Label(root, text=message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
+
+    # Create continue and quit buttons
+    continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, row=1, sticky="e", padx=5, pady=5)
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=1, row=1, sticky="w", padx=5, pady=5)
+
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+
+    # Center the window on the screen
+    root.eval('tk::PlaceWindow . center')
+
+    root.mainloop()
+
+
+def display_message_out_of_the_way(title: str, message: str, window_height: Union[float, int],
+                                   microscope: Union[Interface, None]) -> None:
+    """
+    Display a simple message box with 'continue' and 'exit' buttons at the bottom.
+
+    Message is displayed "out of the way", which is useful when you need the user to adjust the microscope in the
+     background before continuing.
+
+    :param message: str:
+        The message to display.
+    :param title: str:
+        Message box title.
+    :param window_height: int or float:
+        The desired window height (usually determined experimentally based on message length).
+
+    :param microscope: pyTEM Interface (or None):
+        The microscope interface, needed to return the microscope to a safe state if the user exits the script
+         through the quit button on the message box.
 
     :return: None.
     """
@@ -275,7 +390,7 @@ def display_message(title: str, message: str, microscope: Union[Interface, None]
     add_basf_icon_to_tkinter_window(root)
 
     window_width = 650
-    message = ttk.Label(root, text=message, wraplength=window_width, font=(None, 15), justify='center')
+    message = ttk.Label(root, text=message, wraplength=window_width - 10, font=(None, 15), justify='center')
     message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
     # Create continue and exit buttons
@@ -287,19 +402,33 @@ def display_message(title: str, message: str, microscope: Union[Interface, None]
 
     style.configure('big.TButton', font=(None, 10), foreground="blue4")
 
-    if position == "centered":
-        root.eval('tk::PlaceWindow . center')  # Center the window on the screen
-
-    elif position == "out-of-the-way":
-        root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=215,
-                                                        x=int(0.65 * root.winfo_screenwidth()),
-                                                        y=int(0.025 * root.winfo_screenheight())))
-    else:
-        raise Exception("Display message position '" + str(position) + "' not recognized.")
+    # Display the message box up in the top right-hand corner
+    root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=window_height,
+                                                    x=int(0.65 * root.winfo_screenwidth()),
+                                                    y=int(0.025 * root.winfo_screenheight())))
 
     root.mainloop()
 
 
 if __name__ == "__main__":
-    """ Testing """
-    display_start_message(microscope=None)
+    """ 
+    Testing 
+    """
+
+    display_welcome_message(microscope=None)
+
+    # display_initialization_message(microscope=None)
+
+    # have_user_center_particle(microscope=None, dummy_particle=False)
+
+    # have_user_center_particle(microscope=None, dummy_particle=True)
+
+    # display_eucentric_height_message(microscope=None)
+
+    # display_insert_and_align_sad_aperture_message(microscope=None)
+
+    # display_start_message(microscope=None)
+
+    # display_end_message(microscope=None, out_file="")
+
+    # display_good_bye_message(microscope=None)
