@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from pathlib import Path
 
@@ -16,7 +16,7 @@ setup(
     keywords=['transmission electron microscopy', 'TEM', 'microscopy', 'electron microscopy',
               'micro-crystal electron diffraction', 'uED'],
     license='MIT',
-    packages=['pyTEM'],
+    packages=find_packages(exclude=['*.test', '*.test.*', 'test.*', 'test']),
     python_requires='>=3.8',
     install_requires=['numpy',
                       'pandas',
@@ -32,7 +32,9 @@ setup(
                       ],
     entry_points='''
                 [console_scripts]
-                align_images=scripts.align_images:align_images
-                bulk_carbon_analysis=scripts.bulk_carbon_analysis:align_images
+                align_images=pyTEM_scripts.align_images:align_images
+                bulk_carbon_analysis=pyTEM_scripts.bulk_carbon_analysis:bulk_carbon_analysis
             ''',
+    package_data={'': ['*.ico', '*.npy']},
+    include_package_data=True,
 )
