@@ -22,6 +22,7 @@ sys.path.append(str(package_directory))
 try:
     from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
     from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
+    from pyTEM.lib.interface.make_dict_jsonable import make_dict_jsonable
     from pyTEM.lib.interface.Acquisition import Acquisition
 except Exception as ImportException:
     raise ImportException
@@ -252,30 +253,30 @@ class AcquisitionSeries:
             out_file = out_file + ".tif"
 
         # Try to determine the image resolution.
-        try:
+        if "XResolution" in self[0].get_metadata().keys() and "YResolution" in self[0].get_metadata().keys():
+            # If the required TIFF XResolution and YResolution tags already exist, then go ahead and use them.
             # The TIFF types of the XResolution and YResolution tags are RATIONAL (5) which is defined in the TIFF
             #  specification as "two LONGs: the first represents the numerator of a fraction; the second, the
-            #  denominator."
-            # If the required TIFF XResolution and YResolution tags already exist, then go ahead and use them.
-            # Notice we are computing the inverse here and will invert back when we save.
+            #  denominator." Notice we are computing the inverse here and will invert back when we save.
             pixel_size_x_in_cm = float(self[0].get_metadata()['XResolution'][1] /
                                        self[0].get_metadata()['XResolution'][0])
             pixel_size_y_in_cm = float(self[0].get_metadata()['YResolution'][1] /
                                        self[0].get_metadata()['YResolution'][0])
-        except KeyError:
-            try:
-                # If the XResolution and YResolution tags, then maybe we have pixel size data from the TM acq object.
-                pixel_size_x_in_cm = float(100 * self[0].get_metadata()['PixelSize'][0])  # m -> cm
-                pixel_size_y_in_cm = float(100 * self[0].get_metadata()['PixelSize'][1])  # m -> cm
-            except KeyError:
-                # Give up.
-                warnings.warn("save_as_tif() could not determine the pixel size, resolution not set.")
-                tifffile.imwrite(out_file, data=self.get_image_stack(), metadata=self[0].get_metadata(),
-                                 photometric='minisblack')
-                return
 
-        tifffile.imwrite(out_file, data=self.get_image_stack(), metadata=self[0].get_metadata(),
-                         resolution=(1/pixel_size_x_in_cm, 1/pixel_size_y_in_cm, 'CENTIMETER'),
+        elif "PixelSize" in self[0].get_metadata().keys():
+            # Maybe we have pixel size data from the TM acq object.
+            pixel_size_x_in_cm = float(100 * self[0].get_metadata()['PixelSize'][0])  # m -> cm
+            pixel_size_y_in_cm = float(100 * self[0].get_metadata()['PixelSize'][1])  # m -> cm
+
+        else:
+            # Give up, just save without setting the resolution.
+            warnings.warn("save_as_tif() could not determine the pixel size, resolution not set in " + str(out_file))
+            tifffile.imwrite(out_file, data=self.get_image_stack(), photometric='minisblack',
+                             metadata=make_dict_jsonable(self[0].get_metadata()))
+            return
+
+        tifffile.imwrite(out_file, data=self.get_image_stack(), metadata=make_dict_jsonable(self[0].get_metadata()),
+                         resolution=(1 / pixel_size_x_in_cm, 1 / pixel_size_y_in_cm, 'CENTIMETER'),
                          photometric='minisblack')
 
     def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
@@ -315,23 +316,29 @@ if __name__ == "__main__":
     Testing.
     """
     acq_series = AcquisitionSeries()
-    acq_series.append(Acquisition(None))
+    # acq_series.append(Acquisition(None))
+    #
+    # print(acq_series.image_shape())
+    # print(acq_series.get_acquisition(0).image_shape())
+    # print(acq_series.image_dtype())
+    # acq_series.append(Acquisition(None))
+    # acq_series.append(Acquisition(None))
+    #
+    # image_stack_arr_ = acq_series.get_image_stack()
+    # print(np.shape(image_stack_arr_))
+    #
+    # # acq_series.downsample()
+    #
+    # image_stack_arr_ = acq_series.get_image_stack()
+    # print(np.shape(image_stack_arr_))
+    #
+    # print(acq_series.get_acquisition(idx=0).get_metadata())
 
-    print(acq_series.image_shape())
-    print(acq_series.get_acquisition(0).image_shape())
-    print(acq_series.image_dtype())
-    acq_series.append(Acquisition(None))
-    acq_series.append(Acquisition(None))
-
-    image_stack_arr_ = acq_series.get_image_stack()
-    print(np.shape(image_stack_arr_))
-
-    # acq_series.downsample()
-
-    image_stack_arr_ = acq_series.get_image_stack()
-    print(np.shape(image_stack_arr_))
-
-    print(acq_series.get_acquisition(idx=0).get_metadata())
+    in_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" \
+              / "interface" / "test_images"
+    acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 14.tif"))
+    acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 13.tif"))
+    acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 12.tif"))
 
     # print("\nTesting iteration:")
     # for c, acq_ in enumerate(acq_series):
