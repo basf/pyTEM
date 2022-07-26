@@ -3,8 +3,6 @@
  Date:    Summer 2022
 """
 
-import pathlib
-import sys
 import warnings
 import math
 
@@ -19,7 +17,7 @@ import tkinter as tk
 from pyTEM.Interface import Interface
 from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 from pyTEM.lib.micro_ed.exit_script import exit_script
-from pyTEM.lib.micro_ed.messages import get_automated_alignment_message, display_message
+from pyTEM.lib.micro_ed.messages import get_automated_alignment_message
 from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
 
 
@@ -397,7 +395,7 @@ def get_tilt_range(microscope: Union[Interface, None]) -> np.array:
 
     elif math.isclose(a=alpha_arr[-2], b=tilt_range.stop, abs_tol=1e-4):
         # Our array is one element too long (owing to inconsistencies in np.arange() from numerical error, just remove
-        #  the last element and then we are good)
+        #  the last element, and then we are good)
         alpha_arr = np.delete(arr=alpha_arr, obj=-1)
 
     else:
@@ -824,12 +822,12 @@ if __name__ == "__main__":
         scope = None
 
     """ Test getting tilt range info """
-    # # Restore default numpy print options
-    # # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
-    # #                     threshold=1000, formatter=None)
-    # arr = get_tilt_range(microscope=scope)
-    # print("Here is the final alpha array received from get_tilt_range():")
-    # print(arr)
+    # Restore default numpy print options
+    # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
+    #                     threshold=1000, formatter=None)
+    arr = get_tilt_range(microscope=scope)
+    print("Here is the final alpha array received from get_tilt_range():")
+    print(arr)
 
     """ Test getting camera parameters """
     # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=scope)
@@ -839,12 +837,12 @@ if __name__ == "__main__":
     # print("Downsampling: " + str(downsample_))
 
     """ Test getting out file """
-    import os
-    out_file = get_out_file(None)
-    print("Full out file: " + str(out_file))
-    file_name_base, file_extension = os.path.splitext(out_file)
-    print("File name: " + str(file_name_base))
-    print("File extension: " + str(file_extension))
+    # import os
+    # out_file = get_out_file(None)
+    # print("Full out file: " + str(out_file))
+    # file_name_base, file_extension = os.path.splitext(out_file)
+    # print("File name: " + str(file_name_base))
+    # print("File extension: " + str(file_extension))
 
     """ Test getting shift correction samples """
     # use_shift_corrections, samples__, interpolation_scope_ = shift_correction_info(microscope=scope, tilt_start=-30,
