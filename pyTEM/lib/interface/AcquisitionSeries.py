@@ -15,6 +15,7 @@ import hyperspy.api as hs
 
 from typing import Union, Tuple
 from tifffile import tifffile
+from tifffile.tifffile import RESUNIT
 
 from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
 from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
@@ -46,9 +47,11 @@ class AcquisitionSeriesIterator:
 class AcquisitionSeries:
     """
     Hold a series of Acquisition objects. The image of each acquisition in the series must have the same shape
-     and datatype as that of the first acquisition in the series.
+     and datatype as that of the first acquisition in the series (consistent resolution (scale) is not enforced because
+     sometimes the resolution needs to be added manually to the image files or acquisition objects, and we don't want
+     to force the user to manually set the resolution in every file/acquisition they want to load into the series).
 
-    Helpful for saving image stacks to file.
+    This class is especially helpful for managing image stacks, including reading and saving to file.
 
     Public Attributes:
         None
@@ -247,20 +250,23 @@ class AcquisitionSeries:
             out_file = out_file + ".tif"
 
         # Try to determine the image resolution.
-        if "XResolution" in self[0].get_metadata().keys() and "YResolution" in self[0].get_metadata().keys():
+        if "XResolution" in self[0].get_metadata().keys() and "YResolution" in self[0].get_metadata().keys() \
+                and "ResolutionUnit" in self[0].get_metadata().keys():
             # If the required TIFF XResolution and YResolution tags already exist, then go ahead and use them.
             # The TIFF types of the XResolution and YResolution tags are RATIONAL (5) which is defined in the TIFF
             #  specification as "two LONGs: the first represents the numerator of a fraction; the second, the
             #  denominator." Notice we are computing the inverse here and will invert back when we save.
-            pixel_size_x_in_cm = float(self[0].get_metadata()['XResolution'][1] /
-                                       self[0].get_metadata()['XResolution'][0])
-            pixel_size_y_in_cm = float(self[0].get_metadata()['YResolution'][1] /
-                                       self[0].get_metadata()['YResolution'][0])
+            pixel_size_x = float(self[0].get_metadata()['XResolution'][1] /
+                                 self[0].get_metadata()['XResolution'][0])
+            pixel_size_y = float(self[0].get_metadata()['YResolution'][1] /
+                                 self[0].get_metadata()['YResolution'][0])
+            resolution_unit = self[0].get_metadata()['ResolutionUnit']
 
         elif "PixelSize" in self[0].get_metadata().keys():
             # Maybe we have pixel size data from the TM acq object.
-            pixel_size_x_in_cm = float(100 * self[0].get_metadata()['PixelSize'][0])  # m -> cm
-            pixel_size_y_in_cm = float(100 * self[0].get_metadata()['PixelSize'][1])  # m -> cm
+            pixel_size_x = float(100 * self[0].get_metadata()['PixelSize'][0])  # m -> cm
+            pixel_size_y = float(100 * self[0].get_metadata()['PixelSize'][1])  # m -> cm
+            resolution_unit = RESUNIT.CENTIMETER
 
         else:
             # Give up, just save without setting the resolution.
@@ -270,7 +276,7 @@ class AcquisitionSeries:
             return
 
         tifffile.imwrite(out_file, data=self.get_image_stack(), metadata=make_dict_jsonable(self[0].get_metadata()),
-                         resolution=(1 / pixel_size_x_in_cm, 1 / pixel_size_y_in_cm, 'CENTIMETER'),
+                         resolution=(1 / pixel_size_x, 1 / pixel_size_y, resolution_unit),
                          photometric='minisblack')
 
     def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:

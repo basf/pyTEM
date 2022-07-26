@@ -18,6 +18,7 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import Colormap
 from numpy.typing import ArrayLike
 from tifffile import tifffile
+from tifffile.tifffile import RESUNIT
 
 from pyTEM.lib.interface.RedirectStdStreams import RedirectStdStreams
 from pyTEM.lib.interface.hs_metadata_to_dict import hs_metadata_to_dict
@@ -307,18 +308,21 @@ class Acquisition:
             out_file = out_file + ".tif"
 
         # Try to determine the image resolution.
-        if "XResolution" in self.get_metadata().keys() and "YResolution" in self.get_metadata().keys():
+        if "XResolution" in self.get_metadata().keys() and "YResolution" in self.get_metadata().keys() \
+                and "ResolutionUnit" in self.get_metadata().keys():
             # If the required TIFF XResolution and YResolution tags already exist, then go ahead and use them.
             # The TIFF types of the XResolution and YResolution tags are RATIONAL (5) which is defined in the TIFF
             #  specification as "two LONGs: the first represents the numerator of a fraction; the second, the
             #  denominator." Notice we are computing the inverse here and will invert back when we save.
             pixel_size_x_in_cm = float(self.get_metadata()['XResolution'][1] / self.get_metadata()['XResolution'][0])
             pixel_size_y_in_cm = float(self.get_metadata()['YResolution'][1] / self.get_metadata()['YResolution'][0])
+            resolution_unit = self.get_metadata()['ResolutionUnit']
 
         elif "PixelSize" in self.get_metadata().keys():
             # Maybe we have pixel size data from the TM acq object.
             pixel_size_x_in_cm = float(100 * self.get_metadata()['PixelSize'][0])  # m -> cm
             pixel_size_y_in_cm = float(100 * self.get_metadata()['PixelSize'][1])  # m -> cm
+            resolution_unit = RESUNIT.CENTIMETER
 
         else:
             # Give up, just save without setting the resolution.
@@ -328,7 +332,7 @@ class Acquisition:
             return
 
         tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(), photometric='minisblack',
-                         resolution=(1 / pixel_size_x_in_cm, 1 / pixel_size_y_in_cm, 'CENTIMETER'))
+                         resolution=(1 / pixel_size_x_in_cm, 1 / pixel_size_y_in_cm, resolution_unit))
 
     def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
         """
@@ -391,15 +395,21 @@ if __name__ == "__main__":
     Testing
     """
 
-    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve().parent.resolve() / "test" / \
-        "interface" / "test_images"
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() / "test" / "interface" / \
+        "test_images"
     # in_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
-    in_file_ = out_dir / "checking_if_metadata_saved.tif"
+    in_file_ = out_dir / "2_14.tif"
     # out_file_ = out_dir / "checking_if_metadata_saved.tif"
-    # acq = Acquisition(out_file_)
 
+    # acq = Acquisition(None)
     acq = Acquisition(in_file_)
-    print(acq.get_metadata())
+    acq_metadata = acq.get_metadata()
+    print("Metadata:")
+    print(acq_metadata)
+    print("Resolution unit:")
+    print(acq_metadata['ResolutionUnit'])
+    # print(type(acq_metadata['ResolutionUnit']))
+    # print(acq_metadata['ResolutionUnit'] == RESUNIT.CENTIMETER)
     # print(acq.get_image().dtype)
     # acq.show_image()
 
