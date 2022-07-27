@@ -7,7 +7,7 @@ from typing import Tuple
 
 from pyTEM.lib.interface.Acquisition import Acquisition
 from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-from pyTEM_scripts.lib.GetInOutFile import GetInOutFile
+from pyTEM_scripts.lib.align_images.GetInOutFile import GetInOutFile
 
 
 def align_images():
@@ -20,7 +20,7 @@ def align_images():
         Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
             Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
 
-    :return: None.
+    :return: None. The resulting image stack is saved to file at the location requested by the user.
     """
     # Get the in and out file info from the user.
     in_file, out_file = GetInOutFile().run()
