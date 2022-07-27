@@ -588,8 +588,7 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     root = tk.Tk()
     style = ttk.Style()
 
-    root.title("Take a moment to locate the exit nearest you keeping in mind that the closest usable exit may "
-               "be located behind you.")
+    root.title("A life vest is located under or between your seat.")
     add_basf_icon_to_tkinter_window(root)
 
     # Build a message, letting the user know that we need directory and file name information
@@ -610,7 +609,7 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
 
     # Make the user select an out directory
     root = tk.Tk()
-    root.title("A life vest is located under or between your seat.")
+    root.title("As a reminder, smoking is not permitted in any area of the aircraft, including the lavatories.")
     add_basf_icon_to_tkinter_window(root)
     root.geometry("{width}x{height}".format(width=500, height=root.winfo_height()))
     root.directory = filedialog.askdirectory()
@@ -622,7 +621,7 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     root = tk.Tk()
     style = ttk.Style()
 
-    root.title("As a reminder, smoking is not permitted in any area of the aircraft, including the lavatories.")
+    root.title("If you have any questions, please don’t hesitate to ask one of our crew members.")
     add_basf_icon_to_tkinter_window(root)
 
     message = ttk.Label(root, text="Please complete the out file path:", font=(None, 15))
