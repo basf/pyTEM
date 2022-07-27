@@ -93,9 +93,9 @@ class Acquisition:
         __metadata:   dictionary:      All the image metadata (describes and gives information about the __image).
     """
 
-    def __init__(self, source: Union[str, pathlib.Path, Any]):
+    def __init__(self, source: Union[str, pathlib.Path, Any] = None):
         """
-        :param source: From what to initialize the Acquisition.
+        :param source: From what to initialize the Acquisition (optional; default is None).
             Supported sources include:
                 - A string or path object: In which case the Acquisition() object will be initialized from file.
                 - A Thermo Fisher Acquisition object: In which case we will initialize from that.
