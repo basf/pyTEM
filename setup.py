@@ -1,5 +1,9 @@
-from setuptools import setup, find_packages
+"""
+ Author:  Michael Luciuk
+ Date:    Summer 2022
+"""
 
+from setuptools import setup, find_packages
 from pathlib import Path
 
 this_directory = Path(__file__).parent
@@ -34,6 +38,7 @@ setup(
                 [console_scripts]
                 align_images=pyTEM_scripts.align_images:align_images
                 bulk_carbon_analysis=pyTEM_scripts.bulk_carbon_analysis:bulk_carbon_analysis
+                micro_ed=pyTEM.MicroED:script_entry
             ''',
     package_data={'': ['*.ico', '*.npy']},
     include_package_data=True,

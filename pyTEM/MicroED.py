@@ -6,7 +6,7 @@ This is BASF's in-house micro-crystal electron diffraction (MicroED) automated i
  high resolution 3D structure determination of small chemical compounds and biological macromolecules!
 """
 
-import os
+import argparse
 import warnings
 
 import numpy as np
@@ -175,18 +175,10 @@ class MicroED:
                     print("Downsampling images...")
                 acq_stack.downsample()
 
-            # Save each image individually as a jpeg for easy viewing.
-            file_name_base, file_extension = os.path.splitext(out_file)
-            for i, acq in enumerate(acq_stack):
-                out_file = file_name_base + "_" + str(i) + ".jpeg"
-                if verbose:
-                    print("Saving image #" + str(i) + "to file as: " + out_file)
-                acq.save_to_file(out_file=out_file, extension=".jpeg")
-
             # Save the image stack to file.
-            # if verbose:
-            #     print("Saving image stack to file as: " + acquisition_properties.out_file)
-            # image_stack.save_as_mrc(acquisition_properties.out_file)
+            if verbose:
+                print("Saving image stack to file as: " + out_file)
+            acq_stack.save_to_file(out_file=out_file)
 
             # The acquisition is now complete, inform the user.
             display_end_message(microscope=self.microscope, out_file=out_file)
@@ -203,6 +195,23 @@ class MicroED:
         except Exception as e:
             print(e)
             exit_script(microscope=self.microscope, status=1)
+
+
+def script_entry():
+    """
+    Entry point for the MicroED script. Once pyTEM is installed, view script usage by running the following command in
+     a terminal window:
+
+        micro_ed --help
+
+    """
+    parser = argparse.ArgumentParser(description="BASF's in-house micro-crystal electron diffraction (MicroED) "
+                                                 "automated imaging script.")
+    parser.add_argument("-v", "--verbose", help="Increase verbosity, especially useful when debugging.",
+                        action="store_true")
+    args = parser.parse_args()
+
+    MicroED().run(verbose=args.verbose)
 
 
 if __name__ == "__main__":
