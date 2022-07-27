@@ -3,6 +3,7 @@
  Date:    Summer 2022
 """
 
+import time
 import warnings
 import math
 
@@ -162,10 +163,40 @@ class GetTiltRange:
         start_units_label = ttk.Label(root, text="deg", font=(self.font, self.font_size))
         start_units_label.grid(column=2, row=2, sticky="w", padx=5, pady=5)
 
+        def disable_buttons_and_update_alpha():
+            """
+            Temporarily disable the buttons, update alpha, and then re-enable the buttons.
+            This helps prevent problems that arise when one clicks a button while the microscope is working.
+            :return: None.
+            """
+            # Make the buttons 'look' un-clickable.
+            unblank_test_button.config(state=tk.DISABLED)
+            unblank_test_button.update()
+            continue_button.config(state=tk.DISABLED)
+            continue_button.update()
+            exit_button.config(state=tk.DISABLED)
+            exit_button.update()
+
+            # Actually make the buttons un-clickable.
+            unblank_test_button.grid_forget()
+            continue_button.grid_forget()
+            exit_button.grid_forget()
+
+            # Actually update alpha.
+            self._update_alpha(float(start.get()))
+
+            # And finally go ahead and restore the buttons.
+            unblank_test_button.config(state=tk.NORMAL)
+            unblank_test_button.grid(column=0, row=3, padx=5, pady=5)
+            continue_button.config(state=tk.NORMAL)
+            continue_button.grid(column=1, row=3, padx=5, pady=5)
+            exit_button.config(state=tk.NORMAL)
+            exit_button.grid(column=2, row=3, padx=5, pady=5)
+
         # Create test, continue, and exit buttons
-        test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
-                                 command=lambda: self._update_alpha(alpha=float(start.get())))
-        test_button.grid(column=0, row=3, padx=5, pady=5)
+        unblank_test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
+                                         command=disable_buttons_and_update_alpha)
+        unblank_test_button.grid(column=0, row=3, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
         continue_button.grid(column=1, row=3, padx=5, pady=5)
         exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
@@ -295,10 +326,40 @@ class GetTiltRange:
                                           justify='center')
         uneven_division_label.grid(column=0, columnspan=3, row=3, padx=5, pady=5)
 
+        def disable_buttons_and_update_alpha():
+            """
+            Temporarily disable the buttons, update alpha, and then re-enable the buttons.
+            This helps prevent problems that arise when one clicks a button while the microscope is working.
+            :return: None.
+            """
+            # Make the buttons 'look' un-clickable
+            unblank_test_button.config(state=tk.DISABLED)
+            unblank_test_button.update()
+            continue_button.config(state=tk.DISABLED)
+            continue_button.update()
+            exit_button.config(state=tk.DISABLED)
+            exit_button.update()
+
+            # Actually make the buttons un-clickable
+            unblank_test_button.grid_forget()
+            continue_button.grid_forget()
+            exit_button.grid_forget()
+
+            # Actually update alpha.
+            self._update_alpha(float(stop.get()))
+
+            # And finally go ahead and restore the buttons.
+            unblank_test_button.config(state=tk.NORMAL)
+            unblank_test_button.grid(column=0, row=4, padx=5, pady=5)
+            continue_button.config(state=tk.NORMAL)
+            continue_button.grid(column=1, row=4, padx=5, pady=5)
+            exit_button.config(state=tk.NORMAL)
+            exit_button.grid(column=2, row=4, padx=5, pady=5)
+
         # Create test, continue, and exit buttons
-        test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
-                                 command=lambda: self._update_alpha(alpha=float(stop.get())))
-        test_button.grid(column=0, row=4, padx=5, pady=5)
+        unblank_test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
+                                         command=disable_buttons_and_update_alpha)
+        unblank_test_button.grid(column=0, row=4, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
         continue_button.grid(column=1, row=4, padx=5, pady=5)
         exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
@@ -326,8 +387,10 @@ class GetTiltRange:
         :return: None.
         """
         if self.microscope is None:
-            print("We are not connected to the microscope, but otherwise would be moving to \u03B1=" + str(alpha)
+            print("We are not connected to the microscope, but otherwise we would be moving to \u03B1=" + str(alpha)
                   + " and then briefly unblanking.")
+            time.sleep(2)  # Pause to visually confirm the buttons disable.
+
         else:
             self.microscope.set_stage_position_alpha(alpha=alpha, speed=0.5)
 
@@ -338,6 +401,7 @@ class GetTiltRange:
 
             # Quickly unblank for a moment so the user can confirm the tilt angle is okay.
             self.microscope.unblank_beam()
+            time.sleep(2)
             self.microscope.blank_beam()
 
     def _blank_beam(self) -> None:
@@ -811,6 +875,9 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_int
 
 
 if __name__ == "__main__":
+    """
+    Testing.
+    """
 
     # Try to connect to a microscope
     try:
