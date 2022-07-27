@@ -6,6 +6,7 @@
 # Required to type hint that a method is returning an instance of the enclosing class.
 from __future__ import annotations
 
+import os
 import pathlib
 import warnings
 import mrcfile
@@ -17,6 +18,8 @@ from typing import Union, Tuple
 from tifffile import tifffile
 from tifffile.tifffile import RESUNIT
 
+from pyTEM.lib.interface.RedirectStdStreams import RedirectStdStreams
+from pyTEM.lib.interface.hs_metadata_to_dict import hs_metadata_to_dict
 from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
 from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
 from pyTEM.lib.interface.make_dict_jsonable import make_dict_jsonable
@@ -63,13 +66,106 @@ class AcquisitionSeries:
         __acquisitions:      Python list:   An list of Acquisition objects.
     """
 
-    def __init__(self):
+    def __init__(self, source: Union[str, pathlib.Path, np.ndarray] = None):
+        """
+        :param source: From what to initialize the AcquisitionSeries (optional; default is None).
+            Supported sources include:
+                - A string or path object: In which case the AcquisitionSeries() object will be initialized from file
+                    (probably this file contains an image stack, but it could also be a single-image file in which case
+                    the returned series will only be 1 acquisition long). The file's metadata will be loaded into each
+                    acquisition.
+                - A 2-dimensional array: In which case the returned series will only be 1 acquisition long (the single
+                    acquisition's metadata will be initialized to an empty dictionary).
+                - A 3-dimensional array: In which case we assume an image stack and iterate over the first axis,
+                    loading in 2-dimensional images. Each acquisition's metadata will be initialized to an empty
+                    dictionary.
+                - None: In which case, we return an empty AcquisitionSeries abject. Just like all AcquisionSeries
+                    objects, this empty series can always be appended to later.
+        """
         self.__acquisitions = []
-        # TODO: Initialize from MRC, TIFF, and nd.array.
+
+        if source is None:
+            return  # We are done
+
+        elif isinstance(source, str) or isinstance(source, pathlib.Path):
+            # Try to load from file
+
+            # First, check to see if it is an MRC file.
+            try:
+                # Because mrcfile.validate() prints a lot of stuff that is not helpful, temporarily redirect stdout.
+                devnull = open(os.devnull, 'w')
+                with RedirectStdStreams(stdout=devnull, stderr=devnull):
+                    mrc_file = mrcfile.validate(source)
+            except BaseException as e:
+                mrc_file = False
+                warnings.warn("Error ignored in AcquisitionSeries() while trying to check if the input file was an "
+                              "MRC file: " + str(e))
+
+            if mrc_file:
+                # Then it is an MRC file, open with mrcfile
+                with mrcfile.open(source) as mrc:
+                    image_stack_arr = mrc.data
+                    metadata = {}
+                    # TODO: Figure out how to read in metadata from MRC file header
+                    warnings.warn("We haven't learned how to read MRC file headers yet, so the Acquisition's in the"
+                                  "returned AcquisitionSeries object have no metadata!")
+
+            else:
+                # Let's see if it is something Hyperspy can load
+                try:
+                    hs_data = hs.load(str(source))
+                    image_stack_arr = hs_data.data
+                except BaseException as e:
+                    warnings.warn("The Acquisition() constructor received an invalid source.")
+                    raise e
+
+                # Try to load metadata.
+                try:
+                    metadata = hs_metadata_to_dict(hs_data.metadata)
+                    # And don't forget to include the original metadata.
+                    metadata.update(hs_metadata_to_dict(hs_data.original_metadata))
+                except BaseException as e:
+                    warnings.warn("Unable to extract metadata from source: " + str(e))
+                    metadata = {}
+
+            if image_stack_arr.ndim == 2:
+                # Then we have a single image.
+                acq = Acquisition(source=image_stack_arr)
+                acq._set_metadata(metadata)
+                self.append(acq=acq)
+
+            elif image_stack_arr.ndim == 3:
+                # Then we have an image stack, look through and append acquisitions.
+                num_images = np.shape(image_stack_arr)[0]
+                for i in range(num_images):
+                    acq = Acquisition(source=image_stack_arr[i])
+                    acq._set_metadata(metadata)
+                    self.append(acq=acq)
+
+        elif isinstance(source, np.ndarray):
+            # Initialize from array. No need to worry about metadata.
+
+            if source.ndim == 2:
+                # Then the array only contains a single image.
+                self.append(acq=Acquisition(source))
+
+            elif source.ndim == 3:
+                # Then we have an image stack, loop through all the images in the stack, appending them onto to
+                #  the series.
+                for i in range(np.shape(source)[0]):
+                    self.append(acq=Acquisition(source[i]))
+
+            else:
+                # Invalid dimension, panic.
+                raise Exception("AcquisitonSeries() expected a 2 or 3 dimensional source, but the provided source is "
+                                "of dimension " + str(source.ndim) + ".")
+
+        else:
+            raise Exception("The type of the source received by the AcquisitionSeries() constructor is invlaid.")
 
     def append(self, acq: Acquisition) -> None:
         """
-        Added a new acquisition to the series.
+        Add a new acquisition to the end of the series. Notice you can only append single acquisitions.
         :param acq: Acquisition:
             The acquisition to append. The image of the acquisition must have the same shape and datatype as the rest
              of those in the series.
@@ -152,7 +248,7 @@ class AcquisitionSeries:
             self.__acquisitions[idx] = acq
 
         else:
-            raise Exception("Error: Unable to append to AcquisitionSeries, either the provided argument is not of type "
+            raise Exception("Error: Unable to set Acquisition, either the provided argument is not of type "
                             "Acquisition, the image is the wrong shape, or the image uses the wrong datatype.")
 
     def downsample(self) -> None:
@@ -222,9 +318,9 @@ class AcquisitionSeries:
         result = AcquisitionSeries()
         for i in range(self.length()):
             # Build a new acquisition with the aligned image and old metadata and add it to the series.
-            new_acq = Acquisition(image_stack[i])
+            new_acq = Acquisition(source=image_stack[i])
             new_acq._set_metadata(metadata=self[i].get_metadata())
-            result.append(new_acq)
+            result.append(acq=new_acq)
 
         return result
 
@@ -315,7 +411,21 @@ if __name__ == "__main__":
     """
     Testing.
     """
-    acq_series = AcquisitionSeries()
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() / "test" / "interface" / \
+        "test_images"
+    in_file_ = out_dir / "2_11_aligned.tif"
+    # in_file_ = out_dir / "2_11.tif"
+    # in_file_ = out_dir / "cat.jpeg"
+    acq_series = AcquisitionSeries(in_file_)
+
+    print(acq_series)
+    print("Series length: " + str(acq_series.length()))
+    print(acq_series[0])
+    print(acq_series.image_dtype())
+    print(acq_series[0].get_image())
+    print(acq_series[0].get_metadata())
+
+    acq_series[0].show_image()
     # acq_series.append(Acquisition(None))
     #
     # print(acq_series.image_shape())
@@ -334,11 +444,11 @@ if __name__ == "__main__":
     #
     # print(acq_series.get_acquisition(idx=0).get_metadata())
 
-    in_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() \
-        / "test" / "interface" / "test_images"
-    acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 14.tif"))
-    acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 13.tif"))
-    acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 12.tif"))
+    # in_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() \
+    #     / "test" / "interface" / "test_images"
+    # acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 14.tif"))
+    # acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 13.tif"))
+    # acq_series.append(Acquisition(str(in_dir) + "/p2v1 1_25x 12.tif"))
 
     # print("\nTesting iteration:")
     # for c, acq_ in enumerate(acq_series):
