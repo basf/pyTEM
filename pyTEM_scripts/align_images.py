@@ -12,13 +12,13 @@ from pyTEM_scripts.lib.GetInOutFile import GetInOutFile
 
 def align_images():
     """
-    Read in some images (possibly from a stack, possibly from a bunch of single image files), align the images, and save
-     the results back to file.
+    Read in some images (possibly from a stack, possibly from a bunch of single image files), align the images, and
+     save the results back to file.
 
     Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase correlation
      algorithm based on the following paper:
         Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
-        Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+            Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
 
     :return: None.
     """
