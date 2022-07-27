@@ -361,6 +361,9 @@ class Acquisition:
         """
         Save the acquisition to file.
 
+        :param out_file: str or path:
+            Out file path (the file path where you want to save the acquisiton), optionally including the file
+             extension.
         :param extension: str (optional; default is None):
             The extension of the file that defines the file format.
             Allowable string values are: {'hspy', 'hdf5', 'rpl', 'msa', 'unf', 'blo', 'emd', common image
@@ -369,8 +372,6 @@ class Acquisition:
                 1. the filename
                 2. Signal.tmp_parameters.extension
                 3. 'hspy' (the default extension)
-        :param out_file: str or path:
-            Out file path (where you want to save the file), optionally including the file extension.
 
         :return: None.
         """
@@ -383,7 +384,7 @@ class Acquisition:
             self.save_as_mrc(out_file)
 
         else:
-            # Hope for the best
+            # Hope for the best...
             im = hs.signals.Signal2D(self.get_image())
             im.save(filename=out_file, overwrite=True)
             warnings.warn("Acquisition metadata not saved in " + str(out_file))
