@@ -295,13 +295,80 @@ def get_automated_alignment_message() -> Tuple[str, str]:
     """
     :return: str: A message explaining the automated image alignment functionality.
     """
-    title = "If you have any questions, please don’t hesitate to ask one of our crew members."
+    title = "Thank you for choosing TEM-Air, we wish you all an enjoyable flight."
     message = "This MicroED script supports automated image alignment functionality. The required image shifts will " \
               "be computed from a preparatory tilt sequence using the hyperspy Python library (phase correlation) " \
               "and then applied during the main acquisition sequence. While automated image alignment can be useful, " \
               "it increases sample exposure time (although usually not significantly)." \
               "\n\nTo continue without image alignment functionality, please uncheck the checkbox below."
     return title, message
+
+
+def display_insert_camera_message(microscope: Union[Interface, None], camera_name: str) -> None:
+    """
+    Display the start message.
+
+    To improve the changes of the user actual inserting the aperture and beam-stop, check boxes are provided, both of
+     which need to be checked before the continue button becomes active.
+
+    :param camera_name: str:
+        The name of the camera the user requested.
+    :param microscope: pyTEM Interface (or None):
+           A microscope interface, needed to return the microscope to a safe state if the user exits the script
+            through the quit button on the message box.
+    """
+    title = "Take a moment to locate the exit nearest you keeping in mind that the closest usable exit may be " \
+            "located behind you."
+    upper_message = "Please ensure the " + camera_name + " camera is inserted."
+    lower_message = "Once the camera is inserted, please click the continue button."
+
+    root = tk.Tk()
+    style = ttk.Style()
+
+    root.title(title)
+    add_basf_icon_to_tkinter_window(root)
+
+    window_width = 650
+
+    # Display the first part of the message
+    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
+
+    def check_if_camera_is_inserted() -> None:
+        """
+        Check to see, if the camera inserted check box has been checked then we can go ahead and enable the continue
+         button.
+        """
+        if camera_inserted.get():
+            continue_button.config(state=tk.NORMAL)
+        else:
+            continue_button.config(state=tk.DISABLED)
+
+    # Create a checkbutton for aperture inserted.
+    camera_inserted = tk.BooleanVar()
+    camera_inserted.set(False)
+    camera_inserted_checkbutton = ttk.Checkbutton(root, text=camera_name + " Inserted", variable=camera_inserted,
+                                                  command=check_if_camera_is_inserted, style="big.TCheckbutton")
+    camera_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=5)
+
+    # Display the other part of the message
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    lower_message.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
+
+    # Create continue and exit buttons
+    continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, row=4, sticky="e", padx=5, pady=5)
+    check_if_camera_is_inserted()  # Disable the continue button until the user has confirmed the camera is inserted.
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=1, row=4, sticky="w", padx=5, pady=5)
+
+    style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+
+    root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+
+    root.mainloop()
 
 
 def display_start_message(microscope: Union[Interface, None]) -> None:
@@ -512,11 +579,13 @@ if __name__ == "__main__":
 
     # have_user_center_particle(microscope=None, dummy_particle=True)
 
-    have_user_center_particle(microscope=None, dummy_particle=False)
+    # have_user_center_particle(microscope=None, dummy_particle=False)
 
     # display_eucentric_height_message(microscope=None)
 
     # display_insert_and_align_sad_aperture_message(microscope=None)
+
+    display_insert_camera_message(microscope=None, camera_name="BM-Ceta")
 
     # display_start_message(microscope=None)
 

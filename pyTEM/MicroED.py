@@ -17,7 +17,7 @@ from pyTEM.lib.micro_ed.exit_script import exit_script
 from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
     display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
     display_good_bye_message, display_initialization_message, have_user_center_particle, \
-    display_second_condenser_message
+    display_second_condenser_message, display_insert_camera_message
 from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
 from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
     shift_correction_info
@@ -98,24 +98,24 @@ class MicroED:
                 self.microscope.set_mode("TEM")
             if self.microscope.get_projection_mode() != "imaging":
                 self.microscope.set_projection_mode("imaging")
-            self.microscope.set_image_shift(x=0, y=0)  # Zero the image shift
-            self.microscope.set_stage_position(alpha=0, speed=0.25)  # Zero the stage tilt
+            self.microscope.set_image_shift(x=0, y=0)  # Zero the image shift.
+            self.microscope.set_stage_position(alpha=0, speed=0.25)  # Zero the stage tilt.
             self.microscope.normalize()
             self.microscope.unblank_beam()
 
             # Have the user optimize the intensity using the second-condenser aperture and lens.
             display_second_condenser_message(microscope=self.microscope)
 
-            # Have the user center on a dummy particle with which we can calibrate the eucentric height and aperture
+            # Have the user center on a dummy particle with which we can calibrate the eucentric height and aperture.
             have_user_center_particle(microscope=self.microscope, dummy_particle=True)
 
-            # Have the user manually set eucentric height  # TODO: Automate eucentric height calibration
+            # Have the user manually set eucentric height.  # TODO: Automate eucentric height calibration
             display_eucentric_height_message(microscope=self.microscope)
 
-            # Have the user manually insert, align, and remove the SAD aperture  # TODO: Automate SAD aperture controls
+            # Have the user manually insert, align, and remove the SAD aperture.  # TODO: Automate SAD aperture controls
             display_insert_and_align_sad_aperture_message(microscope=self.microscope)
 
-            # Have the user center the particle
+            # Have the user center the particle.
             have_user_center_particle(microscope=self.microscope)
 
             # We are now centered on the particle and need to keep the beam blank whenever possible.
@@ -124,13 +124,16 @@ class MicroED:
             # Get tilt range info
             alpha_arr = get_tilt_range(microscope=self.microscope)
 
-            # The user is done making their adjustments, we can now retract the screen
+            # The user is done making their adjustments, we can now retract the screen.
             self.microscope.retract_screen()
 
-            # Get the required acquisition parameters
+            # Get the required acquisition parameters.
             camera_name, integration_time, sampling, downsample = get_acquisition_parameters(microscope=self.microscope)
 
-            # Get the out path (where in the file system should we save the results?)
+            # Confirm that the requested camera is actually inserted.
+            display_insert_camera_message(microscope=self.microscope, camera_name=camera_name)
+
+            # Get the out path. (Where in the file system should we save the results?)
             out_file = get_out_file(microscope=self.microscope)
 
             # Fnd out if the user wants to use the automated image alignment functionality, and if so which angles they
@@ -160,13 +163,13 @@ class MicroED:
                                                     verbose=verbose)
 
             else:
-                # We will proceed without compensatory image shifts, just make shifts all zero
+                # We will proceed without compensatory image shifts, just make shifts all zero.
                 shifts = np.full(shape=len(alpha_arr) - 1, dtype=(float, 2), fill_value=0.0)
 
             # Confirm they are happy, and have them insert the aperture/beam stop.
             display_start_message(microscope=self.microscope)
 
-            # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode
+            # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode.
 
             # We have everything we need, go ahead and actually perform the tilt series.
             acq_stack = self.microscope.acquisition_series(num=len(alpha_arr) - 1, camera_name=camera_name,
