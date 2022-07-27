@@ -93,18 +93,17 @@ class Acquisition:
         __metadata:   dictionary:      All the image metadata (describes and gives information about the __image).
     """
 
-    def __init__(self, *args: Union[str, pathlib.Path, Any]):
+    def __init__(self, source: Union[str, pathlib.Path, Any]):
         """
-        :param args[0]:
-            Either:
-                A string or path object, in which case the Acquisition() object will be initialized from file.
-                A Thermo Fisher Acquisition object: in which case we will initialize from that.
+        :param source: From what to initialize the Acquisition.
+            Supported sources include:
+                - A string or path object: In which case the Acquisition() object will be initialized from file.
+                - A Thermo Fisher Acquisition object: In which case we will initialize from that.
+                - A 2D array: In which case we will initialize from that (metadata will be initialized to an empty
+                    dictionary).
+            If omitted or None, then we return a dummy Acquisition object with a random 16-bit image (good for testing).
         """
-        if len(args) <= 0 or len(args) >= 2:
-            # We were expecting only one input argument.
-            raise TypeError("Acquisition() expected 1 argument, but got " + str(len(args)))
-
-        if args[0] is None:
+        if source is None:
             # Just return a random image, this is helpful for testing.
             self.__image = np.random.random((1024, 1024))  # A random 1k image.
             self.__image = (65535 * self.__image).astype(np.int16)  # Covert to 16-bit
@@ -114,7 +113,7 @@ class Acquisition:
             return
 
         try:
-            if isinstance(args[0], str) or isinstance(args[0], pathlib.Path):
+            if isinstance(source, str) or isinstance(source, pathlib.Path):
                 # Try to load from file
 
                 # First, check to see if it is an MRC file.
@@ -122,15 +121,15 @@ class Acquisition:
                     # Because mrcfile.validate() prints a lot of stuff that is not helpful, temporarily redirect stdout.
                     devnull = open(os.devnull, 'w')
                     with RedirectStdStreams(stdout=devnull, stderr=devnull):
-                        mrc_file = mrcfile.validate(args[0])
+                        mrc_file = mrcfile.validate(source)
                 except BaseException as e:
                     mrc_file = False
-                    warnings.warn("Error ignored in Acquisition() while trying to check if the input file was an "
-                                  "MRC file: " + str(e))
+                    warnings.warn("Error ignored in Acquisition() while trying to check if the source was an MRC file: "
+                                  + str(e))
 
                 if mrc_file:
                     # Then it is an MRC file, open with mrcfile
-                    with mrcfile.open(args[0]) as mrc:
+                    with mrcfile.open(source) as mrc:
                         self.__image = mrc.data
                         # TODO: Figure out how to read in metadata from MRC file header
                         warnings.warn("We haven't learned how to read MRC file headers yet, so the returned "
@@ -139,7 +138,7 @@ class Acquisition:
 
                 else:
                     # Let's see if it is something hyperspy can load
-                    image = hs.load(args[0])
+                    image = hs.load(source)
                     self.__image = image.data
 
                     try:
@@ -149,7 +148,7 @@ class Acquisition:
                         self.__metadata.update(hs_metadata_to_dict(image.original_metadata))
                     except BaseException as e:
                         self.__metadata = {}
-                        warnings.warn("Unable to extract metadata from in file: " + str(e))
+                        warnings.warn("Unable to extract metadata from source: " + str(e))
 
                     try:
                         # If the file was generated from an Acquisition object, then a bunch of metadata will be in
@@ -159,25 +158,25 @@ class Acquisition:
                     except BaseException as e:
                         warnings.warn("Unable to evaluate the metadata in the ImageDescription field: " + str(e))
 
-            elif isinstance(args[0], np.ndarray):
+            elif isinstance(source, np.ndarray):
                 # Initialize from array.
-                self.__image = args[0]
+                self.__image = source
                 self.__metadata = {}
 
             else:
                 # Try to load from a Thermo Fisher Acquisition object.
                 # Notice that we load as a 16-bit image.
                 # Notice that we will to flip and then rotate the image to match what is shown on the FluCam.
-                self.__image = np.rot90(np.flip(np.asarray(args[0].AsSafeArray, dtype=np.int16), axis=1))
-                self.__metadata = _build_metadata_dict_from_tm(tm_acquisition_object=args[0])
+                self.__image = np.rot90(np.flip(np.asarray(source.AsSafeArray, dtype=np.int16), axis=1))
+                self.__metadata = _build_metadata_dict_from_tm(tm_acquisition_object=source)
 
         except BaseException as e:
-            warnings.warn("The Acquisition() constructor received an invalid input.")
+            warnings.warn("The Acquisition() constructor received an invalid source.")
             raise e
 
         if self.__image.ndim != 2:
-            raise Exception("The Acquisition class is only meant for single 2D images. For image stacks, please use "
-                            "the AcquisitionSeries class.")
+            raise Exception("The Acquisition class is only meant for single 2-dimensional images, however the source "
+                            "data is not 2-dimensional. For image stacks, please use the AcquisitionSeries class.")
 
     def _set_image(self, image: ArrayLike) -> None:
         """
