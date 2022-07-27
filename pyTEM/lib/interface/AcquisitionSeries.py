@@ -400,6 +400,37 @@ class AcquisitionSeries:
             mrc.set_extended_header(get_stock_mrc_extended_header())
         warnings.warn("Acquisition metadata not yet stored in MRC images, for now we are just using a stock header!")
 
+    def save_to_file(self, out_file: Union[str, pathlib.Path], extension: str = None) -> None:
+        """
+        Save the acquisition series to file.
+
+        :param out_file: str or path:
+            Out file path (the file path where you want to save the series), optionally including the file extension.
+        :param extension: str (optional; default is None):
+            The extension of the file that defines the file format.
+            Allowable string values are: {'hspy', 'hdf5', 'rpl', 'msa', 'unf', 'blo', 'emd', common image
+             extensions e.g. 'tiff', 'png', 'jpeg', etc., and 'mrc'}. If omitted, the extension is determined from the
+              following list in this order:
+                1. the filename
+                2. Signal.tmp_parameters.extension
+                3. 'hspy' (the default extension)
+
+        :return: None.
+        """
+        out_file = str(out_file)  # Encase we received a path.
+
+        if out_file[-4:] == ".tif" or extension == 'tif' or out_file[-5:] == ".tiff" or extension == 'tiff':
+            self.save_as_tif(out_file)
+
+        elif out_file[-4:] == ".mrc" or extension == 'mrc':
+            self.save_as_mrc(out_file)
+
+        else:
+            # Hope for the best...
+            im = hs.signals.Signal2D(self.get_image_stack())
+            im.save(filename=out_file, overwrite=True)
+            warnings.warn("Acquisition series metadata not saved in " + str(out_file))
+
     def __iter__(self) -> AcquisitionSeriesIterator:
         return AcquisitionSeriesIterator(self)
 
