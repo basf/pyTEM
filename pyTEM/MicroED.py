@@ -16,7 +16,8 @@ from pyTEM.Interface import Interface
 from pyTEM.lib.micro_ed.exit_script import exit_script
 from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
     display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
-    display_good_bye_message, display_initialization_message, have_user_center_particle
+    display_good_bye_message, display_initialization_message, have_user_center_particle, \
+    display_second_condenser_message
 from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
 from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
     shift_correction_info
@@ -101,6 +102,9 @@ class MicroED:
             self.microscope.set_stage_position(alpha=0, speed=0.25)  # Zero the stage tilt
             self.microscope.normalize()
             self.microscope.unblank_beam()
+
+            # Have the user optimize the intensity using the second-condenser aperture and lens.
+            display_second_condenser_message(microscope=self.microscope)
 
             # Have the user center on a dummy particle with which we can calibrate the eucentric height and aperture
             have_user_center_particle(microscope=self.microscope, dummy_particle=True)
