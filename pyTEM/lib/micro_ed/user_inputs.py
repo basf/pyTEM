@@ -20,6 +20,7 @@ from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_
 from pyTEM.lib.micro_ed.exit_script import exit_script
 from pyTEM.lib.micro_ed.messages import get_automated_alignment_message
 from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
+from pyTEM.lib.micro_ed.powspace import powspace
 
 
 class GetTiltRange:
@@ -210,7 +211,7 @@ class GetTiltRange:
 
         # Create test, continue, and exit buttons
         test_input_button = ttk.Button(root, text="Test Input", style="big.TButton",
-                                         command=disable_buttons_and_update_alpha)
+                                       command=disable_buttons_and_update_alpha)
         test_input_button.grid(column=0, row=3, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
         continue_button.grid(column=1, row=3, padx=5, pady=5)
@@ -373,7 +374,7 @@ class GetTiltRange:
 
         # Create test, continue, and exit buttons
         test_input_button = ttk.Button(root, text="Test Input", style="big.TButton",
-                                         command=disable_buttons_and_update_alpha)
+                                       command=disable_buttons_and_update_alpha)
         test_input_button.grid(column=0, row=4, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
         continue_button.grid(column=1, row=4, padx=5, pady=5)
@@ -716,6 +717,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     """
     window_width = 650
     label_font = (None, 13)
+    spacing = "exponential"
 
     root = tk.Tk()
     style = ttk.Style()
@@ -764,7 +766,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
             calibration_samples_label.config(text="")
 
         else:
-            samples_ = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing="linear",
+            samples_ = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing=spacing,
                                           num_correctional_images=num_correctional_images_)
             total_exposure_time_required_ = num_correctional_images_ * exposure_time
 
@@ -777,7 +779,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     # Provide a text box, in which the user can entry the number of correctional images to take.
     num_correctional_images_string_var = tk.StringVar()
     num_correctional_images_entry_box = ttk.Entry(root, textvariable=num_correctional_images_string_var, width=5)
-    default_num_correctional_images = 10
+    default_num_correctional_images = 11
     num_correctional_images_entry_box.insert(0, str(default_num_correctional_images))  # Insert default value.
     num_correctional_images_entry_box.grid(column=1, sticky='w', row=2, pady=5)
     num_correctional_images_string_var.trace('w', update_total_exposure_label)
@@ -789,7 +791,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     info_label.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
 
     num_correctional_images = int(num_correctional_images_string_var.get())
-    samples = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing="linear",
+    samples = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing=spacing,
                                  num_correctional_images=num_correctional_images)
     total_exposure_time_required = num_correctional_images * exposure_time
 
@@ -843,7 +845,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
         else:
             # Proceed with automated image alignment functionality with the number of calibration images request by
             #  the user.
-            samples = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing="linear",
+            samples = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing="exponential",
                                          num_correctional_images=int(num_correctional_images_string_var.get()))
             return True, samples
 
@@ -853,7 +855,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
 
 
 def compute_sample_arr(tilt_start: float, tilt_stop: float, num_correctional_images: int,
-                       spacing: str = 'linear') -> np.array:
+                       spacing: str = 'linear', verbose: bool = False) -> np.array:
     """
     Compute and return the array of tilt angles at which we will perform calibration images (samples), along with the
      largest step between any two values in samples.
@@ -867,8 +869,11 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, num_correctional_ima
     :param spacing: string (optional; default is 'linear'):
         The spacing method you would like to use. One of:
             - 'linear': Evenly spaced values.
-            - 'inverse_quadratic': Inverse quadratically spaced values. This might be a more appropriate approximation
-                for tilting experiments where you experience drift at higher tilt angles.
+            - 'exponential': Exponentially spaced values. To provide for tilting experiments where you experience more
+                drift at higher tilt angles, this returns exponentially spaced values that are spaced increasingly
+                closer together the farther you get from 0.
+    :param verbose: bool:
+        Print out extra information. Useful for debugging.
 
     :return:
         samples: np.array:
@@ -877,15 +882,65 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, num_correctional_ima
     if num_correctional_images < 3:
         raise Exception("Error: compute_sample_arr() requires at least 3 calibration angles.")
 
-    # Just to be sure
+    # Just to be sure...
     spacing = str(spacing).lower()
     num_correctional_images = int(num_correctional_images)
 
     if spacing == "linear":
         samples = np.linspace(start=tilt_start, stop=tilt_stop, num=num_correctional_images, endpoint=True)
 
-    elif spacing == "inverse_quadratic":
-        raise NotImplementedError
+    elif spacing == "exponential":
+        # This implementation uses powspace() with an exponent <1 to build an array where the values are spaced
+        #  increasingly closer together the farther you get from 0.
+        power = 0.7
+        # Because powspace() only allows positive start/stop values, we have to break our interval across 0 and compute
+        #  the positive and negative samples separately.
+
+        # Because each sign will have a 0. Notice this means that num >=4 (allowing at least 2 values for the negative
+        #  samples and two values for the positive samples)
+        num = num_correctional_images + 1
+
+        if tilt_start < 0:
+            # Then negative samples go from 0 -> abs(start), and positive from 0 -> stop.
+            num_negative_samples = int(abs(tilt_start) / (tilt_stop - tilt_start) * num)
+            num_positive_samples = num - num_negative_samples
+
+            # Each sign range requires at least 2 samples (0 and the end value).
+            if num_negative_samples < 2:
+                num_negative_samples = 2
+                num_positive_samples = num - num_negative_samples
+            if num_positive_samples < 2:
+                num_positive_samples = 2
+                num_negative_samples = num - num_positive_samples
+
+            negative_samples = -1 * powspace(start=0, stop=abs(tilt_start), power=power, num=num_negative_samples)
+            positive_samples = powspace(start=0, stop=tilt_stop, power=power, num=num_positive_samples)
+
+        else:
+            # Then negative samples go from 0 -> abs(stop), and positive from 0 -> start
+            num_positive_samples = int(tilt_start / (tilt_start - tilt_stop) * num)
+            num_negative_samples = num - num_positive_samples
+
+            # Again, each sign range requires at least 2 samples (0 and the end value).
+            if num_negative_samples < 2:
+                num_negative_samples = 2
+                num_positive_samples = num - num_negative_samples
+            if num_positive_samples < 2:
+                num_positive_samples = 2
+                num_negative_samples = num - num_positive_samples
+
+            negative_samples = -1 * powspace(start=0, stop=abs(tilt_stop), power=power, num=num_negative_samples)
+            positive_samples = powspace(start=0, stop=tilt_start, power=power, num=num_positive_samples)
+
+        samples = np.round(np.concatenate((negative_samples, positive_samples)), 5)
+        samples = np.unique(np.sort(samples))  # Removes the extra zero(s).
+
+        if verbose:
+            print("\nNumber of negative samples: " + str(num_negative_samples))
+            print("Number of positive samples: " + str(num_positive_samples))
+
+            print("\nNegative samples: " + str(negative_samples))
+            print("Positive samples: " + str(positive_samples))
 
     else:
         raise Exception("Error: spacing strategy (" + spacing + ") not recognized.")
@@ -931,7 +986,11 @@ if __name__ == "__main__":
     # print("File extension: " + str(file_extension))
 
     """ Test getting shift correction samples """
-    use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=-30, tilt_stop=30,
+    use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=35, tilt_stop=-5,
                                                              exposure_time=0.25)
     print("Use shift: " + str(use_shift_corrections))
     print("Samples: " + str(samples__))
+
+    # samples__ = compute_sample_arr(tilt_start=45, tilt_stop=-30, num_correctional_images=12,
+    #                                spacing='exponential', verbose=True)
+    # print("\n" + str(samples__))
