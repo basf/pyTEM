@@ -48,7 +48,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                            num: int,
                            camera_name: str,
                            exposure_time: float = 1,
-                           sampling: str = None,
+                           sampling: str = '1k',
                            readout_area: int = 0,
                            blanker_optimization: bool = True,
                            tilt_bounds: Union[ArrayLike, None] = None,
@@ -70,7 +70,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         :param exposure_time: float (optional; default is 1 second):
             Exposure time, in seconds. Please expose responsibly.
             About 0.015 seconds is the minimum exposure time required to get a clear image.
-        :param sampling: str:
+        :param sampling: str (optional; default is '1k'):
             One of:
                 - '4k' for 4k images (4096 x 4096; sampling=1)
                 - '2k' for 2k images (2048 x 2048; sampling=2)
@@ -313,7 +313,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
     def acquisition(self,
                     camera_name: str,
                     exposure_time: float = 1,
-                    sampling: str = None,
+                    sampling: str = '1k',
                     readout_area: int = 0,
                     blanker_optimization: bool = True,
                     tilt_destination: float = None,
@@ -323,7 +323,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         Perform (and return the results of) a single acquisition.
 
         If they are not already, the column valve will be opened and the screen retracted. They will be returned to
-         the position in which the were found upon completion of the series.
+         the position in which they were found upon completion of the acquisition.
 
         :param camera_name: str:
             The name of the camera you want use.
@@ -331,7 +331,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         :param exposure_time: float (optional; default is 1 second):
             Exposure time, in seconds. Please expose responsibly.
             About 0.015 seconds is the minimum exposure time required to get a clear image.
-        :param sampling: str:
+        :param sampling: str (optional; default is '1k'):
             One of:
             - '4k' for 4k images (4096 x 4096; sampling=1)
             - '2k' for 2k images (2048 x 2048; sampling=2)
