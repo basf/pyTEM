@@ -137,10 +137,10 @@ class MicroED:
             out_file = get_out_file(microscope=self.microscope)
 
             # Fnd out if the user wants to use the automated image alignment functionality, and if so which angles they
-            #  would like to sample and which interpolation strategy they would like to use to obtain the rest.
-            use_shift_corrections, samples, interpolation_scope = \
-                shift_correction_info(microscope=self.microscope, tilt_start=alpha_arr[0], tilt_stop=alpha_arr[-1],
-                                      exposure_time=shift_calibration_exposure_time)
+            #  would like to sample.
+            use_shift_corrections, samples = shift_correction_info(microscope=self.microscope,
+                                                                   tilt_start=alpha_arr[0], tilt_stop=alpha_arr[-1],
+                                                                   exposure_time=shift_calibration_exposure_time)
             if use_shift_corrections:
                 # Compute the image shifts required to keep the currently centered section of the specimen centered at
                 #  all alpha tilt angles. While alpha_arr is a complete array of alpha start-stop values, we need to
@@ -159,8 +159,7 @@ class MicroED:
                 else:
                     # Go on and interpolate the rest.
                     shifts = build_full_shift_array(alphas=alphas, samples=samples, shifts_at_samples=shifts_at_samples,
-                                                    kind="linear", interpolation_scope=interpolation_scope,
-                                                    verbose=verbose)
+                                                    kind="linear", interpolation_scope="local", verbose=verbose)
 
             else:
                 # We will proceed without compensatory image shifts, just make shifts all zero.
