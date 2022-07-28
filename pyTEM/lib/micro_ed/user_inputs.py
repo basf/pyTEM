@@ -691,9 +691,9 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     The MicroED script supports automated image alignment using the hyperspy library (phase correlation image shift
      detection functionality). However, it is possible the user may want to proceed without enabling this functionality.
 
-     Find out if the user would like to use automated shift correction, and if so, how many degrees they would like
-      between correctional images. The more correctional images taken, the more accurate the image shift correction
-      will be, however, taking these calibration images will increase the sample exposure time.
+     Find out if the user would like to use automated shift correction, and if so, how many calibration images they
+      would like to take. The more correctional images taken, the more accurate the image shift correction will be,
+      however, taking these calibration images will increase the sample exposure time.
 
     :param microscope: pyTEM Interface (or None):
         The microscope interface, needed to return the microscope to a safe state if the user exits the script
@@ -725,14 +725,14 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     root.title(title)
     add_basf_icon_to_tkinter_window(root)
     message_label = ttk.Label(root, text=message, wraplength=window_width, font=label_font, justify='center')
-    message_label.grid(column=0, columnspan=3, row=0, sticky='w', padx=5, pady=5)
+    message_label.grid(column=0, columnspan=2, row=0, sticky='w', padx=5, pady=5)
 
     # Deactivate all the other entry widgets whenever the user unchecks the use_automated_alignment button.
     def deactivate_other_entry_widgets():
         if use_automated_alignment.get() == 1:
-            correction_shift_interval_entry_box.config(state=tk.NORMAL)
+            num_correctional_images_entry_box.config(state=tk.NORMAL)
         else:
-            correction_shift_interval_entry_box.config(state=tk.DISABLED)
+            num_correctional_images_entry_box.config(state=tk.DISABLED)
 
     # Create a checkbutton for whether to proceed with automated image alignment.
     use_automated_alignment = tk.BooleanVar()
@@ -740,77 +740,88 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     use_automated_alignment_button = ttk.Checkbutton(root, text="Proceed with Automated Image Alignment",
                                                      variable=use_automated_alignment, style="big.TCheckbutton",
                                                      command=deactivate_other_entry_widgets)
-    use_automated_alignment_button.grid(column=0, columnspan=3, row=1, padx=5, pady=5)
+    use_automated_alignment_button.grid(column=0, columnspan=2, row=1, padx=5, pady=5)
 
-    correction_shift_interval_label = ttk.Label(root, text="Perform a compensatory image shift every ", font=label_font)
-    correction_shift_interval_label.grid(column=0, row=2, sticky="e", pady=5)
+    num_correctional_images_label = ttk.Label(root, text="Number of Calibration Images to Take: ", font=label_font)
+    num_correctional_images_label.grid(column=0, row=2, sticky="e", pady=5)
 
-    # Show the user how much exposure will result from the current shift correction interval
-    def update_total_exposure_label():
+    # Show the user how much exposure will result from the current number of correctional images.
+    def update_total_exposure_label(*args):
         try:
-            correction_shift_interval_ = float(correction_shift_interval.get())
+            num_correctional_images_ = int(num_correctional_images_string_var.get())
         except ValueError:
-            correction_shift_interval_ = 0
-        samples_, step_ = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop,
-                                             correction_shift_interval=correction_shift_interval_)
+            num_correctional_images_ = 0
 
-        if samples_ is None:
-            # We probably just cleared the entry box
-            txt_ = "We cannot have an correctional shift interval <= 0 deg, please enter a positive correctional " \
-                   "shift interval in the text box above."
+        exposure_time_label1.config(text="Total exposure time required for automated image alignment with "
+                                    + str(num_correctional_images_) + " correctional images: ")
+
+        if num_correctional_images_ < 3:
+            # This conditional also fires when we clear the entry box.
+            exposure_time_label2.config(text="We cannot perform automatic image alignment with any fewer than 3 "
+                                             "correctional images.")
+            exposure_time_label2.configure(foreground="red")
+
+            calibration_samples_label.config(text="")
+
         else:
-            num_images_required_ = len(samples_)
-            total_exposure_time_required_ = num_images_required_ * exposure_time
-            txt_ = "Total exposure time required for automated image alignment with a correctional shift interval " \
-                   "of " + str(round(step_, 2)) + " deg: " + str(round(total_exposure_time_required_, 2)) + \
-                   " seconds " + "\nThat is, calibration images taken at the following tilt angles: " + \
-                   "\n" + str(np.round(samples_, 2)) + " (" + str(num_images_required_) + " calibration images)"
-        correction_shift_interval_label.config(text=txt_)
+            samples_ = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing="linear",
+                                          num_correctional_images=num_correctional_images_)
+            total_exposure_time_required_ = num_correctional_images_ * exposure_time
 
-    # Provide a text box, in which the user can entry the correction shift interval
-    correction_shift_interval = tk.StringVar()
-    correction_shift_interval_entry_box = ttk.Entry(root, textvariable=correction_shift_interval, width=5)
-    default_correction_shift_interval = 5
-    correction_shift_interval_entry_box.insert(0, str(default_correction_shift_interval))  # Default value
-    correction_shift_interval_entry_box.grid(column=1, row=2, pady=5)
-    correction_shift_interval.trace('w', update_total_exposure_label)
+            exposure_time_label2.config(text=str(round(total_exposure_time_required_, 2)) + " seconds")
+            exposure_time_label2.configure(foreground="black")
 
-    units_label = ttk.Label(root, text="degrees.", font=label_font)
-    units_label.grid(column=2, row=2, sticky="w", pady=5)
+            calibration_samples_label.config(text="Calibration Images will be taken at the following tilt "
+                                                  "angles:\n" + str(np.round(samples_, 2)))
 
-    tilt_range_label = ttk.Label(root, text="For reference, the selected tilt range is \u03B1="
-                                            + str(round(tilt_start, 2)) + " to " + str(round(tilt_stop, 2))
-                                            + " degrees.", font=label_font, justify='center', wraplength=window_width)
-    tilt_range_label.grid(column=0, row=3, columnspan=3, padx=5, pady=5)
+    # Provide a text box, in which the user can entry the number of correctional images to take.
+    num_correctional_images_string_var = tk.StringVar()
+    num_correctional_images_entry_box = ttk.Entry(root, textvariable=num_correctional_images_string_var, width=5)
+    default_num_correctional_images = 10
+    num_correctional_images_entry_box.insert(0, str(default_num_correctional_images))  # Insert default value.
+    num_correctional_images_entry_box.grid(column=1, sticky='w', row=2, pady=5)
+    num_correctional_images_string_var.trace('w', update_total_exposure_label)
 
-    samples, step = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop,
-                                       correction_shift_interval=float(correction_shift_interval.get()))
-    num_images_required = len(samples)
-    total_exposure_time_required = num_images_required * exposure_time
+    info_label = ttk.Label(root, font=label_font, wraplength=window_width, justify='center',
+                           text="The more correctional images taken, the better the results but also "
+                                "the greater the sample dose. For reference, the selected tilt range is \u03B1="
+                                + str(round(tilt_start, 2)) + " to " + str(round(tilt_stop, 2)) + " degrees.")
+    info_label.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
 
-    txt = "Total exposure time required for automated image alignment with a correctional shift interval of " + \
-          str(round(step, 2)) + " deg: " + str(round(total_exposure_time_required, 2)) + " seconds " + \
-          "\nThat is, calibration images will be taken at the following tilt angles: " + \
-          "\n" + str(np.round(samples, decimals=2)) + " (" + str(num_images_required) + " calibration images)"
-    correction_shift_interval_label = ttk.Label(root, text=txt, font=label_font, wraplength=window_width,
-                                                justify='center')
-    correction_shift_interval_label.grid(column=0, row=4, columnspan=3, padx=5, pady=5)
+    num_correctional_images = int(num_correctional_images_string_var.get())
+    samples = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing="linear",
+                                 num_correctional_images=num_correctional_images)
+    total_exposure_time_required = num_correctional_images * exposure_time
+
+    exposure_time_label1 = ttk.Label(root, text="Total exposure time required for automated image alignment with "
+                                                + str(num_correctional_images) + " correctional images: ",
+                                     font=label_font, justify='center', wraplength=window_width)
+    exposure_time_label1.grid(column=0, columnspan=2, row=4, padx=5, pady=(5, 0))
+
+    exposure_time_label2 = ttk.Label(root, text=str(round(total_exposure_time_required, 2)) + " seconds",
+                                     font=label_font + ('bold',), justify='center', wraplength=window_width)
+    exposure_time_label2.grid(column=0, columnspan=2, row=5, padx=5, pady=(0, 5))
+
+    calibration_samples_label = ttk.Label(root, text="Calibration Images will be taken at the following tilt "
+                                                     "angles:\n" + str(np.round(samples, 2)),
+                                          font=label_font, wraplength=window_width, justify='center')
+    calibration_samples_label.grid(column=0, columnspan=2, row=6, padx=5, pady=5)
 
     # Provide a label explaining that we will linear interpolate the required compensatory image shifts between
     #  calibration images.
-    interpolation_explanation_label = ttk.Label(root, text="All additional compensatory image shifts will be linearly "
+    interpolation_explanation_label = ttk.Label(root, text="Any additional compensatory image shifts will be linearly "
                                                            "interpolated locally from the bracketing samples.",
                                                 font=label_font, wraplength=window_width, justify='center')
-    interpolation_explanation_label.grid(column=0, columnspan=3, row=5, pady=5)
+    interpolation_explanation_label.grid(column=0, columnspan=2, row=7, padx=5, pady=5)
 
     # Create a 'Continue' button that the user can click to proceed with automated image alignment
     continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=0, columnspan=3, row=8, padx=5, pady=5)
+    continue_button.grid(column=0, columnspan=2, row=8, padx=5, pady=5)
 
     # Create an 'exit' button that the user can use to exit the script.
     exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                              style="big.TButton")
-    exit_button.grid(column=0, columnspan=3, row=9, padx=5, pady=5)
+    exit_button.grid(column=0, columnspan=2, row=9, padx=5, pady=5)
 
     style.configure('big.TButton', font=(None, 10), foreground="blue4")
     style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
@@ -822,19 +833,18 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
 
     if use_automated_alignment.get():
         # The user has requested we proceed with automated image alignment functionality
-        samples, _ = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop,
-                                        correction_shift_interval=float(correction_shift_interval.get()))
-
-        if samples is None:
-            # Then the user requested a correction shift interval of 0 deg, which is not possible because it would
-            #  require an infinite number of calibration images, so we will just proceed without automated image
+        if int(num_correctional_images_string_var.get()) < 3:
+            # Then the user requested too few correctional images, so we will just proceed without automated image
             #  alignment functionality
-            warnings.warn("Cannot have a correctional shift interval <= 0 deg, proceeding with automated image shift "
-                          "functionality.")
+            warnings.warn("Cannot perform automated image alignment with less than 3 samples, proceeding without "
+                          "automated image shift functionality.")
             return False, None
+
         else:
-            # Proceed with automated image alignment functionality with the correction shift interval and
-            #  interpolation scope chosen by the user.
+            # Proceed with automated image alignment functionality with the number of calibration images request by
+            #  the user.
+            samples = compute_sample_arr(tilt_start=tilt_start, tilt_stop=tilt_stop, spacing="linear",
+                                         num_correctional_images=int(num_correctional_images_string_var.get()))
             return True, samples
 
     else:
@@ -842,7 +852,8 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
         return False, None
 
 
-def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_interval: float) -> Tuple[np.array, float]:
+def compute_sample_arr(tilt_start: float, tilt_stop: float, num_correctional_images: int,
+                       spacing: str = 'linear') -> np.array:
     """
     Compute and return the array of tilt angles at which we will perform calibration images (samples), along with the
      largest step between any two values in samples.
@@ -851,30 +862,35 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, correction_shift_int
         The alpha tilt angle at which to start the tilt series (where we start obtaining correctional shifts).
     :param tilt_stop: float:
         The alpha tilt angle at which to stop the tilt series (where we stop obtaining automatic shifts).
-    :param correction_shift_interval: float:
-        The maximum allowed interval, in degrees, between adjacent image shift calibration images.
+    :param num_correctional_images: int:
+        The number of calibration images you would like to take (number of calibration angles you would like to use).
+    :param spacing: string (optional; default is 'linear'):
+        The spacing method you would like to use. One of:
+            - 'linear': Evenly spaced values.
+            - 'inverse_quadratic': Inverse quadratically spaced values. This might be a more appropriate approximation
+                for tilting experiments where you experience drift at higher tilt angles.
 
     :return:
-        samples: np.array: The angles at which we need to take calibration images.
-        step: float: The
-        If the provided correction_shift_interval is <= 0, then we return (None, np.nan) because it would take infinite
-         calibration images to achieve such a correction-shift interval.
+        samples: np.array:
+            The angles at which we need to take calibration images.
     """
-    if correction_shift_interval <= 0:
-        return None, np.nan
+    if num_correctional_images < 3:
+        raise Exception("Error: compute_sample_arr() requires at least 3 calibration angles.")
 
-    total_tilt_range = abs(tilt_stop - tilt_start)
-    num_images_required = math.ceil(total_tilt_range / correction_shift_interval) + 1
-    samples, step = np.linspace(start=tilt_start, stop=tilt_stop, num=num_images_required,
-                                endpoint=True, retstep=True)
+    # Just to be sure
+    spacing = str(spacing).lower()
+    num_correctional_images = int(num_correctional_images)
 
-    if 0 not in samples:
-        # We need 0 to be in our list of samples because this is where our first reference image will be taken (the
-        #  user has centered the particle at this tilt angle).
-        samples = np.append(arr=samples, values=0)
-        samples = np.sort(samples)
+    if spacing == "linear":
+        samples = np.linspace(start=tilt_start, stop=tilt_stop, num=num_correctional_images, endpoint=True)
 
-    return samples, step
+    elif spacing == "inverse_quadratic":
+        raise NotImplementedError
+
+    else:
+        raise Exception("Error: spacing strategy (" + spacing + ") not recognized.")
+
+    return samples
 
 
 if __name__ == "__main__":
@@ -892,12 +908,12 @@ if __name__ == "__main__":
         scope = None
 
     """ Test getting tilt range info """
-    # Restore default numpy print options
-    # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
-    #                     threshold=1000, formatter=None)
-    arr = get_tilt_range(microscope=scope, camera_name="BM-Ceta", verbose=True)
-    print("Here is the final alpha array received from get_tilt_range():")
-    print(arr)
+    # # Restore default numpy print options
+    # # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
+    # #                     threshold=1000, formatter=None)
+    # arr = get_tilt_range(microscope=scope, camera_name="BM-Ceta", verbose=True)
+    # print("Here is the final alpha array received from get_tilt_range():")
+    # print(arr)
 
     """ Test getting camera parameters """
     # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=scope)
@@ -915,7 +931,7 @@ if __name__ == "__main__":
     # print("File extension: " + str(file_extension))
 
     """ Test getting shift correction samples """
-    # use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=-30, tilt_stop=30,
-    #                                                          exposure_time=0.25)
-    # print("Use shift: " + str(use_shift_corrections))
-    # print("Samples: " + str(samples__))
+    use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=-30, tilt_stop=30,
+                                                             exposure_time=0.25)
+    print("Use shift: " + str(use_shift_corrections))
+    print("Samples: " + str(samples__))
