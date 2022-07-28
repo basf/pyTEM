@@ -24,11 +24,16 @@ from pyTEM.lib.micro_ed.opposite_signs import opposite_signs
 
 class GetTiltRange:
 
-    def __init__(self, microscope: Union[Interface, None]):
+    def __init__(self, microscope: Union[Interface, None], camera_name: str, verbose: bool = False):
         """
         :param microscope: pyTEM Interface (or None):
            The microscope interface, needed to return the microscope to a safe state if the user exits the script
             through the quit button on the message box.
+        :param camera_name: str:
+            The name of the camera to use. To reduce beam exposure, we will only be showing the user images taken
+             with this camera (rather than unblanking and having the user view through the FluCam screen).
+        :param verbose: bool:
+            Print out extra information. Useful for debugging.
         """
         self.microscope = microscope
         user_had_the_beam_blank = self._beam_is_blank()
@@ -43,10 +48,14 @@ class GetTiltRange:
             warnings.warn("Unable to obtain tilt range limits, assuming -90 to +90 degrees.")
             self.alpha_min, self.alpha_max = -90, 90
 
+        self.verbose = verbose
+        self.camera_name = camera_name
         self.font = None  # Default is fine
         self.font_size = 13
 
         # Since the tilt step is always to be respected, we will get it first
+        if self.verbose:
+            print("Prompting user for tilt step...")
         while True:
             self.step = self.get_tilt_step()
             if 0.001 <= abs(self.step) <= 40.1:
@@ -54,6 +63,8 @@ class GetTiltRange:
             else:
                 warnings.warn("The provided alpha step is unpractical, please try again!")
 
+        if self.verbose:
+            print("Prompting user for tilt start...")
         while True:
             self.start = self.get_tilt_start()
             if self.alpha_min < self.start < self.alpha_max and self.start != 0:
@@ -63,8 +74,12 @@ class GetTiltRange:
 
         # tilt_step and tilt_start should have opposite signs
         if not opposite_signs(self.start, self.step):
+            if self.verbose:
+                print("Flipping the provided tilt step so it has the opposite sign as the tilt start...")
             self.step = -1 * self.step
 
+        if self.verbose:
+            print("Prompting user for tilt stop...")
         self.stop = self.get_tilt_stop()
 
         if not user_had_the_beam_blank:
@@ -136,7 +151,7 @@ class GetTiltRange:
         add_basf_icon_to_tkinter_window(root)
 
         message = ttk.Label(root, text="Please enter the \u03B1 tilt angle at which to start tilting."
-                                       "\n\nPlease confirm, using the 'Unblank & Test Input' button, that the stage is "
+                                       "\n\nPlease confirm, using the 'Test Input' button, that the stage is "
                                        "actually capable of tilting to the this \u03B1, and that the particle remains "
                                        "in the field-of-view and doesn't overlap any other particles before submitting "
                                        "your input."
@@ -170,15 +185,15 @@ class GetTiltRange:
             :return: None.
             """
             # Make the buttons 'look' un-clickable.
-            unblank_test_button.config(state=tk.DISABLED)
-            unblank_test_button.update()
+            test_input_button.config(state=tk.DISABLED)
+            test_input_button.update()
             continue_button.config(state=tk.DISABLED)
             continue_button.update()
             exit_button.config(state=tk.DISABLED)
             exit_button.update()
 
             # Actually make the buttons un-clickable.
-            unblank_test_button.grid_forget()
+            test_input_button.grid_forget()
             continue_button.grid_forget()
             exit_button.grid_forget()
 
@@ -186,17 +201,17 @@ class GetTiltRange:
             self._update_alpha(float(start.get()))
 
             # And finally go ahead and restore the buttons.
-            unblank_test_button.config(state=tk.NORMAL)
-            unblank_test_button.grid(column=0, row=3, padx=5, pady=5)
+            test_input_button.config(state=tk.NORMAL)
+            test_input_button.grid(column=0, row=3, padx=5, pady=5)
             continue_button.config(state=tk.NORMAL)
             continue_button.grid(column=1, row=3, padx=5, pady=5)
             exit_button.config(state=tk.NORMAL)
             exit_button.grid(column=2, row=3, padx=5, pady=5)
 
         # Create test, continue, and exit buttons
-        unblank_test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
+        test_input_button = ttk.Button(root, text="Test Input", style="big.TButton",
                                          command=disable_buttons_and_update_alpha)
-        unblank_test_button.grid(column=0, row=3, padx=5, pady=5)
+        test_input_button.grid(column=0, row=3, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
         continue_button.grid(column=1, row=3, padx=5, pady=5)
         exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
@@ -300,7 +315,7 @@ class GetTiltRange:
                     suggested_stop = round(alpha_arr_[-1], 2)
                     txt_ = "Warning: A stop value of " + str(current_stop) + " would provide a tilt interval that " \
                            "doesn't divide evently by \u0394\u03B1=" + str(self.step) + ". Suggested stop: " + \
-                           str(suggested_stop)
+                           str(suggested_stop) + "."
                     uneven_division_label.configure(foreground="red")
 
             uneven_division_label.config(text=txt_)
@@ -333,15 +348,15 @@ class GetTiltRange:
             :return: None.
             """
             # Make the buttons 'look' un-clickable
-            unblank_test_button.config(state=tk.DISABLED)
-            unblank_test_button.update()
+            test_input_button.config(state=tk.DISABLED)
+            test_input_button.update()
             continue_button.config(state=tk.DISABLED)
             continue_button.update()
             exit_button.config(state=tk.DISABLED)
             exit_button.update()
 
             # Actually make the buttons un-clickable
-            unblank_test_button.grid_forget()
+            test_input_button.grid_forget()
             continue_button.grid_forget()
             exit_button.grid_forget()
 
@@ -349,17 +364,17 @@ class GetTiltRange:
             self._update_alpha(float(stop.get()))
 
             # And finally go ahead and restore the buttons.
-            unblank_test_button.config(state=tk.NORMAL)
-            unblank_test_button.grid(column=0, row=4, padx=5, pady=5)
+            test_input_button.config(state=tk.NORMAL)
+            test_input_button.grid(column=0, row=4, padx=5, pady=5)
             continue_button.config(state=tk.NORMAL)
             continue_button.grid(column=1, row=4, padx=5, pady=5)
             exit_button.config(state=tk.NORMAL)
             exit_button.grid(column=2, row=4, padx=5, pady=5)
 
         # Create test, continue, and exit buttons
-        unblank_test_button = ttk.Button(root, text="Unblank & Test Input", style="big.TButton",
+        test_input_button = ttk.Button(root, text="Test Input", style="big.TButton",
                                          command=disable_buttons_and_update_alpha)
-        unblank_test_button.grid(column=0, row=4, padx=5, pady=5)
+        test_input_button.grid(column=0, row=4, padx=5, pady=5)
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
         continue_button.grid(column=1, row=4, padx=5, pady=5)
         exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
@@ -388,10 +403,12 @@ class GetTiltRange:
         """
         if self.microscope is None:
             print("We are not connected to the microscope, but otherwise we would be moving to \u03B1=" + str(alpha)
-                  + " and then briefly unblanking.")
+                  + " and talking a quick picture to show the user.")
             time.sleep(2)  # Pause to visually confirm the buttons disable.
 
         else:
+            if self.verbose:
+                print("Moving to \u03B1=" + str(alpha) + "...")
             self.microscope.set_stage_position_alpha(alpha=alpha, speed=0.5)
 
             # Sometimes, if the allowable tilt range is not properly configured, the user might be able to enter an
@@ -399,10 +416,13 @@ class GetTiltRange:
             if not math.isclose(alpha, self.microscope.get_stage_position_alpha(), abs_tol=0.01):
                 raise Exception("Error: We don't seem to be able to reach the requested tilt angle.")
 
-            # Quickly unblank for a moment so the user can confirm the tilt angle is okay.
-            self.microscope.unblank_beam()
-            time.sleep(2)
-            self.microscope.blank_beam()
+            # Take a quick acquisition and show it to the user. They can use this to check whether the tilt angle is
+            #  okay without having to unblank.
+            if self.verbose:
+                print("Taking a quick picture to show to the user.")
+            quick_acq = self.microscope.acquisition(camera_name=self.camera_name, exposure_time=0.25, sampling='1k',
+                                                    blanker_optimization=True, verbose=self.verbose)
+            quick_acq.show_image()
 
     def _blank_beam(self) -> None:
         """
@@ -439,18 +459,23 @@ class GetTiltRange:
             return self.microscope.beam_is_blank()
 
 
-def get_tilt_range(microscope: Union[Interface, None]) -> np.array:
+def get_tilt_range(microscope: Union[Interface, None], camera_name: str, verbose: bool = False) -> np.array:
     """
     Get the full alpha tilt range from the user.
 
     :param microscope: pyTEM Interface (or None):
         The microscope interface, needed to test out different tilt angles, and also to return the microscope to a safe
          state if the user exits the script through the 'Quit' button on the message box.
+    :param camera_name: str:
+        The name of the camera to use. To reduce beam exposure, we will only be showing the user images taken
+         with this camera (rather than unblanking and having the user view through the FluCam screen).
+    :param verbose: bool:
+        Print out extra information. Useful for debugging.
 
     :return: np.array of floats:
         An array of alpha start-stop values that can be used for a tilt acquisition series.
     """
-    tilt_range = GetTiltRange(microscope=microscope)
+    tilt_range = GetTiltRange(microscope=microscope, camera_name=camera_name, verbose=verbose)
     alpha_arr = np.arange(tilt_range.start, tilt_range.stop + tilt_range.step, tilt_range.step)
 
     if math.isclose(a=alpha_arr[-1], b=tilt_range.stop, abs_tol=1e-4):
@@ -721,7 +746,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
     correction_shift_interval_label.grid(column=0, row=2, sticky="e", pady=5)
 
     # Show the user how much exposure will result from the current shift correction interval
-    def update_total_exposure_label(*args):
+    def update_total_exposure_label():
         try:
             correction_shift_interval_ = float(correction_shift_interval.get())
         except ValueError:
@@ -867,12 +892,12 @@ if __name__ == "__main__":
         scope = None
 
     """ Test getting tilt range info """
-    # # Restore default numpy print options
-    # # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
-    # #                     threshold=1000, formatter=None)
-    # arr = get_tilt_range(microscope=scope)
-    # print("Here is the final alpha array received from get_tilt_range():")
-    # print(arr)
+    # Restore default numpy print options
+    # np.set_printoptions(edgeitems=3, infstr='inf', linewidth=75, nanstr='nan', precision=8, suppress=False,
+    #                     threshold=1000, formatter=None)
+    arr = get_tilt_range(microscope=scope, camera_name="BM-Ceta", verbose=True)
+    print("Here is the final alpha array received from get_tilt_range():")
+    print(arr)
 
     """ Test getting camera parameters """
     # camera_name_, integration_time_, sampling_, downsample_ = get_acquisition_parameters(microscope=scope)
@@ -890,7 +915,7 @@ if __name__ == "__main__":
     # print("File extension: " + str(file_extension))
 
     """ Test getting shift correction samples """
-    use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=-30, tilt_stop=30,
-                                                             exposure_time=0.25)
-    print("Use shift: " + str(use_shift_corrections))
-    print("Samples: " + str(samples__))
+    # use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=-30, tilt_stop=30,
+    #                                                          exposure_time=0.25)
+    # print("Use shift: " + str(use_shift_corrections))
+    # print("Samples: " + str(samples__))

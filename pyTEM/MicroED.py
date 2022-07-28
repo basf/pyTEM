@@ -121,9 +121,6 @@ class MicroED:
             # We are now centered on the particle and need to keep the beam blank whenever possible.
             self.microscope.blank_beam()
 
-            # Get tilt range info
-            alpha_arr = get_tilt_range(microscope=self.microscope)
-
             # The user is done making their adjustments, we can now retract the screen.
             self.microscope.retract_screen()
 
@@ -132,6 +129,9 @@ class MicroED:
 
             # Confirm that the requested camera is actually inserted.
             display_insert_camera_message(microscope=self.microscope, camera_name=camera_name)
+
+            # Get tilt range info
+            alpha_arr = get_tilt_range(microscope=self.microscope, camera_name=camera_name)
 
             # Get the out path. (Where in the file system should we save the results?)
             out_file = get_out_file(microscope=self.microscope)
