@@ -45,6 +45,8 @@ def obtain_shifts(microscope: Interface,
         Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
         Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
 
+    # TODO: Consider image stretching and/or filtering to improve the quality of the image alignment.
+
     :param microscope: pyTEM.Interface:
         A pyTEM interface to the microscope.
     :param alphas: np.array:
