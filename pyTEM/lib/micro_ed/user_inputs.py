@@ -651,7 +651,7 @@ def get_out_file(microscope: Union[Interface, None]) -> str:
     add_basf_icon_to_tkinter_window(root)
 
     message = ttk.Label(root, text="Please complete the out file path:", font=(None, 15))
-    message.grid(column=0, row=0, columnspan=3, sticky='w', padx=5, pady=5)
+    message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
 
     # Label the filename box with the out directory
     path_label = ttk.Label(root, text=out_dir + "/")
@@ -978,18 +978,18 @@ if __name__ == "__main__":
     # print("Downsampling: " + str(downsample_))
 
     """ Test getting out file """
-    # import os
-    # out_file = get_out_file(None)
-    # print("Full out file: " + str(out_file))
-    # file_name_base, file_extension = os.path.splitext(out_file)
-    # print("File name: " + str(file_name_base))
-    # print("File extension: " + str(file_extension))
+    import os
+    out_file = get_out_file(None)
+    print("Full out file: " + str(out_file))
+    file_name_base, file_extension = os.path.splitext(out_file)
+    print("File name: " + str(file_name_base))
+    print("File extension: " + str(file_extension))
 
     """ Test getting shift correction samples """
-    use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=35, tilt_stop=-5,
-                                                             exposure_time=0.25)
-    print("Use shift: " + str(use_shift_corrections))
-    print("Samples: " + str(samples__))
+    # use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=35, tilt_stop=-5,
+    #                                                          exposure_time=0.25)
+    # print("Use shift: " + str(use_shift_corrections))
+    # print("Samples: " + str(samples__))
 
     # samples__ = compute_sample_arr(tilt_start=45, tilt_stop=-30, num_correctional_images=12,
     #                                spacing='exponential', verbose=True)
