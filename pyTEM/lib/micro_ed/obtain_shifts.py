@@ -8,17 +8,12 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import hyperspy.api as hs
+
 from numpy.typing import NDArray
 from scipy.signal import argrelextrema
 
 from pyTEM.Interface import Interface
-
-try:
-    import matplotlib  # import matplotlib for the GUI backend HyperSpy needs
-    matplotlib.rcParams["backend"] = "Agg"
-    import hyperspy.api as hs
-except Exception as ImportException:
-    raise ImportException
 
 
 def obtain_shifts(microscope: Interface,
