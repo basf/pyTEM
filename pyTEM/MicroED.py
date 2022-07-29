@@ -174,7 +174,11 @@ class MicroED:
 
             # If required, have the user insert the beam stop.
             # Additionally, this message will have the user center the diffraction spot.
+            self.microscope.insert_screen()
+            self.microscope.unblank_beam()
             display_beam_stop_center_spot_message(microscope=self.microscope)
+            self.microscope.retract_screen()
+            self.microscope.blank_beam()
 
             # Let the user know we are ready to begin!
             display_start_message(microscope=self.microscope)
