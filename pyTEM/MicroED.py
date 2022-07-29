@@ -15,9 +15,10 @@ from pyTEM.Interface import Interface
 
 from pyTEM.lib.micro_ed.exit_script import exit_script
 from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
-    display_insert_and_align_sad_aperture_message, display_start_message, display_end_message, \
-    display_good_bye_message, display_initialization_message, have_user_center_particle, \
-    display_second_condenser_message, display_insert_camera_message
+    display_insert_and_align_sad_aperture_message, display_end_message, display_good_bye_message, \
+    display_initialization_message, have_user_center_particle, display_beam_stop_center_spot_message, \
+    display_second_condenser_message, display_insert_camera_message, display_insert_sad_aperture_message, \
+    display_start_message
 from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
 from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
     shift_correction_info
@@ -165,10 +166,18 @@ class MicroED:
                 # We will proceed without compensatory image shifts, just make shifts all zero.
                 shifts = np.full(shape=len(alpha_arr) - 1, dtype=(float, 2), fill_value=0.0)
 
-            # Confirm they are happy, and have them insert the aperture/beam stop.
-            display_start_message(microscope=self.microscope)
+            # Have the user insert the previously aligned SAD aperture.
+            display_insert_sad_aperture_message(microscope=self.microscope)
 
-            # microscope.set_projection_mode("diffraction")  # Switch to diffraction mode.
+            # Switch to diffraction mode.
+            self.microscope.set_projection_mode("diffraction")
+
+            # If required, have the user insert the beam stop.
+            # Additionally, this message will have the user center the diffraction spot.
+            display_beam_stop_center_spot_message(microscope=self.microscope)
+
+            # Let the user know we are ready to begin!
+            display_start_message(microscope=self.microscope)
 
             # We have everything we need, go ahead and actually perform the tilt series.
             acq_stack = self.microscope.acquisition_series(num=len(alpha_arr) - 1, camera_name=camera_name,
@@ -176,6 +185,10 @@ class MicroED:
                                                            blanker_optimization=True, tilt_bounds=alpha_arr,
                                                            shifts=shifts, verbose=verbose)
 
+            # Encase running unsupervised, it is a good idea to close the column valve once we are done.
+            self.microscope.close_column_valve()
+
+            # If requested, go ahead and downsample the series.
             if downsample:
                 if verbose:
                     print("Downsampling images...")
@@ -189,7 +202,7 @@ class MicroED:
             # The acquisition is now complete, inform the user.
             display_end_message(microscope=self.microscope, out_file=out_file)
 
-            # Thanks to the user, and direct them to report issues on GitHub.
+            # Give thanks to the user, and direct them to report issues on GitHub.
             display_good_bye_message(microscope=self.microscope)
 
             exit_script(microscope=self.microscope, status=0)

@@ -370,23 +370,20 @@ def display_insert_camera_message(microscope: Union[Interface, None], camera_nam
     root.mainloop()
 
 
-def display_start_message(microscope: Union[Interface, None]) -> None:
+def display_insert_sad_aperture_message(microscope: Union[Interface, None]) -> None:
     """
-    Display the start message.
+    Display the message prompting the user to insert the SAD aperture.
 
-    To improve the changes of the user actual inserting the aperture and beam-stop, check boxes are provided, both of
-     which need to be checked before the continue button becomes active.
+    To improve the changes of the user actual inserting the aperture, a checkbox is provided which need to be checked
+     before the continue button becomes active.
 
     :param microscope: pyTEM Interface (or None):
            A microscope interface, needed to return the microscope to a safe state if the user exits the script
             through the quit button on the message box.
     """
     title = "Flight attendants, prepare doors for departure and cross-check."
-    upper_message = "We are now ready to perform a MicroED tilt series acquisition! " \
-                    "\n\nPlease insert the desired SAD aperture and (if required) the beam-stop. "
-    lower_message = "Please refrain from touching the microscope controls for the duration of the experiment. If at " \
-                    "any point you need to stop the experiment, please hit Ctrl-C on your keyboard. " \
-                    "\n\nUpon pressing continue, the automated acquisition series will begin!"
+    upper_message = "Please insert the desired (and previously aligned) SAD aperture."
+    lower_message = "Upon pressing continue, we will switch into diffraction mode."
 
     root = tk.Tk()
     style = ttk.Style()
@@ -400,12 +397,11 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
     upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
-    def check_if_aperture_and_beam_stop_are_inserted() -> None:
+    def check_if_aperture_is_inserted() -> None:
         """
-        Check to see, if both the aperture and beam-stop check boxes have been checked then we can go ahead and enable
-         the continue button.
+        Check to see, if the aperture has been inserted then we can go ahead and enable the continue button.
         """
-        if aperture_inserted.get() and beam_stop_inserted.get():
+        if aperture_inserted.get():
             continue_button.config(state=tk.NORMAL)
         else:
             continue_button.config(state=tk.DISABLED)
@@ -414,18 +410,9 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     aperture_inserted = tk.BooleanVar()
     aperture_inserted.set(False)
     aperture_inserted_checkbutton = ttk.Checkbutton(root, text="SAD Aperture Inserted", variable=aperture_inserted,
-                                                    command=check_if_aperture_and_beam_stop_are_inserted,
+                                                    command=check_if_aperture_is_inserted,
                                                     style="big.TCheckbutton")
-    aperture_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=(5, 0))
-
-    # Create a checkbutton for beam-stop inserted.
-    beam_stop_inserted = tk.BooleanVar()
-    beam_stop_inserted.set(False)
-    beam_stop_inserted_checkbutton = ttk.Checkbutton(root, text="Beam-Stop Inserted (or not required)",
-                                                     variable=beam_stop_inserted,
-                                                     command=check_if_aperture_and_beam_stop_are_inserted,
-                                                     style="big.TCheckbutton")
-    beam_stop_inserted_checkbutton.grid(column=0, columnspan=2, row=2, padx=5, pady=(0, 5))
+    aperture_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=5)
 
     # Display the other part of the message
     lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
@@ -434,7 +421,7 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     # Create continue and exit buttons
     continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
     continue_button.grid(column=0, row=4, sticky="e", padx=5, pady=5)
-    check_if_aperture_and_beam_stop_are_inserted()  # Disabled until aperture and beam stop and inserted
+    check_if_aperture_is_inserted()  # Disabled until aperture has been inserted.
     exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                              style="big.TButton")
     exit_button.grid(column=1, row=4, sticky="w", padx=5, pady=5)
@@ -445,6 +432,110 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
     root.mainloop()
+
+
+def display_beam_stop_center_spot_message(microscope: Union[Interface, None]) -> None:
+    """
+    Display a message prompting the user to insert the beam stop (if required) and to center the diffraction spot.
+
+    To improve the changes of the user actual inserting beam-stop and aligning the spot, check boxes are provided,
+     both of which need to be checked before the continue button becomes active.
+
+    :param microscope: pyTEM Interface (or None):
+           A microscope interface, needed to return the microscope to a safe state if the user exits the script
+            through the quit button on the message box.
+    """
+    title = "We are third in priority for take-off, we should depart in about five minutes."
+    upper_message = "If required, please insert the beam-stop."
+    middle_message = "Please, using the multifunction knobs on the microscope control panel, center/align the " \
+                     "diffraction spot."
+    lower_message = "Once the beam-stop has (if required) been inserted and the diffraction spot aligned, please " \
+                    "continue."
+
+    root = tk.Tk()
+    style = ttk.Style()
+
+    root.title(title)
+    add_basf_icon_to_tkinter_window(root)
+
+    window_width = 650
+    window_height = 255
+
+    # Display the upper part of the message.
+    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
+
+    def check_if_beam_stop_inserted_and_diffraction_spot_aligned() -> None:
+        """
+        Check to see, if both the beam-stop and diffraction spot check boxes have been checked then we can go ahead and
+         enable the continue button.
+        """
+        if beam_stop_inserted.get() and diffraction_spot_centered.get():
+            continue_button.config(state=tk.NORMAL)
+        else:
+            continue_button.config(state=tk.DISABLED)
+
+    # Create a checkbutton for beam-stop inserted.
+    beam_stop_inserted = tk.BooleanVar()
+    beam_stop_inserted.set(False)
+    beam_stop_inserted_checkbutton = ttk.Checkbutton(root, text="Beam-Stop Inserted (or not required)",
+                                                     variable=beam_stop_inserted,
+                                                     command=check_if_beam_stop_inserted_and_diffraction_spot_aligned,
+                                                     style="big.TCheckbutton")
+    beam_stop_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=(0, 5))
+
+    # Display the middle part of the message.
+    middle_message = ttk.Label(root, text=middle_message, wraplength=window_width - 10, font=(None, 15),
+                               justify='center')
+    middle_message.grid(column=0, columnspan=2, row=2, padx=5, pady=5)
+
+    # Create a checkbutton for diffraction spot centered.
+    diffraction_spot_centered = tk.BooleanVar()
+    diffraction_spot_centered.set(False)
+    diffraction_spot_centered_checkbutton = \
+        ttk.Checkbutton(root, text="Diffraction Spot Aligned", variable=diffraction_spot_centered,
+                        style="big.TCheckbutton", command=check_if_beam_stop_inserted_and_diffraction_spot_aligned)
+    diffraction_spot_centered_checkbutton.grid(column=0, columnspan=2, row=3, padx=5, pady=(5, 0))
+
+    # Display the lower part of the message
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    lower_message.grid(column=0, columnspan=2, row=4, padx=5, pady=5)
+
+    # Create continue and exit buttons
+    continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, row=5, sticky="e", padx=5, pady=5)
+    # Disable until beam stop inserted and diffraction spot centered.
+    check_if_beam_stop_inserted_and_diffraction_spot_aligned()
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=1, row=5, sticky="w", padx=5, pady=5)
+
+    style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+
+    # Display the message box up in the top right-hand corner
+    root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=window_height,
+                                                    x=int(0.65 * root.winfo_screenwidth()),
+                                                    y=int(0.025 * root.winfo_screenheight())))
+
+    root.mainloop()
+
+
+def display_start_message(microscope: Union[Interface, None]) -> None:
+    """
+    Display a message notifying the user that we are about to start the experiment.
+
+    :param microscope: pyTEM Interface (or None):
+           A microscope interface, needed to return the microscope to a safe state if the user exits the script
+            through the quit button on the message box.
+    """
+    title = "Cabin crew, please take your seats for take-off."
+    message = "We are now ready to begin the MicroED tilt series!" \
+              "\n\nPlease refrain from touching the microscope controls for the duration of the experiment. If, at " \
+              "any point, you need to stop the experiment, please hit Ctrl-C on the keyboard. " \
+              "\n\nOnce the experiment concludes, the column valve will close automatically. Upon pressing " \
+              "continue, the automated acquisition series will begin!"
+    display_message_centered(title=title, message=message, microscope=microscope)
 
 
 def display_end_message(microscope: Union[Interface, None], out_file: str) -> None:
@@ -584,9 +675,13 @@ if __name__ == "__main__":
 
     # display_insert_and_align_sad_aperture_message(microscope=None)
 
-    display_insert_camera_message(microscope=None, camera_name="BM-Ceta")
+    # display_insert_camera_message(microscope=None, camera_name="BM-Ceta")
 
-    # display_start_message(microscope=None)
+    display_insert_sad_aperture_message(microscope=None)
+
+    display_beam_stop_center_spot_message(microscope=None)
+
+    display_start_message(microscope=None)
 
     # display_end_message(microscope=None, out_file="")
 
