@@ -143,7 +143,7 @@ class GetInOutFiles:
                                      style="big.TButton")
         out_file_button.grid(column=0, columnspan=3, row=6, padx=5, pady=5)
 
-        file_extension_options = ['.tif', '.mrc']
+        file_extension_options = ['.tif', '.mrc', '.png', '.jpeg']
 
         # Get the anisotropy out file path.
         anisotropy_out_file_label = ttk.Label(root, text="Anisotropy Map:", justify='center',
