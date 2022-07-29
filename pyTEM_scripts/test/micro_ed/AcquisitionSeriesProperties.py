@@ -5,7 +5,7 @@
 
 from numpy.typing import ArrayLike
 
-from pyTEM.lib.interface.tem_tilt_speed import tem_tilt_speed
+from pyTEM.lib.tem_tilt_speed import tem_tilt_speed
 
 
 class AcquisitionSeriesProperties:

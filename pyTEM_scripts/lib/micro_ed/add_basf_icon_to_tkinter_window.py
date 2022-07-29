@@ -15,5 +15,5 @@ def add_basf_icon_to_tkinter_window(root: tk.Tk) -> None:
         The tkinter window of which you want to add the BASF icon.
     :return: None.
     """
-    path_to_ico = os.path.join(BASEDIR, "ico\\BASF.ico")
+    path_to_ico = os.path.join(BASEDIR, "ico/BASF.ico")
     root.iconbitmap(path_to_ico)

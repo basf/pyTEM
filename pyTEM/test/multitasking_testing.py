@@ -9,8 +9,8 @@ import time
 import numpy as np
 from pathos.helpers import mp
 
-from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface
+from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
+from pyTEM.lib.mixins import BeamBlankerInterface
 
 
 # https://stackoverflow.com/questions/3246525/why-cant-i-create-a-com-object-in-a-new-thread-in-python

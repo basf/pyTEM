@@ -9,8 +9,8 @@ import time
 from typing import Union
 from numpy.typing import ArrayLike
 
-from pyTEM.lib.interface.mixins.StageMixin import StageInterface
-from pyTEM.lib.interface.tem_tilt_speed import tem_tilt_speed
+from pyTEM.lib.mixins.StageMixin import StageInterface
+from pyTEM.lib.tem_tilt_speed import tem_tilt_speed
 
 
 def tilt_control(num_acquisitions: int, barriers: ArrayLike, integration_time: float,

@@ -7,7 +7,7 @@ import time
 
 from numpy.typing import ArrayLike
 
-from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerInterface
+from pyTEM.lib.mixins.BeamBlankerMixin import BeamBlankerInterface
 
 
 def blanker_control(num_acquisitions: int, barriers: ArrayLike, exposure_time: float, verbose: bool = False) -> None:

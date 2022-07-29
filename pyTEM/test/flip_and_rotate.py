@@ -4,10 +4,9 @@ Test flipping and rotating images with numpy
 import pathlib
 
 import numpy as np
-from PIL import Image
 from matplotlib import pyplot as plt
 
-from pyTEM.lib.interface.Acquisition import Acquisition
+from pyTEM.lib.Acquisition import Acquisition
 
 
 out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve() \

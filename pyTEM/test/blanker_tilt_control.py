@@ -11,9 +11,9 @@ import comtypes.client as cc
 from typing import Union
 from numpy.typing import ArrayLike
 
-from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
-from pyTEM.lib.interface.mixins.StageMixin import StageMixin
-from pyTEM.lib.interface.tem_tilt_speed import tem_tilt_speed
+from pyTEM.lib.mixins import BeamBlankerMixin
+from pyTEM.lib.mixins import StageMixin
+from pyTEM.lib.tem_tilt_speed import tem_tilt_speed
 
 
 def blanker_tilt_control(num_acquisitions: int,

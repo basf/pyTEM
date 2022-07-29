@@ -10,8 +10,8 @@ from tkinter import ttk
 from typing import Tuple, Union
 
 from pyTEM.Interface import Interface
-from pyTEM.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
-from pyTEM.lib.micro_ed.exit_script import exit_script
+from pyTEM_scripts.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
+from pyTEM_scripts.lib.micro_ed.exit_script import exit_script
 
 
 def display_welcome_message(microscope: Union[Interface, None]) -> None:

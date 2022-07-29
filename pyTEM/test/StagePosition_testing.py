@@ -3,7 +3,7 @@
 Some manual testing of the StagePosition class
 """
 
-from pyTEM.lib.interface.StagePosition import StagePosition
+from pyTEM.lib.StagePosition import StagePosition
 
 
 print("\nCreating a stage position object with x=0, y=1, z=2, alpha=-0.35, and beta=0.35...")

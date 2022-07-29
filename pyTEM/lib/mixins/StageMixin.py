@@ -10,7 +10,7 @@ from typing import Tuple
 
 import comtypes.client as cc
 
-from pyTEM.lib.interface.StagePosition import StagePosition  # Requires the pyTEM package directory on path
+from pyTEM.lib.StagePosition import StagePosition  # Requires the pyTEM package directory on path
 
 
 # TODO: Compute min and max stage movement speeds along x, y and z

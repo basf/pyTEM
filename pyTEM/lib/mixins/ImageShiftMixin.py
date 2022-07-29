@@ -9,7 +9,7 @@ import comtypes.client as cc
 
 from numpy.typing import ArrayLike
 
-from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
+from pyTEM.lib.mixins.ModeMixin import ModeMixin
 
 
 class ImageShiftMixin(ModeMixin):

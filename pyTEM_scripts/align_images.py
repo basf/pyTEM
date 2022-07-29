@@ -7,8 +7,8 @@ import argparse
 
 from typing import Tuple
 
-from pyTEM.lib.interface.Acquisition import Acquisition
-from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
+from pyTEM.lib.Acquisition import Acquisition
+from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
 from pyTEM_scripts.lib.align_images.GetInOutFile import GetInOutFile
 
 DESCRIPTION = "Read in some images (possibly from an image stack, possibly from a bunch of single image files), " \
@@ -19,6 +19,8 @@ DESCRIPTION = "Read in some images (possibly from an image stack, possibly from 
               "\n   Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction " \
               "\n       for EFTEMmImage Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36."
 
+
+# TODO: Add support for RGB images as per Thorsten's request
 
 def align_images():
     """

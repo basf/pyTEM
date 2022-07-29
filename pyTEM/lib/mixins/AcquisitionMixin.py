@@ -14,17 +14,17 @@ from typing import List, Tuple, Union
 from numpy.typing import ArrayLike, NDArray
 
 # Mixins
-from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
-from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
-from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
-from pyTEM.lib.interface.mixins.StageMixin import StageMixin
-from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
+from pyTEM.lib.mixins.ImageShiftMixin import ImageShiftMixin
+from pyTEM.lib.mixins.ScreenMixin import ScreenMixin
+from pyTEM.lib.mixins.BeamBlankerMixin import BeamBlankerMixin
+from pyTEM.lib.mixins.StageMixin import StageMixin
+from pyTEM.lib.mixins.VacuumMixin import VacuumMixin
 
 # Other library imports
-from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-from pyTEM.lib.interface.Acquisition import Acquisition
-from pyTEM.lib.interface.blanker_control import blanker_control
-from pyTEM.lib.interface.tilt_control import tilt_control
+from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
+from pyTEM.lib.Acquisition import Acquisition
+from pyTEM.lib.blanker_control import blanker_control
+from pyTEM.lib.tilt_control import tilt_control
 
 
 class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image shifts

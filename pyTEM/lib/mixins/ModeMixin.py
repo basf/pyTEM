@@ -5,7 +5,7 @@
 
 import comtypes.client as cc
 
-from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
+from pyTEM.lib.mixins.ScreenMixin import ScreenMixin
 
 
 class ModeMixin(ScreenMixin):

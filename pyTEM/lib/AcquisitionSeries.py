@@ -18,12 +18,12 @@ from typing import Union, Tuple
 from tifffile import tifffile
 from tifffile.tifffile import RESUNIT
 
-from pyTEM.lib.interface.RedirectStdStreams import RedirectStdStreams
-from pyTEM.lib.interface.hs_metadata_to_dict import hs_metadata_to_dict
-from pyTEM.lib.interface.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
-from pyTEM.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
-from pyTEM.lib.interface.make_dict_jsonable import make_dict_jsonable
-from pyTEM.lib.interface.Acquisition import Acquisition
+from pyTEM.lib.RedirectStdStreams import RedirectStdStreams
+from pyTEM.lib.hs_metadata_to_dict import hs_metadata_to_dict
+from pyTEM.lib.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
+from pyTEM_scripts.lib.micro_ed import turn_off_hyperspy_warnings
+from pyTEM.lib.make_dict_jsonable import make_dict_jsonable
+from pyTEM.lib.Acquisition import Acquisition
 
 
 class AcquisitionSeriesIterator:

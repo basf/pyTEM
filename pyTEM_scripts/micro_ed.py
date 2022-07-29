@@ -13,16 +13,16 @@ import numpy as np
 
 from pyTEM.Interface import Interface
 
-from pyTEM.lib.micro_ed.exit_script import exit_script
-from pyTEM.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
+from pyTEM_scripts.lib.micro_ed.exit_script import exit_script
+from pyTEM_scripts.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
     display_insert_and_align_sad_aperture_message, display_end_message, display_good_bye_message, \
     display_initialization_message, have_user_center_particle, display_beam_stop_center_spot_message, \
     display_second_condenser_message, display_insert_camera_message, display_insert_sad_aperture_message, \
     display_start_message
-from pyTEM.lib.micro_ed.obtain_shifts import obtain_shifts
-from pyTEM.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
+from pyTEM_scripts.lib.micro_ed.obtain_shifts import obtain_shifts
+from pyTEM_scripts.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
     shift_correction_info
-from pyTEM.lib.micro_ed.build_full_shifts_array import build_full_shift_array
+from pyTEM_scripts.lib.micro_ed.build_full_shifts_array import build_full_shift_array
 
 
 class MicroED:

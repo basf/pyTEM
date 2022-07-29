@@ -36,7 +36,7 @@ setup(
                       ],
     entry_points='''
                 [console_scripts]
-                align_images=pyTEM_scripts.align_images:align_images
+                align_images=pyTEM_scripts.align_images:script_entry
                 bulk_carbon_analysis=pyTEM_scripts.bulk_carbon_analysis:script_entry
                 micro_ed=pyTEM.MicroED:script_entry
             ''',

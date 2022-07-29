@@ -17,18 +17,18 @@ import numpy as np
 import comtypes.client as cc
 
 # Mixins
-from pyTEM.lib.interface.mixins.AcquisitionMixin import AcquisitionMixin
-from pyTEM.lib.interface.mixins.MagnificationMixin import MagnificationMixin
-from pyTEM.lib.interface.mixins.ImageShiftMixin import ImageShiftMixin
-from pyTEM.lib.interface.mixins.BeamShiftMixin import BeamShiftMixin
-from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
-from pyTEM.lib.interface.mixins.ScreenMixin import ScreenMixin
-from pyTEM.lib.interface.mixins.BeamBlankerMixin import BeamBlankerMixin
-from pyTEM.lib.interface.mixins.StageMixin import StageMixin
-from pyTEM.lib.interface.mixins.VacuumMixin import VacuumMixin
+from pyTEM.lib.mixins import AcquisitionMixin
+from pyTEM.lib.mixins.MagnificationMixin import MagnificationMixin
+from pyTEM.lib.mixins.ImageShiftMixin import ImageShiftMixin
+from pyTEM.lib.mixins.BeamShiftMixin import BeamShiftMixin
+from pyTEM.lib.mixins import ModeMixin
+from pyTEM.lib.mixins.ScreenMixin import ScreenMixin
+from pyTEM.lib.mixins import BeamBlankerMixin
+from pyTEM.lib.mixins import StageMixin
+from pyTEM.lib.mixins import VacuumMixin
 
 # Other library imports
-from pyTEM.lib.interface.StagePosition import StagePosition
+from pyTEM.lib.StagePosition import StagePosition
 
 
 class Interface(AcquisitionMixin,    # Microscope acquisition controls, including those for taking images.

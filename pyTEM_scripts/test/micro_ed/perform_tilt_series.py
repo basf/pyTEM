@@ -9,8 +9,8 @@ import numpy as np
 from threading import Thread
 
 from pyTEM.Interface import Interface
-from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
-from pyTEM.test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
+from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
+from pyTEM_scripts.test.micro_ed.AcquisitionSeriesProperties import AcquisitionSeriesProperties
 
 
 def perform_tilt_series(microscope: Interface, acquisition_properties: AcquisitionSeriesProperties,

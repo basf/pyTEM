@@ -5,8 +5,8 @@
 
 import argparse
 
-from pyTEM.lib.interface.Acquisition import Acquisition
-from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
+from pyTEM.lib.Acquisition import Acquisition
+from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
 
 from pyTEM_scripts.lib.bulk_carbon_analysis.GetInOutFiles import GetInOutFiles
 

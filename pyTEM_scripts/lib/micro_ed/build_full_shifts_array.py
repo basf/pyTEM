@@ -11,7 +11,7 @@ from typing import Union
 from numpy.typing import ArrayLike
 from scipy.interpolate import interp1d
 
-from pyTEM.lib.micro_ed.find_bound_indicies import find_bound_indices
+from pyTEM_scripts.lib.micro_ed.find_bound_indicies import find_bound_indices
 
 
 def build_full_shift_array(alphas: ArrayLike, samples: ArrayLike, shifts_at_samples: ArrayLike, verbose: bool = False,

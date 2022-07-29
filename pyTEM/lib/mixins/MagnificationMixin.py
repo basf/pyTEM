@@ -7,7 +7,7 @@ import math
 import warnings
 import comtypes.client as cc
 
-from pyTEM.lib.interface.mixins.ModeMixin import ModeMixin
+from pyTEM.lib.mixins.ModeMixin import ModeMixin
 
 
 class MagnificationMixin(ModeMixin):
