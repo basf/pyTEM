@@ -3,22 +3,29 @@
  Date:    Summer 2022
 """
 
+import argparse
+
 from typing import Tuple
 
 from pyTEM.lib.interface.Acquisition import Acquisition
 from pyTEM.lib.interface.AcquisitionSeries import AcquisitionSeries
 from pyTEM_scripts.lib.align_images.GetInOutFile import GetInOutFile
 
+DESCRIPTION = "Read in some images (possibly from an image stack, possibly from a bunch of single image files), " \
+              "align the images, and save the results back to file." \
+              "\n\n" \
+              "Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase " \
+              "correlation algorithm based on the following paper: " \
+              "\n   Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction " \
+              "\n       for EFTEMmImage Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36."
+
 
 def align_images():
     """
     Read in some images (possibly from a stack, possibly from a bunch of single image files), align the images, and
-     save the results back to file.
+     save the results back to file. For more information, please refer to the above description, or view using:
 
-    Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase correlation
-     algorithm based on the following paper:
-        Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEM
-            Image Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+        align_images --help
 
     :return: None. The resulting image stack is saved to file at the location requested by the user.
     """
@@ -50,6 +57,20 @@ def align_images():
 
     else:
         raise Exception("Error: Out file type not recognized: " + str(out_file))
+
+
+def script_entry():
+    """
+    Entry point for Align Images script. Once pyTEM is installed, view script usage by running the following
+     command in a terminal window:
+
+        align_images --help
+
+    """
+    print("Entered at the right point.")
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawTextHelpFormatter)
+    parser.parse_args()
+    align_images()
 
 
 if __name__ == "__main__":
