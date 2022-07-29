@@ -208,7 +208,7 @@ def display_eucentric_height_message(microscope: Union[Interface, None]) -> None
     message = "Please, using the \u03B1 wobble and z-axis buttons on the microscope control panel, manually set the " \
               "microscope to the eucentric height. That is, please find and select the z-height where tilting the " \
               "specimen leads to a minimal lateral movement of the image." \
-              "\n\nOnce at eucentric height, re-center on the dummy particle and click the Continue button."
+              "\n\nOnce at eucentric height, re-center on the dummy particle and click the continue button."
     display_message_out_of_the_way(title=title, message=message, microscope=microscope, window_height=215)
 
 
@@ -269,7 +269,7 @@ def display_insert_and_align_sad_aperture_message(microscope: Union[Interface, N
     aperture_removed_checkbutton.grid(column=0, columnspan=2, row=2, padx=5, pady=(0, 5))
 
     # Display the other part of the message
-    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width, font=(None, 15), justify='center')
     lower_message.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
 
     # Create continue and exit buttons
@@ -707,7 +707,7 @@ def display_message_out_of_the_way(title: str, message: str, window_height: Unio
     add_basf_icon_to_tkinter_window(root)
 
     window_width = 650
-    message = ttk.Label(root, text=message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    message = ttk.Label(root, text=message, wraplength=window_width, font=(None, 15), justify='center')
     message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
     # Create continue and exit buttons
@@ -744,7 +744,7 @@ if __name__ == "__main__":
 
     # display_eucentric_height_message(microscope=None)
 
-    # display_insert_and_align_sad_aperture_message(microscope=None)
+    display_insert_and_align_sad_aperture_message(microscope=None)
 
     # display_insert_camera_message(microscope=None, camera_name="BM-Ceta")
 
@@ -754,6 +754,6 @@ if __name__ == "__main__":
 
     # display_start_message(microscope=None)
 
-    display_end_message(microscope=None, out_file="C:/Users/LuciukMR/PycharmProjects/dummy_path.tif")
+    # display_end_message(microscope=None, out_file="C:/Users/LuciukMR/PycharmProjects/dummy_path.tif")
 
     # display_good_bye_message(microscope=None)
