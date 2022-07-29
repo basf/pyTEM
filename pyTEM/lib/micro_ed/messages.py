@@ -540,7 +540,13 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
 
 def display_end_message(microscope: Union[Interface, None], out_file: str) -> None:
     """
-    Display the start message.
+    Display an end message letting the user know that we have completed the MicroED sequence.
+
+    We inform the user of the things that will be taken care of automatically (like zeroing the image shift)
+
+    To improve the changes of the user actual inserting beam-stop and aligning the spot, check boxes are provided,
+     both of which need to be checked before the continue button becomes active.
+
     :param microscope: pyTEM Interface (or None):
            A microscope interface, needed to return the microscope to a safe state if the user exits the script
             through the quit button on the message box.
@@ -549,15 +555,80 @@ def display_end_message(microscope: Union[Interface, None], out_file: str) -> No
     """
     title = "Ladies and gentlemen, we have begun our descent into Ludwigshafen, where the weather is a balmy " \
             "30 degrees centigrade."
-    message = "We have now completed the MicroED tilt acquisition series!" \
-              "\n\nYour images can be found in " + str(out_file) + \
-              "\n\n\u03B1 stage tilt, beam shift, and image shift will be zeroed upon script termination."
-    display_message_centered(title=title, message=message, microscope=microscope)
+    upper_message = "We have now completed the MicroED tilt series acquisition!" \
+                    "\n\nThe results can be found here:"
+    lower_message = "Image shift and \u03B1 stage tilt will be zeroed automatically upon script termination. " \
+                    "However, the beam will remain blank, and both the apertures and the camera will remain inserted " \
+                    "until manually retracted."
+
+    root = tk.Tk()
+    style = ttk.Style()
+
+    root.title(title)
+    add_basf_icon_to_tkinter_window(root)
+
+    window_width = 650
+
+    # Display the upper part of the message.
+    upper_message_label = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15),
+                                    justify='center')
+    upper_message_label.grid(column=0, columnspan=2, row=0, padx=5, pady=(5, 0))
+
+    def check_if_user_understands() -> None:
+        """
+        Check to see, if the user checks the box indicating that they understand that they must remove the apertures and
+         the camera manually, then can go ahead and enable the continue button.
+        """
+        if user_understands.get():
+            continue_button.config(state=tk.NORMAL)
+        else:
+            continue_button.config(state=tk.DISABLED)
+
+    # Display the out file location.
+    out_file_label = ttk.Label(root, text=out_file, wraplength=window_width - 10, font=(None, 12, 'bold'),
+                               justify='center')
+    out_file_label.grid(column=0, columnspan=2, row=1, padx=5, pady=(0, 5))
+
+    # Display the lower part of the message.
+    lower_message_label = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15),
+                                    justify='center')
+    lower_message_label.grid(column=0, columnspan=2, row=2, padx=5, pady=(5, 0))
+
+    # Create a checkbutton for the user to click if they understand they are responsible for removing the apertures
+    #  and camera manually.
+    user_understands = tk.BooleanVar()
+    user_understands.set(False)
+    user_understands_checkbutton = ttk.Checkbutton(root, text="I understand the apertures and camera need to be "
+                                                              "retracted manually.", variable=user_understands,
+                                                   command=check_if_user_understands, style="big.TCheckbutton")
+    user_understands_checkbutton.grid(column=0, columnspan=2, row=3, padx=5, pady=(0, 5))
+
+    # Create continue and exit buttons
+    continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
+    continue_button.grid(column=0, row=4, sticky="e", padx=5, pady=5)
+    # Disable until user understands that the apertures and camera need to be retracted manually.
+    check_if_user_understands()
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+                             style="big.TButton")
+    exit_button.grid(column=1, row=4, sticky="w", padx=5, pady=5)
+
+    style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
+    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+
+    root.eval('tk::PlaceWindow . center')  # Center the window on the screen.
+
+    root.mainloop()
 
 
 def display_good_bye_message(microscope: Union[Interface, None]):
     """
-    :return: str: A good bye message.
+    Display goodbye message.
+
+    :param microscope: pyTEM Interface (or None):
+        The microscope interface, needed to return the microscope to a safe state if the user exits the script
+         through the quit button on the message box.
+
+    :return: None.
     """
     title = "Thank you for flying with Air TEM, we hope to see you again soon!"
     message = "Thank you for using BASF's in house MicroED automated imaging script. Please report any issues on " \
@@ -677,12 +748,12 @@ if __name__ == "__main__":
 
     # display_insert_camera_message(microscope=None, camera_name="BM-Ceta")
 
-    display_insert_sad_aperture_message(microscope=None)
+    # display_insert_sad_aperture_message(microscope=None)
 
-    display_beam_stop_center_spot_message(microscope=None)
+    # display_beam_stop_center_spot_message(microscope=None)
 
-    display_start_message(microscope=None)
+    # display_start_message(microscope=None)
 
-    # display_end_message(microscope=None, out_file="")
+    display_end_message(microscope=None, out_file="C:/Users/LuciukMR/PycharmProjects/dummy_path.tif")
 
     # display_good_bye_message(microscope=None)
