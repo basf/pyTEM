@@ -21,7 +21,7 @@ from tifffile.tifffile import RESUNIT
 from pyTEM.lib.RedirectStdStreams import RedirectStdStreams
 from pyTEM.lib.hs_metadata_to_dict import hs_metadata_to_dict
 from pyTEM.lib.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
-from pyTEM_scripts.lib.micro_ed import turn_off_hyperspy_warnings
+from pyTEM_scripts.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
 from pyTEM.lib.make_dict_jsonable import make_dict_jsonable
 from pyTEM.lib.Acquisition import Acquisition
 
