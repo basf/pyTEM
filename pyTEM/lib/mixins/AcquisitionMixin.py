@@ -5,6 +5,7 @@
 
 import time
 import warnings
+import pathlib
 
 import comtypes.client as cc
 import numpy as np
@@ -355,7 +356,7 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
 
         :param blanker_optimization: bool (optional; default is True):
             When we call the core Thermo Fisher acquisition command, the camera is blind for
-             one interval of exposure_time and then records for the next interval of exposure_time. Therefore the full
+             one interval of exposure_time and then records for the next interval of exposure_time. Therefore, the full
              acquisition takes 2 * exposure_time + some communication delays. In order to minimize sample exposure
              (material are often beam sensitive), we can opt to control the blanker in a parallel process where we
              only unblank when the camera is actually recording.
@@ -593,7 +594,7 @@ def acquisition_series_testing():
     """
     Test the acquisition series method.
     """
-    out_dir = package_directory.resolve() / "test" / "interface" / "test_images"
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() / "test" / "test_images"
     print("out_dir: " + str(out_dir))
 
     requested_exposure_time = 1  # s
@@ -604,22 +605,23 @@ def acquisition_series_testing():
 
 
     """ Perform an acquisition series with no multitasking """
-    # print("\n\n## Performing an acquisition series of 3 images with no multitasking ##")
-    # acq_series = interface.acquisition_series(num=num, camera_name="BM-Ceta",
-    #                                           exposure_time=requested_exposure_time,
-    #                                           sampling='4k',
-    #                                           blanker_optimization=False,
-    #                                           tilt_bounds=None,
-    #                                           verbose=True)
-    #
-    # print("\nLength of the obtained series: " + str(acq_series.length()))
-    # print("Mean exposures:")
-    # for i in range(num):
-    #     print(np.mean(acq_series[i].get_image()))
-    # print("Showing the first image in the obtained series:")
-    # print(acq_series[0].get_image())
-    # acq_series[0].show_image()
-    #
+    print("\n\n## Performing an acquisition series of 3 images with no multitasking ##")
+    num = 3
+    acq_series = interface.acquisition_series(num=num, camera_name="BM-Ceta",
+                                              exposure_time=requested_exposure_time,
+                                              sampling='4k',
+                                              blanker_optimization=False,
+                                              tilt_bounds=None,
+                                              verbose=True)
+
+    print("\nLength of the obtained series: " + str(acq_series.length()))
+    print("Mean exposures:")
+    for i in range(num):
+        print(np.mean(acq_series[i].get_image()))
+    print("Showing the first image in the obtained series:")
+    print(acq_series[0].get_image())
+    acq_series[0].show_image()
+
     # out_file_ = out_dir / "test_series_no_multitasking.mrc"
     # print("Saving series as " + str(out_file_))
     # acq_series.save_as_mrc(out_file=out_file_)
@@ -648,25 +650,25 @@ def acquisition_series_testing():
 
 
     """ Perform an acquisition with tilting but no blanker optimization """
-    print("\n\n## Performing an acquisition with titling (-2 deg -> 2 deg) but no blanker optimization ##")
-
-    tilt_bounds = np.asarray([-2, -1, 0, 1, 2])
-
-    acq_series = interface.acquisition_series(num=len(tilt_bounds) - 1, camera_name="BM-Ceta",
-                                              exposure_time=requested_exposure_time,
-                                              sampling='4k',
-                                              blanker_optimization=False,
-                                              tilt_bounds=tilt_bounds,
-                                              verbose=True)
-
-    print("Length of the obtained series: " + str(acq_series.length()))
-    print("Showing the first image in the obtained series:")
-    print(acq_series[0].get_image())
-    acq_series[0].show_image()
-
-    out_file_ = out_dir / "test_series_only_tilting.mrc"
-    print("Saving series as " + str(out_file_))
-    acq_series.save_as_mrc(out_file=out_file_)
+    # print("\n\n## Performing an acquisition with titling (-2 deg -> 2 deg) but no blanker optimization ##")
+    #
+    # tilt_bounds = np.asarray([-2, -1, 0, 1, 2])
+    #
+    # acq_series = interface.acquisition_series(num=len(tilt_bounds) - 1, camera_name="BM-Ceta",
+    #                                           exposure_time=requested_exposure_time,
+    #                                           sampling='4k',
+    #                                           blanker_optimization=False,
+    #                                           tilt_bounds=tilt_bounds,
+    #                                           verbose=True)
+    #
+    # print("Length of the obtained series: " + str(acq_series.length()))
+    # print("Showing the first image in the obtained series:")
+    # print(acq_series[0].get_image())
+    # acq_series[0].show_image()
+    #
+    # out_file_ = out_dir / "test_series_only_tilting.mrc"
+    # print("Saving series as " + str(out_file_))
+    # acq_series.save_as_mrc(out_file=out_file_)
 
 
     """ Perform an acquisition with both tilting and blanker optimization """
