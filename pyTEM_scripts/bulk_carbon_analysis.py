@@ -57,7 +57,8 @@ DESCRIPTION = "Given 16 natural light micrographs of a bulk carbon sample sandwi
 
 def bulk_carbon_analysis(verbose: bool = False):
     """
-    Please refer to the above description, or view using:
+    Given 16 natural light micrographs of a bulk carbon sample sandwiched between polarizers of varying cross, produce
+     both anisotropy and orientation maps. For more information, please refer to the above description, or view using:
 
         bulk_carbon_analysis --help
 
