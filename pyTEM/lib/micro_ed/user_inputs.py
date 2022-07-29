@@ -770,7 +770,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
                                           num_correctional_images=num_correctional_images_)
             total_exposure_time_required_ = num_correctional_images_ * exposure_time
 
-            exposure_time_label2.config(text=str(round(total_exposure_time_required_, 2)) + " seconds")
+            exposure_time_label2.config(text="~" + str(round(total_exposure_time_required_, 2)) + " seconds")
             exposure_time_label2.configure(foreground="black")
 
             calibration_samples_label.config(text="Calibration Images will be taken at the following tilt "
@@ -800,7 +800,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
                                      font=label_font, justify='center', wraplength=window_width)
     exposure_time_label1.grid(column=0, columnspan=2, row=4, padx=5, pady=(5, 0))
 
-    exposure_time_label2 = ttk.Label(root, text=str(round(total_exposure_time_required, 2)) + " seconds",
+    exposure_time_label2 = ttk.Label(root, text="~" + str(round(total_exposure_time_required, 2)) + " seconds",
                                      font=label_font + ('bold',), justify='center', wraplength=window_width)
     exposure_time_label2.grid(column=0, columnspan=2, row=5, padx=5, pady=(0, 5))
 
