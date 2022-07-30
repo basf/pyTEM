@@ -12,7 +12,7 @@ from tkinter import ttk, filedialog
 from typing import Tuple, Union
 from pathlib import Path
 
-from pyTEM_scripts.lib.micro_ed import add_basf_icon_to_tkinter_window
+from pyTEM_scripts.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 
 
 class GetInOutFile:
