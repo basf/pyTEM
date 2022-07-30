@@ -82,6 +82,9 @@ class Acquisition:
     A simplified, forward facing Acquisition class. This class holds, and allows the user to interact
      with, the results of a single acquisition (single 2D image).
 
+    The acquisition class only supports greyscale images. When initializing from an RGB image file, the image is
+     converted to unsigned 8-bit greyscale.
+
     Public Attributes:
         None
 
@@ -97,10 +100,11 @@ class Acquisition:
         """
         :param source: From what to initialize the Acquisition (optional; default is None).
             Supported sources include:
-                - A string or path object: In which case the Acquisition() object will be initialized from file.
+                - A string or path object: In which case the Acquisition() object will be initialized from file. When
+                    initializing from an RGB image file, the image is converted to unsigned 8-bit greyscale.
                 - A Thermo Fisher Acquisition object: In which case we will initialize from that.
                 - A 2D array: In which case we will initialize from that (metadata will be initialized to an empty
-                    dictionary).
+                    dictionary). Array must be representing a 2-dimensional greyscale image.
             If omitted or None, then we return a dummy Acquisition object with a random 16-bit image (good for testing).
         """
         if source is None:
@@ -128,7 +132,9 @@ class Acquisition:
                                   + str(e))
 
                 if mrc_file:
-                    # Then it is an MRC file, open with mrcfile
+                    # Then it is an MRC file, open with mrcfile.
+                    # No need to worry about checking for RGB -> storing RGB images in the MRC file format would
+                    #  deviate from MRC standards (and so we naively assume that nobody does it)!
                     with mrcfile.open(source) as mrc:
                         self.__image = mrc.data
                         # TODO: Figure out how to read in metadata from MRC file header
@@ -137,9 +143,29 @@ class Acquisition:
                         self.__metadata = {}
 
                 else:
-                    # Let's see if it is something hyperspy can load
+                    # Let's see if it is something hyperspy can load.
                     image = hs.load(source)
-                    self.__image = image.data
+
+                    # Convert from RGB if necessary.
+                    if image.is_rgb or image.is_rgba or image.is_rgbx:
+                        warnings.warn("Acquisition objects do not support RGB images, converting image to unsigned "
+                                      "8-bit greyscale.")
+                        image.change_dtype('uint8')
+
+                        # Ensure we have the expected dimensionality otherwise the RGB -> greyscale conversion is not
+                        #  going to work.
+                        if image.data.ndim != 3:
+                            raise Exception("The Acquisition class is only meant for single 2-dimensional images, "
+                                            "however the source data seems " + str(image.data.ndim - 1)
+                                            + "-dimensional. For image stacks, please use the AcquisitionSeries class.")
+
+                        # Use the standard matplotlib formula (luminosity method) to perform the conversion.
+                        r, g, b = image.data[:, :, 0], image.data[:, :, 1], image.data[:, :, 2]
+                        self.__image = 0.2989 * r + 0.5870 * g + 0.1140 * b
+
+                    else:
+                        # Image is already greyscale, we are good to go.
+                        self.__image = image.data
 
                     try:
                         # Try to load metadata.
@@ -177,6 +203,9 @@ class Acquisition:
         if self.__image.ndim != 2:
             raise Exception("The Acquisition class is only meant for single 2-dimensional images, however the source "
                             "data is not 2-dimensional. For image stacks, please use the AcquisitionSeries class.")
+        if isinstance(self.__image[0][0], np.void) or isinstance(self.__image[0][0], Tuple):
+            raise Exception("Image datatype not recognized. Please note that Acquisition only supports standard "
+                            "greyscale image datatypes.")
 
     def _set_image(self, image: ArrayLike) -> None:
         """
@@ -395,24 +424,27 @@ if __name__ == "__main__":
     Testing
     """
 
-    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() / "test" / "interface" / \
-        "test_images"
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve() / "test" / "test_images"
     # in_file_ = out_dir / "Tiltseies_SAD40_-20-20deg_0.5degps_1.1m.tif"
-    in_file_ = out_dir / "2_14.tif"
-    # out_file_ = out_dir / "checking_if_metadata_saved.tif"
+    # in_file_ = out_dir / "2_14.tif"
+
+    in_file1 = out_dir / "RGB" / "S1 0_0.tif"
+    acq1 = Acquisition(in_file1)
+    print("Average intensity of acq1: " + str(np.mean(acq1.get_image())))
+
+    in_file2 = out_dir / "RGB" / "S1 90_135.tif"
+    acq2 = Acquisition(in_file2)
+    print("Average intensity acq2: " + str(np.mean(acq2.get_image())))
+
+    in_file3 = out_dir / "RGB" / "S1 135_45.tif"
+    acq3 = Acquisition(in_file3)
+    print("Average intensity acq3: " + str(np.mean(acq3.get_image())))
+
+    acq3.show_image()
 
     # acq = Acquisition(None)
-    acq = Acquisition(in_file_)
-    acq_metadata = acq.get_metadata()
-    print("Metadata:")
-    print(acq_metadata)
-    print("Resolution unit:")
-    print(acq_metadata['ResolutionUnit'])
-    # print(type(acq_metadata['ResolutionUnit']))
-    # print(acq_metadata['ResolutionUnit'] == RESUNIT.CENTIMETER)
-    # print(acq.get_image().dtype)
-    # acq.show_image()
 
+    # out_file_ = out_dir / "RGB" / "rgb_mrc_file.mrc"
     # acq.save_as_mrc(out_file=out_file_)
     # acq.save_as_tif(out_file=out_file_)
 
