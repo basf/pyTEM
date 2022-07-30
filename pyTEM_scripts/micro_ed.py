@@ -1,9 +1,6 @@
 """
  Author:  Michael Luciuk
  Date:    Summer 2022
-
-This is BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows fast,
- high resolution 3D structure determination of small chemical compounds and biological macromolecules!
 """
 
 import argparse
@@ -24,10 +21,14 @@ from pyTEM_scripts.lib.micro_ed.user_inputs import get_tilt_range, get_acquisiti
     shift_correction_info
 from pyTEM_scripts.lib.micro_ed.build_full_shifts_array import build_full_shift_array
 
+DESCRIPTION = "This is BASF's in-house micro-crystal electron diffraction (MicroED) automated imaging script. " \
+              "MicroED allows for fast, high resolution 3D structure determination of small chemical compounds and " \
+              "biological macromolecules!"
+
 
 class MicroED:
     """
-    A MicroED objection that can be used to run MicroED experiments.
+    A MicroED object that can be used to run MicroED experiments.
     """
 
     def __init__(self):
@@ -228,8 +229,7 @@ def script_entry():
         micro_ed --help
 
     """
-    parser = argparse.ArgumentParser(description="BASF's in-house micro-crystal electron diffraction (MicroED) "
-                                                 "automated imaging script.")
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("-v", "--verbose", help="Increase verbosity, especially useful when debugging.",
                         action="store_true")
     args = parser.parse_args()
