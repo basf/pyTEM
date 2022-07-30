@@ -23,6 +23,7 @@ from tifffile.tifffile import RESUNIT
 from pyTEM.lib.RedirectStdStreams import RedirectStdStreams
 from pyTEM.lib.hs_metadata_to_dict import hs_metadata_to_dict
 from pyTEM.lib.make_dict_jsonable import make_dict_jsonable
+from pyTEM.lib.rgb_to_greyscale import rgb_to_greyscale
 from pyTEM.lib.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
 
 
@@ -158,10 +159,7 @@ class Acquisition:
                             raise Exception("The Acquisition class is only meant for single 2-dimensional images, "
                                             "however the source data seems " + str(image.data.ndim - 1)
                                             + "-dimensional. For image stacks, please use the AcquisitionSeries class.")
-
-                        # Use the standard matplotlib formula (luminosity method) to perform the conversion.
-                        r, g, b = image.data[:, :, 0], image.data[:, :, 1], image.data[:, :, 2]
-                        self.__image = 0.2989 * r + 0.5870 * g + 0.1140 * b
+                        self.__image = rgb_to_greyscale(rgb_image=image.data)
 
                     else:
                         # Image is already greyscale, we are good to go.
