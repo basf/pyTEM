@@ -20,11 +20,18 @@ class GetCorrectionalFactors:
      polarizer and analyzer are aligned at 45 deg you expect 100% intensity. However, this is not always the case. Such
      discrepancies may be due to inhomogeneities in, and a slight polarization of, the incident light.
 
-    This class displays a Tkinter window to help the user get correctional factors.
+    This class displays a Tkinter window to help the user get the correctional factors.
     """
 
     def __init__(self):
+        # Preallocate correctional factors' matrix.
         self.correctional_factors = np.full(shape=(4, 4), fill_value=np.nan, dtype='float64')
+
+        # So we don't have to type them in every time, hard code some default values for the observed intensities.
+        self.observed_intensity_default_values = [[100.0, 100.0, 100.0, 100.0],
+                                                  [91.2,  89.8,  83.4,  93.8],
+                                                  [49.2,  70.8,  79.5,  80.9],
+                                                  [89.0,  87.4,  84.5,  89.3]]
 
     def run(self) -> Union[np.ndarray, None]:
         """
@@ -84,13 +91,13 @@ class GetCorrectionalFactors:
         instructions1_label.grid(row=2, column=0, columnspan=6, padx=5, pady=(5, 0))
         instructions2 = "Correctional factors are shown in blue."
         instructions2_label = ttk.Label(root, text=instructions2, wraplength=window_width, font=font, justify='center')
-        instructions2_label.grid(row=3, column=0, columnspan=6, padx=5, pady=(0, 5))
+        instructions2_label.grid(row=3, column=0, columnspan=6, padx=5, pady=(0, 15))
         instructions2_label.config(foreground="blue")
 
         # Create analyzer and polarizer table labels.
-        analyzer_angle_label = ttk.Label(root, text="Analyzer Angle, \u03C6 [deg]", wraplength=125, font=font,
+        analyzer_angle_label = ttk.Label(root, text="Analyzer Angle, \u03C6 [deg]", wraplength=300, font=font,
                                          justify='center')
-        analyzer_angle_label.grid(row=4, column=2, padx=5, pady=5)
+        analyzer_angle_label.grid(row=4, column=2, columnspan=2, padx=5, pady=5)
         polarizer_angle_label = ttk.Label(root, text="Polarizer Angle, \u03B8 [deg]", wraplength=125, font=font,
                                           justify='center')
         polarizer_angle_label.grid(row=6, rowspan=2, column=0, padx=5, pady=5)
@@ -116,7 +123,7 @@ class GetCorrectionalFactors:
                     # User entered 0 or cleared the box.
                     self.correctional_factors[i][j] = np.inf
 
-                # Update the label.
+                # Update the corresponding label.
                 correctional_factor_labels[i][j].config(text=round(self.correctional_factors[i][j], 2))
 
             # If we have any invalid entries, then disable the continue button.
@@ -126,13 +133,32 @@ class GetCorrectionalFactors:
                 # All values should be fine
                 continue_button.config(state=tk.NORMAL)
 
+        def clear_observed_intensities(*args) -> None:
+            """
+            Clear all the observed intensity entry boxes.
+            :return: None.
+            """
+            for (_, _), observed_intensity_entry_box_ in np.ndenumerate(observed_intensity_entry_boxes):
+                observed_intensity_entry_box_.delete(0, 'end')
+            compute_correctional_factors_and_fill_in_labels()
+
+        def reset_observed_intensities(*args) -> None:
+            """
+            Set/reset all the observed intensity entry boxes to their default values.
+            :return: None.
+            """
+            clear_observed_intensities()
+            for (i, j), observed_intensity_entry_box_ in np.ndenumerate(observed_intensity_entry_boxes):
+                observed_intensity_entry_box_.insert(0, str(self.observed_intensity_default_values[i][j]))
+            compute_correctional_factors_and_fill_in_labels()
+
         # Offsets for the 4x4 entry box grid.
         row_offset = 6  # There are this many rows above us.
         col_offset = 2  # There are this many columns to the right of us.
 
         # Create variables to hold the observed intensities.
         observed_intensity_entry_str_vars = np.asarray(
-            [[tk.StringVar() for j in range(4)] for i in range(4)]
+            [[tk.StringVar() for _ in range(4)] for _ in range(4)]
         )
 
         # Add entry boxes in which the user can update the observed intensities.
@@ -141,7 +167,6 @@ class GetCorrectionalFactors:
         )
         for (row, col), observed_intensity_entry_box in np.ndenumerate(observed_intensity_entry_boxes):
             observed_intensity_entry_box.config(justify='center')
-            observed_intensity_entry_box.insert(0, str(100))
             observed_intensity_entry_box.grid(row=row_offset + 2 * row, column=col_offset + col, padx=5, pady=(5, 0))
 
         # Add labels where we show the current correctional factors in blue.
@@ -152,18 +177,26 @@ class GetCorrectionalFactors:
             correctional_factor_label.config(foreground="blue")
             correctional_factor_label.grid(row=row_offset + 2 * row + 1, column=col_offset + col, padx=5, pady=(0, 5))
 
+        # Add a reset button that will reset all observed intensities to their default values.
+        reset_button = ttk.Button(root, text="Reset", command=lambda: reset_observed_intensities(), style="big.TButton")
+        reset_button.grid(row=14, column=2, padx=5, pady=5)
+
+        # Add a clear button that will clear all observed intensities.
+        reset_button = ttk.Button(root, text="Clear", command=lambda: clear_observed_intensities(), style="big.TButton")
+        reset_button.grid(row=14, column=3, padx=5, pady=5)
+
         # Create a 'Continue' button that the user can click to proceed.
         continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
-        continue_button.grid(row=14, column=0, columnspan=6, padx=5, pady=5)
+        continue_button.grid(row=14, column=4, padx=5, pady=5)
 
         # Create an 'exit' button that the user can use to exit the script.
         exit_button = ttk.Button(root, text="Exit", command=lambda: sys.exit(), style="big.TButton")
-        exit_button.grid(row=15, column=0, columnspan=6, padx=5, pady=5)
+        exit_button.grid(row=14, column=5, padx=5, pady=5)
 
         # Add variable traces and initialize correctional factors from the initial entry box values.
         for (_, _), observed_intensity_entry_str_var in np.ndenumerate(observed_intensity_entry_str_vars):
             observed_intensity_entry_str_var.trace('w', compute_correctional_factors_and_fill_in_labels)
-        compute_correctional_factors_and_fill_in_labels()  # Fill in the labels
+        reset_observed_intensities()  # Also fills in the labels
 
         style.configure('big.TButton', font=(None, 10), foreground="blue4")
         style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
