@@ -20,6 +20,7 @@ from tifffile.tifffile import RESUNIT
 
 from pyTEM.lib.RedirectStdStreams import RedirectStdStreams
 from pyTEM.lib.hs_metadata_to_dict import hs_metadata_to_dict
+from pyTEM.lib.rgb_to_greyscale import rgb_to_greyscale
 from pyTEM.lib.stock_mrc_extended_header.get_stock_mrc_header import get_stock_mrc_extended_header
 from pyTEM_scripts.lib.micro_ed.hyperspy_warnings import turn_off_hyperspy_warnings
 from pyTEM.lib.make_dict_jsonable import make_dict_jsonable
@@ -56,6 +57,10 @@ class AcquisitionSeries:
 
     This class is especially helpful for managing image stacks, including reading and saving to file.
 
+    Notice that because the underlying Acquisition class only supports greyscale images, the same is true for
+     AcquisitionSeries objects. When initializing from an RGB image file/stack, the image(s) is(are) converted to
+     unsigned 8-bit greyscale.
+
     Public Attributes:
         None
 
@@ -70,16 +75,22 @@ class AcquisitionSeries:
         """
         :param source: From what to initialize the AcquisitionSeries (optional; default is None).
             Supported sources include:
+
                 - A string or path object: In which case the AcquisitionSeries() object will be initialized from file
                     (probably this file contains an image stack, but it could also be a single-image file in which case
                     the returned series will only be 1 acquisition long). The file's metadata will be loaded into each
-                    acquisition.
+                    acquisition. When initializing from an RGB image/stack file, the image(s) is(are) converted to
+                    unsigned 8-bit greyscale.
+                    
                 - A 2-dimensional array: In which case the returned series will only be 1 acquisition long (the single
-                    acquisition's metadata will be initialized to an empty dictionary).
+                    acquisition's metadata will be initialized to an empty dictionary). Array must be representing
+                    a 2-dimensional greyscale image.
+
                 - A 3-dimensional array: In which case we assume an image stack and iterate over the first axis,
                     loading in 2-dimensional images. Each acquisition's metadata will be initialized to an empty
-                    dictionary.
-                - None: In which case, we return an empty AcquisitionSeries abject. Just like all AcquisionSeries
+                    dictionary. Array must be representing a stack of 2-dimensional greyscale image.
+
+                - None: In which case, we return an empty AcquisitionSeries abject. Just like all AcquisitionSeries
                     objects, this empty series can always be appended to later.
         """
         self.__acquisitions = []
@@ -102,7 +113,9 @@ class AcquisitionSeries:
                               "MRC file: " + str(e))
 
             if mrc_file:
-                # Then it is an MRC file, open with mrcfile
+                # Then it is an MRC file, open with mrcfile.
+                # No need to worry about checking for RGB -> storing RGB images in the MRC file format would
+                #  deviate from MRC standards (and so we naively assume that nobody does it)!
                 with mrcfile.open(source) as mrc:
                     image_stack_arr = mrc.data
                     metadata = {}
@@ -111,10 +124,38 @@ class AcquisitionSeries:
                                   "returned AcquisitionSeries object have no metadata!")
 
             else:
-                # Let's see if it is something Hyperspy can load
+                # Let's see if it is something Hyperspy can load.
                 try:
                     hs_data = hs.load(str(source))
-                    image_stack_arr = hs_data.data
+
+                    if hs_data.is_rgb or hs_data.is_rgba or hs_data.is_rgbx:
+                        warnings.warn("Acquisition objects do not support RGB images, converting image to unsigned "
+                                      "8-bit greyscale.")
+                        hs_data.change_dtype('uint8')
+
+                        # Ensure we have the expected dimensionality otherwise the RGB -> greyscale conversion is not
+                        # going to work.
+                        if hs_data.data.ndim == 3:
+                            # Then we have a single 2D image.
+                            image_stack_arr = rgb_to_greyscale(rgb_image=hs_data.data)
+
+                        elif hs_data.data.ndim == 4:
+                            # Then we have an image stack, loop through and covert to grayscale.
+                            num_images, x_dim, y_dim, channels = np.shape(hs_data.data)
+                            image_stack_arr = np.full(shape=(num_images, x_dim, y_dim), fill_value=np.nan,
+                                                      dtype='uint8')
+                            for i in range(num_images):
+                                image_stack_arr[i] = rgb_to_greyscale(rgb_image=hs_data.data[i])
+
+                        else:
+                            # Then we have a problem.
+                            raise Exception("AcquisitionSeries is unable to interpret " + str(hs_data.ndim - 1)
+                                            + "-dimensional RGB data.")
+
+                    else:
+                        # Image is already greyscale, we are good to go.
+                        image_stack_arr = hs_data.data
+
                 except BaseException as e:
                     warnings.warn("The Acquisition() constructor received an invalid source.")
                     raise e
@@ -442,9 +483,9 @@ if __name__ == "__main__":
     """
     Testing.
     """
-    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve().parent.resolve() / "test" / "interface" / \
-        "test_images"
-    in_file_ = out_dir / "2_11_aligned.tif"
+    out_dir = pathlib.Path(__file__).parent.resolve().parent.resolve() / "test" / "test_images"
+    in_file_ = out_dir / "RGB" / "S1 0_0.tif"
+    # in_file_ = out_dir / "RGB" / "rgb_image_stack.tif"
     # in_file_ = out_dir / "2_11.tif"
     # in_file_ = out_dir / "cat.jpeg"
     acq_series = AcquisitionSeries(in_file_)
@@ -452,9 +493,10 @@ if __name__ == "__main__":
     print(acq_series)
     print("Series length: " + str(acq_series.length()))
     print(acq_series[0])
-    print(acq_series.image_dtype())
+    print("Series datatype: " + str(acq_series.image_dtype()))
     print(acq_series[0].get_image())
     print(acq_series[0].get_metadata())
+    print("Average intensity of the first image: " + str(np.mean(acq_series[0].get_image())))
 
     acq_series[0].show_image()
     # acq_series.append(Acquisition(None))
