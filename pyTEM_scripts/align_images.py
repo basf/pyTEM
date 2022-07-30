@@ -20,8 +20,6 @@ DESCRIPTION = "Read in some images (possibly from an image stack, possibly from 
               "\n       for EFTEMmImage Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36."
 
 
-# TODO: Add support for RGB images as per Thorsten's request
-
 def align_images():
     """
     Read in some images (possibly from a stack, possibly from a bunch of single image files), align the images, and
@@ -69,7 +67,6 @@ def script_entry():
         align_images --help
 
     """
-    print("Entered at the right point.")
     parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawTextHelpFormatter)
     parser.parse_args()
     align_images()
