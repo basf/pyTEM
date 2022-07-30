@@ -17,15 +17,15 @@ import numpy as np
 import comtypes.client as cc
 
 # Mixins
-from pyTEM.lib.mixins import AcquisitionMixin
+from pyTEM.lib.mixins.AcquisitionMixin import AcquisitionMixin
 from pyTEM.lib.mixins.MagnificationMixin import MagnificationMixin
 from pyTEM.lib.mixins.ImageShiftMixin import ImageShiftMixin
 from pyTEM.lib.mixins.BeamShiftMixin import BeamShiftMixin
-from pyTEM.lib.mixins import ModeMixin
+from pyTEM.lib.mixins.ModeMixin import ModeMixin
 from pyTEM.lib.mixins.ScreenMixin import ScreenMixin
-from pyTEM.lib.mixins import BeamBlankerMixin
-from pyTEM.lib.mixins import StageMixin
-from pyTEM.lib.mixins import VacuumMixin
+from pyTEM.lib.mixins.BeamBlankerMixin import BeamBlankerMixin
+from pyTEM.lib.mixins.StageMixin import StageMixin
+from pyTEM.lib.mixins.VacuumMixin import VacuumMixin
 
 # Other library imports
 from pyTEM.lib.StagePosition import StagePosition

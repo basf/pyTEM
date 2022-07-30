@@ -11,8 +11,8 @@ import comtypes.client as cc
 from typing import Union
 from numpy.typing import ArrayLike
 
-from pyTEM.lib.mixins import BeamBlankerMixin
-from pyTEM.lib.mixins import StageMixin
+from pyTEM.lib.mixins.BeamBlankerMixin import BeamBlankerMixin
+from pyTEM.lib.mixins.StageMixin import StageMixin
 from pyTEM.lib.tem_tilt_speed import tem_tilt_speed
 
 
