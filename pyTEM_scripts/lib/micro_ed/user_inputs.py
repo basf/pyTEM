@@ -7,15 +7,16 @@ import time
 import warnings
 import math
 
+import numpy as np
+import tkinter as tk
+
 from tkinter import ttk
 from tkinter import filedialog
 from datetime import date
 from typing import Union, Tuple
 
-import numpy as np
-import tkinter as tk
-
 from pyTEM.Interface import Interface
+
 from pyTEM_scripts.lib.micro_ed.add_basf_icon_to_tkinter_window import add_basf_icon_to_tkinter_window
 from pyTEM_scripts.lib.micro_ed.exit_script import exit_script
 from pyTEM_scripts.lib.micro_ed.messages import get_automated_alignment_message
