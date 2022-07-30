@@ -7,6 +7,7 @@ import argparse
 
 from pyTEM.lib.Acquisition import Acquisition
 from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
+from pyTEM_scripts.lib.bulk_carbon_analysis.GetCorrectionalFactors import GetCorrectionalFactors
 
 from pyTEM_scripts.lib.bulk_carbon_analysis.GetInOutFiles import GetInOutFiles
 
@@ -75,18 +76,23 @@ def bulk_carbon_analysis(verbose: bool = False):
 
     if len(in_files) != 16:
         raise Exception("Error: bulk_carbon_analysis() received the wrong number of input files. "
-                        "Expected 16, received " + str(len(in_files)))
+                        "Expected 16, received " + str(len(in_files)) + ".")
+
+    # Prompt the user for correctional factors
+    if verbose:
+        print("Prompting the user for correctional factors...")
+    correctional_factors = GetCorrectionalFactors().run()
 
     # Use the pyTEM Acquisition and AcquisitionSeries classes to make our lives a little easier.
     if verbose:
-        print("\nLoading the 16 in files into a AcquisitionSeries object.")
+        print("\nLoading the 16 in files into a AcquisitionSeries object...")
     acq_series = AcquisitionSeries()
     for file in in_files:
         acq_series.append(Acquisition(file))
 
     # There shouldn't be any drift, but sometimes there is some.
     if verbose:
-        print("\nAligning series.")
+        print("\nAligning series...")
     acq_series.align()
 
     raise NotImplementedError  # TODO
