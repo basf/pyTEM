@@ -1,5 +1,9 @@
-from setuptools import setup
+"""
+ Author:  Michael Luciuk
+ Date:    Summer 2022
+"""
 
+from setuptools import setup, find_packages
 from pathlib import Path
 
 this_directory = Path(__file__).parent
@@ -16,7 +20,7 @@ setup(
     keywords=['transmission electron microscopy', 'TEM', 'microscopy', 'electron microscopy',
               'micro-crystal electron diffraction', 'uED'],
     license='MIT',
-    packages=['pyTEM'],
+    packages=find_packages(exclude=['*.test', '*.test.*', 'test.*', 'test']),
     python_requires='>=3.8',
     install_requires=['numpy',
                       'pandas',
@@ -30,4 +34,12 @@ setup(
                       'pathlib',
                       'Pillow',
                       ],
+    entry_points='''
+                [console_scripts]
+                align_images=pyTEM_scripts.align_images:script_entry
+                bulk_carbon_analysis=pyTEM_scripts.bulk_carbon_analysis:script_entry
+                micro_ed=pyTEM_scripts.micro_ed:script_entry
+            ''',
+    package_data={'': ['*.ico', '*.npy']},
+    include_package_data=True,
 )
