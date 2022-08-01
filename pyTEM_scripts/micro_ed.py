@@ -199,6 +199,11 @@ class MicroED:
                     print("Downsampling images...")
                 acq_stack.downsample()
 
+            # Align the series.
+            if verbose:
+                print("Aligning images...")
+            acq_stack.align()
+
             # Save the image stack to file.
             if verbose:
                 print("Saving image stack to file as: " + out_file)
