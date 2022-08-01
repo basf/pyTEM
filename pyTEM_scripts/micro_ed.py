@@ -4,6 +4,7 @@
 """
 
 import argparse
+import os
 import warnings
 
 import numpy as np
@@ -136,7 +137,7 @@ class MicroED:
             alpha_arr = get_tilt_range(microscope=self.microscope, camera_name=camera_name)
 
             # Get the out path. (Where in the file system should we save the results?)
-            out_file = get_out_file(microscope=self.microscope)
+            out_file, save_as_stack = get_out_file(microscope=self.microscope)
 
             # Fnd out if the user wants to use the automated image alignment functionality, and if so which angles they
             #  would like to sample.
@@ -204,10 +205,21 @@ class MicroED:
                 print("Aligning images...")
             acq_stack.align()
 
-            # Save the image stack to file.
-            if verbose:
-                print("Saving image stack to file as: " + out_file)
-            acq_stack.save_to_file(out_file=out_file)
+            # Save results to file.
+            if save_as_stack:
+                if verbose:
+                    print("Saving results to file as a multi-image stack: " + out_file)
+                acq_stack.save_to_file(out_file=out_file)
+
+            else:
+                if verbose:
+                    print("Saving the results to file as a bunch of single-image files.")
+                file_name_base, file_extension = os.path.splitext(out_file)
+                for i, acq in enumerate(acq_stack):
+                    this_image_out_file = file_name_base + "_" + str(i) + file_extension
+                    if verbose:
+                        print("  Saving image #" + str(i) + " to file as: " + out_file)
+                    acq.save_to_file(out_file=this_image_out_file, extension=file_extension)
 
             # The acquisition is now complete, inform the user.
             display_end_message(microscope=self.microscope, out_file=out_file)
