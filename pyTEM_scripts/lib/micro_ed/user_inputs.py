@@ -14,6 +14,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from datetime import date
 from typing import Union, Tuple
+from pathlib import Path
 
 from pyTEM.Interface import Interface
 
@@ -599,92 +600,162 @@ def get_acquisition_parameters(microscope: Union[Interface, None]) -> Tuple[str,
     return str(camera_name.get()), float(integration_time.get()), str(sampling.get())[0:2], bool(downsample.get())
 
 
-def get_out_file(microscope: Union[Interface, None]) -> str:
+def get_out_file(microscope: Union[Interface, None]) -> Tuple[str, bool]:
     """
-    Get the out file, this is where we will store the results of the microED sequence.
+    Using some Tkinter windows, to get the out file information from the user.
 
     :param microscope: pyTEM Interface (or None):
-        The microscope interface, needed to return the microscope to a safe state if the user exits the script
-         through the quit button on the message box.
+            The microscope interface, needed to return the microscope to a safe state if the user exits the script
+             through the quit button on the message box.
 
-    :return: str:
-        The out path where the MicroED acquisition results will be saved.
+    :return:
+        out_file_path: str:
+            The complete out file path, including the file extension.
+        save_as_stack: bool:
+            True: Save results in a single image stack file.
+            False: Save each image in its own individual file.
+    """
+    return GetOutFile(microscope=microscope).run()
+
+
+class GetOutFile:
+    """
+    Helper class to get out file information from the user.
     """
 
-    # First we will create a pop-up warning the user they are about to have to select an out directory.
-    root = tk.Tk()
-    style = ttk.Style()
+    def __init__(self, microscope: Union[Interface, None]):
+        """
+        :param microscope: pyTEM Interface (or None):
+            The microscope interface, needed to return the microscope to a safe state if the user exits the script
+             through the quit button on the message box.
+        """
+        self.microscope = microscope
+        self.out_directory = str(Path.home())
 
-    root.title("A life vest is located under or between your seat.")
-    add_basf_icon_to_tkinter_window(root)
+        # Preallocate, put we can't build these string vars until we have a tkinter window.
+        self.file_extension_str_var = None
+        self.stack_str_var = None
 
-    # Build a message, letting the user know that we need directory and file name information
-    message = ttk.Label(root, text="Where would you like to save the results?", font=(None, 15), justify='center')
-    message.grid(column=0, row=0, sticky='w', padx=5, pady=5)
+    def run(self) -> Tuple[str, bool]:
+        """
+        Get the out file path.
 
-    # Create 'select directory' and 'exit' buttons
-    select_directory_button = ttk.Button(root, text="Select Directory", command=lambda: root.destroy(),
-                                         style="big.TButton")
-    select_directory_button.grid(column=0, row=1, padx=5, pady=5)
-    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
-                             style="big.TButton")
-    exit_button.grid(column=0, row=2, padx=5, pady=5)
+        :return:
+            out_file_path: str:
+                The complete out file path, including the file extension.
+            save_as_stack: bool:
+                True: Save results in a single image stack file.
+                False: Save each image in its own individual file.
+        """
+        # Create a new window in which the user can fill in the remaining in file path information.
+        root = tk.Tk()
+        style = ttk.Style()
+        max_window_width = 500
 
-    style.configure('big.TButton', font=(None, 10), foreground="blue4")
+        root.title("If you have any questions, please don’t hesitate to ask one of our crew members.")
+        add_basf_icon_to_tkinter_window(root)
 
-    root.mainloop()
+        def change_out_directory():
+            """
+            Change/update the out directory.
+            :return: None, but the self.out_directory is updated with the new out directory of the users choosing.
+            """
+            leaf = tk.Tk()
+            leaf.title("Please select an out directory.")
+            add_basf_icon_to_tkinter_window(leaf)
+            leaf.geometry("{width}x{height}".format(width=500, height=leaf.winfo_height()))
 
-    # Make the user select an out directory
-    root = tk.Tk()
-    root.title("As a reminder, smoking is not permitted in any area of the aircraft, including the lavatories.")
-    add_basf_icon_to_tkinter_window(root)
-    root.geometry("{width}x{height}".format(width=500, height=root.winfo_height()))
-    root.directory = filedialog.askdirectory()
-    out_dir = str(root.directory)
+            self.out_directory = filedialog.askdirectory()
+            path_label.configure(text=self.out_directory + "/")
+            leaf.destroy()
 
-    root.destroy()
+        def update_file_extension_options_based_on_stack():
+            """
+            The list of legal file extensions varies based on whether we are saving as a stack or as a list of
+             individual files.
+            :return: None, but self.file_extension_str_var is updated.
+            """
+            if self.stack_str_var.get() == "True":
+                # Then we are saving as a stack.
+                file_extension_options = ['.mrc', '.tif']
+            else:
+                # We are saving as multiple single image files, and therefore have more freedom.
+                file_extension_options = ['.mrc', '.tif', '.jpeg', '.png']
 
-    # Make the user select a file-name
-    root = tk.Tk()
-    style = ttk.Style()
+            # Update the drop-down menu with the new list of options.
+            menu = file_extension_menu["menu"]
+            file_extension_menu["menu"].delete(0, "end")
+            for string in file_extension_options:
+                menu.add_command(label=string, command=lambda value=string: self.file_extension_str_var.set(value))
 
-    root.title("If you have any questions, please don’t hesitate to ask one of our crew members.")
-    add_basf_icon_to_tkinter_window(root)
+            # Make sure the current file extension is a valid one from the current set of options.
+            if self.file_extension_str_var.get() not in file_extension_options:
+                self.file_extension_str_var.set(file_extension_options[0])
 
-    message = ttk.Label(root, text="Please complete the out file path:", font=(None, 15))
-    message.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
+        complete_out_file_label = ttk.Label(root, text="Where would you like to save the results?", font=(None, 15),
+                                            wraplength=max_window_width, justify='center')
+        complete_out_file_label.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
 
-    # Label the filename box with the out directory
-    path_label = ttk.Label(root, text=out_dir + "/")
-    path_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
+        # Label the filename box with the out directory
+        path_label = ttk.Label(root, text=self.out_directory + "\\", wraplength=max_window_width, justify='center')
+        path_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
 
-    # Create an entry box for the user to enter the file name.
-    file_name = tk.StringVar()
-    file_name_entry_box = ttk.Entry(root, textvariable=file_name)
-    file_name_entry_box.insert(0, "MicroED_" + str(date.today()))  # Default value
-    file_name_entry_box.grid(column=1, row=1, padx=5, pady=5)
+        # Create an entry box for the user to enter the file name.
+        file_name_str_var = tk.StringVar()
+        file_name_entry_box = ttk.Entry(root, textvariable=file_name_str_var)
+        file_name_entry_box.insert(0, "micro_ed_" + str(date.today()))  # Default value
+        file_name_entry_box.grid(column=1, row=1, padx=5, pady=5)
 
-    # Add a dropdown menu to get the file extension
-    file_extension_options = ['.mrc', '.tif']
-    file_extension = tk.StringVar()
-    file_extension_menu = ttk.OptionMenu(root, file_extension, file_extension_options[0], *file_extension_options)
-    file_extension_menu.grid(column=2, row=1, sticky="w", padx=5, pady=5)
+        # Add a dropdown menu to get the file extension
+        self.file_extension_str_var = tk.StringVar()
+        file_extension_menu = ttk.OptionMenu(root, self.file_extension_str_var)
+        file_extension_menu.grid(column=2, row=1, sticky="w", padx=5, pady=5)
 
-    # Create continue and exit buttons
-    continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=0, columnspan=3, row=2, padx=5, pady=5)
-    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
-                             style="big.TButton")
-    exit_button.grid(column=0, columnspan=3, row=3, padx=5, pady=5)
+        # Create a button that, when clicked, will update the out_file directory.
+        out_file_button = ttk.Button(root, text="Update Out Directory", command=lambda: change_out_directory(),
+                                     style="big.TButton")
+        out_file_button.grid(column=0, columnspan=3, row=2, padx=5, pady=5)
 
-    style.configure('big.TButton', font=(None, 10), foreground="blue4")
-    root.eval('tk::PlaceWindow . center')  # Center the window on the screen
+        # Create a label asking the user if they would like to save the image as a stack or as several individual files.
+        complete_out_file_label = ttk.Label(root, text="Would you like to save the results as a multi-image stack "
+                                                       "or as multiple single-image files?",
+                                            font=(None, 15), wraplength=max_window_width, justify='center')
+        complete_out_file_label.grid(column=0, row=3, columnspan=3, padx=5, pady=5)
 
-    root.mainloop()
+        # Add radio buttons for single image stack or multiple single-image files.
+        self.stack_str_var = tk.StringVar(value="True")
+        stack_str_var_radio_button1 = ttk.Radiobutton(root, text="Single Image Stack", variable=self.stack_str_var,
+                                                      value="True", style="big.TRadiobutton",
+                                                      command=lambda: update_file_extension_options_based_on_stack())
+        stack_str_var_radio_button2 = ttk.Radiobutton(root, text="Multiple Single Image Files", value="False",
+                                                      style="big.TRadiobutton", variable=self.stack_str_var,
+                                                      command=lambda: update_file_extension_options_based_on_stack())
+        stack_str_var_radio_button1.grid(column=0, columnspan=3, row=4, pady=(5, 0))
+        stack_str_var_radio_button2.grid(column=0, columnspan=3, row=5, pady=(0, 15))
 
-    # Build and return the complete path
-    out_path = out_dir + "/" + str(file_name.get()) + str(file_extension.get())
-    return out_path
+        # Add continue and quit buttons.
+        continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
+        continue_button.grid(column=0, columnspan=3, row=6, padx=5, pady=5)
+        exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
+                                 style="big.TButton")
+        exit_button.grid(column=0, columnspan=3, row=7, padx=5, pady=5)
+
+        style.configure('big.TButton', font=(None, 10), foreground="blue4")
+        style.configure('big.TRadiobutton', font=(None, 11))
+
+        # Just to make sure dropdown file extension is consistent with whether we are saving as a stack.
+        update_file_extension_options_based_on_stack()
+
+        root.eval('tk::PlaceWindow . center')  # Center the window on the screen.
+
+        root.mainloop()
+
+        # Build and return the complete path
+        out_path = self.out_directory + "/" + str(file_name_str_var.get()) + str(self.file_extension_str_var.get())
+        if self.stack_str_var.get() == "True":
+            return out_path, True
+        else:
+            return out_path, False
 
 
 def shift_correction_info(microscope: Union[Interface, None], tilt_start: float, tilt_stop: float,
@@ -980,11 +1051,12 @@ if __name__ == "__main__":
 
     """ Test getting out file """
     import os
-    out_file = get_out_file(None)
-    print("Full out file: " + str(out_file))
-    file_name_base, file_extension = os.path.splitext(out_file)
+    out_file__, save_as_stack__ = get_out_file(None)
+    print("Full out file: " + str(out_file__))
+    file_name_base, file_extension = os.path.splitext(out_file__)
     print("File name: " + str(file_name_base))
     print("File extension: " + str(file_extension))
+    print("Save as stack: " + str(save_as_stack__))
 
     """ Test getting shift correction samples """
     # use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=35, tilt_stop=-5,
