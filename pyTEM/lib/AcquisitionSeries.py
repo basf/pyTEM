@@ -143,7 +143,7 @@ class AcquisitionSeries:
                             # Then we have an image stack, loop through and covert to grayscale.
                             num_images, x_dim, y_dim, channels = np.shape(hs_data.data)
                             image_stack_arr = np.full(shape=(num_images, x_dim, y_dim), fill_value=np.nan,
-                                                      dtype='uint8')
+                                                      dtype=np.uint8)
                             for i in range(num_images):
                                 image_stack_arr[i] = rgb_to_greyscale(rgb_image=hs_data.data[i])
 
