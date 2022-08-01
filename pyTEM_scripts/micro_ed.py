@@ -133,8 +133,13 @@ class MicroED:
             # Confirm that the requested camera is actually inserted.
             display_insert_camera_message(microscope=self.microscope, camera_name=camera_name)
 
-            # Get tilt range info
+            # Get tilt range info.
+            # Notice alpha_arr is a complete array of alpha start-stop values.
             alpha_arr = get_tilt_range(microscope=self.microscope, camera_name=camera_name)
+
+            # Compute alphas - the interval midpoints.
+            alpha_step = alpha_arr[1] - alpha_arr[0]
+            alphas = alpha_arr[0:-1] + alpha_step / 2
 
             # Get the out path. (Where in the file system should we save the results?)
             out_file, save_as_stack = get_out_file(microscope=self.microscope)
@@ -146,15 +151,13 @@ class MicroED:
                                                                    exposure_time=shift_calibration_exposure_time)
             if use_shift_corrections:
                 # Compute the image shifts required to keep the currently centered section of the specimen centered at
-                #  all alpha tilt angles. While alpha_arr is a complete array of alpha start-stop values, we need to
-                # compute alphas - the interval midpoints which the correctional shifts will be based.
-                alpha_step = alpha_arr[1] - alpha_arr[0]
-                alphas = alpha_arr[0:-1] + alpha_step / 2
+                #  all alpha tilt angles.
 
                 # Sample at the requested tilt angles.
                 shifts_at_samples = obtain_shifts(microscope=self.microscope, alphas=samples, camera_name=camera_name,
                                                   sampling=shift_calibration_sampling, batch_wise=False,
                                                   exposure_time=shift_calibration_exposure_time, verbose=verbose)
+
                 if shifts_at_samples is None:
                     # We will proceed without compensatory image shifts, just make shifts all zero
                     warnings.warn("Automatic shift alignment failed :( proceeding without compensatory image shifts.")
@@ -213,16 +216,16 @@ class MicroED:
 
             else:
                 if verbose:
-                    print("Saving the results to file as a bunch of single-image files.")
+                    print("Saving the results to file as " + str(acq_stack.length()) + " single-image files.")
                 file_name_base, file_extension = os.path.splitext(out_file)
                 for i, acq in enumerate(acq_stack):
-                    this_image_out_file = file_name_base + "_" + str(i) + file_extension
+                    this_image_out_file = file_name_base + "_" + str(round(alphas[i], 1)) + file_extension
                     if verbose:
-                        print("  Saving image #" + str(i) + " to file as: " + out_file)
+                        print("  Saving image #" + str(i + 1) + " to file as: " + this_image_out_file)
                     acq.save_to_file(out_file=this_image_out_file, extension=file_extension)
 
             # The acquisition is now complete, inform the user.
-            display_end_message(microscope=self.microscope, out_file=out_file)
+            display_end_message(microscope=self.microscope, out_file=out_file)  # TODO
 
             # Give thanks to the user, and direct them to report issues on GitHub.
             display_good_bye_message(microscope=self.microscope)
