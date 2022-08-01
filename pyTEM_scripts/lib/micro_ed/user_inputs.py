@@ -678,9 +678,11 @@ class GetOutFile:
             if self.stack_str_var.get() == "True":
                 # Then we are saving as a stack.
                 file_extension_options = ['.mrc', '.tif']
+                file_name_index_label.config(text="")  # We have no index.
             else:
                 # We are saving as multiple single image files, and therefore have more freedom.
                 file_extension_options = ['.mrc', '.tif', '.jpeg', '.png']
+                file_name_index_label.config(text="_<image number>")  # We need to index the files.
 
             # Update the drop-down menu with the new list of options.
             menu = file_extension_menu["menu"]
@@ -694,10 +696,10 @@ class GetOutFile:
 
         complete_out_file_label = ttk.Label(root, text="Where would you like to save the results?", font=(None, 15),
                                             wraplength=max_window_width, justify='center')
-        complete_out_file_label.grid(column=0, row=0, columnspan=3, padx=5, pady=5)
+        complete_out_file_label.grid(column=0, row=0, columnspan=4, padx=5, pady=5)
 
         # Label the filename box with the out directory
-        path_label = ttk.Label(root, text=self.out_directory + "\\", wraplength=max_window_width, justify='center')
+        path_label = ttk.Label(root, text=self.out_directory + "\\", justify='center')
         path_label.grid(column=0, row=1, sticky="e", padx=5, pady=5)
 
         # Create an entry box for the user to enter the file name.
@@ -706,21 +708,27 @@ class GetOutFile:
         file_name_entry_box.insert(0, "micro_ed_" + str(date.today()))  # Default value
         file_name_entry_box.grid(column=1, row=1, padx=5, pady=5)
 
+        # Add a label for image index (should it be required to differential between multiple single-image files
+        #  that would otherwise have the same name).
+        file_name_index_label = ttk.Label(root, text="", justify='center')
+        file_name_index_label.grid(column=2, row=1, padx=5, pady=5)
+        file_name_index_label.config(foreground="blue")
+
         # Add a dropdown menu to get the file extension
         self.file_extension_str_var = tk.StringVar()
         file_extension_menu = ttk.OptionMenu(root, self.file_extension_str_var)
-        file_extension_menu.grid(column=2, row=1, sticky="w", padx=5, pady=5)
+        file_extension_menu.grid(column=3, row=1, sticky="w", padx=5, pady=5)
 
         # Create a button that, when clicked, will update the out_file directory.
         out_file_button = ttk.Button(root, text="Update Out Directory", command=lambda: change_out_directory(),
                                      style="big.TButton")
-        out_file_button.grid(column=0, columnspan=3, row=2, padx=5, pady=5)
+        out_file_button.grid(column=0, columnspan=4, row=2, padx=5, pady=5)
 
         # Create a label asking the user if they would like to save the image as a stack or as several individual files.
         complete_out_file_label = ttk.Label(root, text="Would you like to save the results as a multi-image stack "
                                                        "or as multiple single-image files?",
                                             font=(None, 15), wraplength=max_window_width, justify='center')
-        complete_out_file_label.grid(column=0, row=3, columnspan=3, padx=5, pady=5)
+        complete_out_file_label.grid(column=0, row=3, columnspan=4, padx=5, pady=5)
 
         # Add radio buttons for single image stack or multiple single-image files.
         self.stack_str_var = tk.StringVar(value="True")
@@ -730,15 +738,15 @@ class GetOutFile:
         stack_str_var_radio_button2 = ttk.Radiobutton(root, text="Multiple Single Image Files", value="False",
                                                       style="big.TRadiobutton", variable=self.stack_str_var,
                                                       command=lambda: update_file_extension_options_based_on_stack())
-        stack_str_var_radio_button1.grid(column=0, columnspan=3, row=4, pady=(5, 0))
-        stack_str_var_radio_button2.grid(column=0, columnspan=3, row=5, pady=(0, 15))
+        stack_str_var_radio_button1.grid(column=0, columnspan=4, row=4, pady=(5, 0))
+        stack_str_var_radio_button2.grid(column=0, columnspan=4, row=5, pady=(0, 15))
 
         # Add continue and quit buttons.
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
-        continue_button.grid(column=0, columnspan=3, row=6, padx=5, pady=5)
+        continue_button.grid(column=0, columnspan=4, row=6, padx=5, pady=5)
         exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=self.microscope, status=1),
                                  style="big.TButton")
-        exit_button.grid(column=0, columnspan=3, row=7, padx=5, pady=5)
+        exit_button.grid(column=0, columnspan=4, row=7, padx=5, pady=5)
 
         style.configure('big.TButton', font=(None, 10), foreground="blue4")
         style.configure('big.TRadiobutton', font=(None, 11))
