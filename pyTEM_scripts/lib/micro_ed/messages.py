@@ -86,7 +86,7 @@ def display_second_condenser_message(microscope: Union[Interface, None]) -> None
     window_width = 650
 
     # Display the first part of the message
-    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width, font=(None, 15), justify='center')
     upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
     def check_if_intensity_optimized() -> None:
@@ -117,7 +117,7 @@ def display_second_condenser_message(microscope: Union[Interface, None]) -> None
     lens_intensity_optimized_checkbutton.grid(column=0, columnspan=2, row=2, padx=5, pady=(0, 5))
 
     # Display the other part of the message
-    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width, font=(None, 15), justify='center')
     lower_message.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
 
     # Create continue and exit buttons
@@ -330,7 +330,7 @@ def display_insert_camera_message(microscope: Union[Interface, None], camera_nam
     window_width = 650
 
     # Display the first part of the message
-    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width, font=(None, 15), justify='center')
     upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
     def check_if_camera_is_inserted() -> None:
@@ -351,7 +351,7 @@ def display_insert_camera_message(microscope: Union[Interface, None], camera_nam
     camera_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=5)
 
     # Display the other part of the message
-    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width, font=(None, 15), justify='center')
     lower_message.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
 
     # Create continue and exit buttons
@@ -394,7 +394,7 @@ def display_insert_sad_aperture_message(microscope: Union[Interface, None]) -> N
     window_width = 650
 
     # Display the first part of the message
-    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width, font=(None, 15), justify='center')
     upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
     def check_if_aperture_is_inserted() -> None:
@@ -415,7 +415,7 @@ def display_insert_sad_aperture_message(microscope: Union[Interface, None]) -> N
     aperture_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=5)
 
     # Display the other part of the message
-    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width, font=(None, 15), justify='center')
     lower_message.grid(column=0, columnspan=2, row=3, padx=5, pady=5)
 
     # Create continue and exit buttons
@@ -436,84 +436,101 @@ def display_insert_sad_aperture_message(microscope: Union[Interface, None]) -> N
 
 def display_beam_stop_center_spot_message(microscope: Union[Interface, None]) -> None:
     """
-    Display a message prompting the user to insert the beam stop (if required) and to center the diffraction spot.
+    Display a message prompting the user to:
+     - Set an appropriate camera length
+     - Insert the beam stop (if required)
+     - Center the diffraction spot
 
-    To improve the changes of the user actual inserting beam-stop and aligning the spot, check boxes are provided,
-     both of which need to be checked before the continue button becomes active.
+    To improve the changes of the user actual selecting an appropriate camera length, inserting beam-stop, and
+     aligning the diffraction spot, check boxes are provided, all of which need to be checked before the continue
+     button becomes active.
 
     :param microscope: pyTEM Interface (or None):
            A microscope interface, needed to return the microscope to a safe state if the user exits the script
             through the quit button on the message box.
     """
-    title = "We are third in priority for take-off, we should depart in about five minutes."
-    upper_message = "If required, please insert the beam-stop."
-    middle_message = "Please, using the multifunction knobs on the microscope control panel, center/align the " \
-                     "diffraction spot."
-    lower_message = "Once the beam-stop has (if required) been inserted and the diffraction spot aligned, please " \
-                    "continue."
-
     root = tk.Tk()
     style = ttk.Style()
 
-    root.title(title)
+    root.title("We are third in priority for take-off, we should depart in about five minutes.")
     add_basf_icon_to_tkinter_window(root)
 
     window_width = 650
-    window_height = 255
+    window_height = 325
 
-    # Display the upper part of the message.
-    upper_message = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15), justify='center')
-    upper_message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
-
-    def check_if_beam_stop_inserted_and_diffraction_spot_aligned() -> None:
+    def check_if_camera_length_set__beam_stop_inserted__diffraction_spot_aligned() -> None:
         """
-        Check to see, if both the beam-stop and diffraction spot check boxes have been checked then we can go ahead and
-         enable the continue button.
+        Check to see, if the camera length, beam-stop, and diffraction spot check boxes have all been checked then
+         we can go ahead and enable the continue button.
         """
-        if beam_stop_inserted.get() and diffraction_spot_centered.get():
+        if camera_length_selected.get() and beam_stop_inserted.get() and diffraction_spot_centered.get():
             continue_button.config(state=tk.NORMAL)
         else:
             continue_button.config(state=tk.DISABLED)
 
+    # Display the first message.
+    message1 = "Please select an appropriate camera length."
+    message1_label = ttk.Label(root, text=message1, wraplength=window_width, font=(None, 15), justify='center')
+    message1_label.grid(column=0, columnspan=2, row=0, padx=5, pady=(5, 0))
+
+    # Create a checkbutton for camera length selected.
+    camera_length_selected = tk.BooleanVar()
+    camera_length_selected.set(False)
+    camera_length_selected_checkbutton = \
+        ttk.Checkbutton(root, text="Camera Length Selected", variable=camera_length_selected,
+                        command=check_if_camera_length_set__beam_stop_inserted__diffraction_spot_aligned,
+                        style="big.TCheckbutton")
+    camera_length_selected_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=(0, 5))
+
+    # Display the second message.
+    message2 = "If required, please insert the beam-stop."
+    message2_label = ttk.Label(root, text=message2, wraplength=window_width, font=(None, 15), justify='center')
+    message2_label.grid(column=0, columnspan=2, row=2, padx=5, pady=(5, 0))
+
     # Create a checkbutton for beam-stop inserted.
     beam_stop_inserted = tk.BooleanVar()
     beam_stop_inserted.set(False)
-    beam_stop_inserted_checkbutton = ttk.Checkbutton(root, text="Beam-Stop Inserted (or not required)",
-                                                     variable=beam_stop_inserted,
-                                                     command=check_if_beam_stop_inserted_and_diffraction_spot_aligned,
-                                                     style="big.TCheckbutton")
-    beam_stop_inserted_checkbutton.grid(column=0, columnspan=2, row=1, padx=5, pady=(0, 5))
+    beam_stop_inserted_checkbutton = \
+        ttk.Checkbutton(root, text="Beam-Stop Inserted (or not required)", variable=beam_stop_inserted,
+                        command=check_if_camera_length_set__beam_stop_inserted__diffraction_spot_aligned,
+                        style="big.TCheckbutton")
+    beam_stop_inserted_checkbutton.grid(column=0, columnspan=2, row=3, padx=5, pady=(0, 5))
 
-    # Display the middle part of the message.
-    middle_message = ttk.Label(root, text=middle_message, wraplength=window_width - 10, font=(None, 15),
+    # Display the third message
+    message3 = "Please, using the multifunction knobs on the microscope control panel, center/align the " \
+               "diffraction spot."
+    message3_label = ttk.Label(root, text=message3, wraplength=window_width, font=(None, 15),
                                justify='center')
-    middle_message.grid(column=0, columnspan=2, row=2, padx=5, pady=5)
+    message3_label.grid(column=0, columnspan=2, row=4, padx=5, pady=(5, 0))
 
     # Create a checkbutton for diffraction spot centered.
     diffraction_spot_centered = tk.BooleanVar()
     diffraction_spot_centered.set(False)
     diffraction_spot_centered_checkbutton = \
         ttk.Checkbutton(root, text="Diffraction Spot Aligned", variable=diffraction_spot_centered,
-                        style="big.TCheckbutton", command=check_if_beam_stop_inserted_and_diffraction_spot_aligned)
-    diffraction_spot_centered_checkbutton.grid(column=0, columnspan=2, row=3, padx=5, pady=(5, 0))
+                        command=check_if_camera_length_set__beam_stop_inserted__diffraction_spot_aligned,
+                        style="big.TCheckbutton")
+    diffraction_spot_centered_checkbutton.grid(column=0, columnspan=2, row=5, padx=5, pady=(0, 5))
 
-    # Display the lower part of the message
-    lower_message = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15), justify='center')
-    lower_message.grid(column=0, columnspan=2, row=4, padx=5, pady=5)
+    # Display the fourth message
+    message4 = "Once an appropriate camera length has been selected, the beam-stop has been inserted (if required), " \
+               "and the diffraction spot has been aligned, please continue."
+    message4_label = ttk.Label(root, text=message4, wraplength=window_width, font=(None, 15), justify='center')
+    message4_label.grid(column=0, columnspan=2, row=6, padx=5, pady=(5, 0))
 
     # Create continue and exit buttons
     continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=0, row=5, sticky="e", padx=5, pady=5)
-    # Disable until beam stop inserted and diffraction spot centered.
-    check_if_beam_stop_inserted_and_diffraction_spot_aligned()
+    continue_button.grid(column=0, row=7, sticky="e", padx=5, pady=5)
+    # Disable until the camera length has been set, beam stop inserted, and diffraction spot centered.
+    check_if_camera_length_set__beam_stop_inserted__diffraction_spot_aligned()
     exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
                              style="big.TButton")
-    exit_button.grid(column=1, row=5, sticky="w", padx=5, pady=5)
+    exit_button.grid(column=1, row=7, sticky="w", padx=5, pady=5)
 
     style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
     style.configure('big.TButton', font=(None, 10), foreground="blue4")
 
-    # Display the message box up in the top right-hand corner
+    # Display the message box up in the top right-hand corner.
     root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=window_height,
                                                     x=int(0.65 * root.winfo_screenwidth()),
                                                     y=int(0.025 * root.winfo_screenheight())))
@@ -570,7 +587,7 @@ def display_end_message(microscope: Union[Interface, None], out_file: str) -> No
     window_width = 650
 
     # Display the upper part of the message.
-    upper_message_label = ttk.Label(root, text=upper_message, wraplength=window_width - 10, font=(None, 15),
+    upper_message_label = ttk.Label(root, text=upper_message, wraplength=window_width, font=(None, 15),
                                     justify='center')
     upper_message_label.grid(column=0, columnspan=2, row=0, padx=5, pady=(5, 0))
 
@@ -585,12 +602,12 @@ def display_end_message(microscope: Union[Interface, None], out_file: str) -> No
             continue_button.config(state=tk.DISABLED)
 
     # Display the out file location.
-    out_file_label = ttk.Label(root, text=out_file, wraplength=window_width - 10, font=(None, 12, 'bold'),
+    out_file_label = ttk.Label(root, text=out_file, wraplength=window_width, font=(None, 12, 'bold'),
                                justify='center')
     out_file_label.grid(column=0, columnspan=2, row=1, padx=5, pady=(0, 5))
 
     # Display the lower part of the message.
-    lower_message_label = ttk.Label(root, text=lower_message, wraplength=window_width - 10, font=(None, 15),
+    lower_message_label = ttk.Label(root, text=lower_message, wraplength=window_width, font=(None, 15),
                                     justify='center')
     lower_message_label.grid(column=0, columnspan=2, row=2, padx=5, pady=(5, 0))
 
@@ -661,7 +678,7 @@ def display_message_centered(title: str, message: str, microscope: Union[Interfa
     add_basf_icon_to_tkinter_window(root)
 
     window_width = 650
-    message = ttk.Label(root, text=message, wraplength=window_width - 10, font=(None, 15), justify='center')
+    message = ttk.Label(root, text=message, wraplength=window_width, font=(None, 15), justify='center')
     message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
     # Create continue and quit buttons
@@ -744,13 +761,13 @@ if __name__ == "__main__":
 
     # display_eucentric_height_message(microscope=None)
 
-    display_insert_and_align_sad_aperture_message(microscope=None)
+    # display_insert_and_align_sad_aperture_message(microscope=None)
 
     # display_insert_camera_message(microscope=None, camera_name="BM-Ceta")
 
     # display_insert_sad_aperture_message(microscope=None)
 
-    # display_beam_stop_center_spot_message(microscope=None)
+    display_beam_stop_center_spot_message(microscope=None)
 
     # display_start_message(microscope=None)
 
