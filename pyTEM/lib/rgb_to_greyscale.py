@@ -30,4 +30,4 @@ def rgb_to_greyscale(rgb_image: np.ndarray) -> np.ndarray:
                         "there are " + str(num_channels) + ".")
 
     r, g, b = rgb_image[:, :, 0], rgb_image[:, :, 1], rgb_image[:, :, 2]
-    return 0.2989 * r + 0.5870 * g + 0.1140 * b
+    return (0.2989 * r + 0.5870 * g + 0.1140 * b).astype(np.uint8)
