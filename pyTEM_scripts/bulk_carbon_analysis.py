@@ -4,12 +4,14 @@
 """
 
 import argparse
+import warnings
 
 from pyTEM.lib.Acquisition import Acquisition
 from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
 from pyTEM_scripts.lib.bulk_carbon_analysis.GetCorrectionalFactors import GetCorrectionalFactors
 
 from pyTEM_scripts.lib.bulk_carbon_analysis.GetInOutFiles import GetInOutFiles
+from pyTEM_scripts.lib.bulk_carbon_analysis.display_goodbye_message import display_goodbye_message
 
 DESCRIPTION = "Given 16 natural light micrographs of a bulk carbon sample sandwiched between polarizers of varying " \
               "cross, produce both anisotropy and orientation maps. " \
@@ -87,7 +89,9 @@ def bulk_carbon_analysis(verbose: bool = False):
     if verbose:
         print("\nLoading the 16 in files into a AcquisitionSeries object...")
     acq_series = AcquisitionSeries()
-    for file in in_files:
+    for i, file in enumerate(in_files):
+        if verbose:
+            print(" Loading image " + str(i + 1) + " out of 16...")
         acq_series.append(Acquisition(file))
 
     # There shouldn't be any drift, but sometimes there is some.
@@ -95,7 +99,9 @@ def bulk_carbon_analysis(verbose: bool = False):
         print("\nAligning series...")
     acq_series.align()
 
-    raise NotImplementedError  # TODO
+    warnings.warn("This script is still under development and is not yet fully implemented.")  # TODO
+
+    display_goodbye_message(anisotropy_out_path=anisotropy_out_path, orientation_out_path=orientation_out_path)
 
 
 def script_entry():
