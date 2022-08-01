@@ -32,8 +32,6 @@ def display_goodbye_message(out_path: Union[pathlib.Path, str]):
     root.title("Mission success!")
     add_basf_icon_to_tkinter_window(root)
 
-    "We have now completed the MicroED tilt series acquisition!" \
-
     upper_message = "Image Alignment Successful!" \
                     "\n\nThe results can be found here:"
     lower_message = "Thank you for using pyTEM, please report any issues on GitHub:"
