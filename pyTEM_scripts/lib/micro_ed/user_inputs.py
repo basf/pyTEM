@@ -634,7 +634,7 @@ class GetOutFile:
 
         # Preallocate, put we can't build these string vars until we have a tkinter window.
         self.file_extension_str_var = None
-        self.stack_str_var = None
+        self.stack_bool_var = None
 
     def run(self) -> Tuple[str, bool]:
         """
@@ -675,14 +675,14 @@ class GetOutFile:
              individual files.
             :return: None, but self.file_extension_str_var is updated.
             """
-            if self.stack_str_var.get() == "True":
+            if self.stack_bool_var.get():
                 # Then we are saving as a stack.
                 file_extension_options = ['.mrc', '.tif']
                 file_name_index_label.config(text="")  # We have no index.
             else:
                 # We are saving as multiple single image files, and therefore have more freedom.
                 file_extension_options = ['.mrc', '.tif', '.jpeg', '.png']
-                file_name_index_label.config(text="_<image number>")  # We need to index the files.
+                file_name_index_label.config(text="_<tilt angle>")  # We need to index the files.
 
             # Update the drop-down menu with the new list of options.
             menu = file_extension_menu["menu"]
@@ -731,15 +731,15 @@ class GetOutFile:
         complete_out_file_label.grid(column=0, row=3, columnspan=4, padx=5, pady=5)
 
         # Add radio buttons for single image stack or multiple single-image files.
-        self.stack_str_var = tk.StringVar(value="True")
-        stack_str_var_radio_button1 = ttk.Radiobutton(root, text="Single Image Stack", variable=self.stack_str_var,
-                                                      value="True", style="big.TRadiobutton",
-                                                      command=lambda: update_file_extension_options_based_on_stack())
-        stack_str_var_radio_button2 = ttk.Radiobutton(root, text="Multiple Single Image Files", value="False",
-                                                      style="big.TRadiobutton", variable=self.stack_str_var,
-                                                      command=lambda: update_file_extension_options_based_on_stack())
-        stack_str_var_radio_button1.grid(column=0, columnspan=4, row=4, pady=(5, 0))
-        stack_str_var_radio_button2.grid(column=0, columnspan=4, row=5, pady=(0, 15))
+        self.stack_bool_var = tk.BooleanVar(value=True)
+        stack_bool_var_radio_button1 = ttk.Radiobutton(root, text="Single Image Stack", variable=self.stack_bool_var,
+                                                       value=True, style="big.TRadiobutton",
+                                                       command=lambda: update_file_extension_options_based_on_stack())
+        stack_bool_var_radio_button2 = ttk.Radiobutton(root, text="Multiple Single Image Files", value=False,
+                                                       style="big.TRadiobutton", variable=self.stack_bool_var,
+                                                       command=lambda: update_file_extension_options_based_on_stack())
+        stack_bool_var_radio_button1.grid(column=0, columnspan=4, row=4, pady=(5, 0))
+        stack_bool_var_radio_button2.grid(column=0, columnspan=4, row=5, pady=(0, 15))
 
         # Add continue and quit buttons.
         continue_button = ttk.Button(root, text="Submit", command=lambda: root.destroy(), style="big.TButton")
@@ -760,10 +760,7 @@ class GetOutFile:
 
         # Build and return the complete path
         out_path = self.out_directory + "/" + str(file_name_str_var.get()) + str(self.file_extension_str_var.get())
-        if self.stack_str_var.get() == "True":
-            return out_path, True
-        else:
-            return out_path, False
+        return out_path, self.stack_bool_var.get()
 
 
 def shift_correction_info(microscope: Union[Interface, None], tilt_start: float, tilt_stop: float,
