@@ -3,6 +3,7 @@
  Date:    Summer 2022
 """
 
+import os
 import warnings
 import tkinter as tk
 
@@ -555,7 +556,7 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     display_message_centered(title=title, message=message, microscope=microscope)
 
 
-def display_end_message(microscope: Union[Interface, None], out_file: str) -> None:
+def display_end_message(microscope: Union[Interface, None], out_file: str, saved_as_stack: bool) -> None:
     """
     Display an end message letting the user know that we have completed the MicroED sequence.
 
@@ -569,6 +570,8 @@ def display_end_message(microscope: Union[Interface, None], out_file: str) -> No
             through the quit button on the message box.
     :param out_file: str:
         The out file path.
+    :param saved_as_stack: bool:
+        Whether the images were saved as a single multi-image stack file.
     """
     title = "Ladies and gentlemen, we have begun our descent into Ludwigshafen, where the weather is a balmy " \
             "30 degrees centigrade."
@@ -602,7 +605,12 @@ def display_end_message(microscope: Union[Interface, None], out_file: str) -> No
             continue_button.config(state=tk.DISABLED)
 
     # Display the out file location.
-    out_file_label = ttk.Label(root, text=out_file, wraplength=window_width, font=(None, 12, 'bold'),
+    if saved_as_stack:
+        out_file_label_text = out_file
+    else:
+        file_name_base, file_extension = os.path.splitext(out_file)
+        out_file_label_text = file_name_base + "_<tilt angle>" + file_extension
+    out_file_label = ttk.Label(root, text=out_file_label_text, wraplength=window_width, font=(None, 12, 'bold'),
                                justify='center')
     out_file_label.grid(column=0, columnspan=2, row=1, padx=5, pady=(0, 5))
 
@@ -767,10 +775,10 @@ if __name__ == "__main__":
 
     # display_insert_sad_aperture_message(microscope=None)
 
-    display_beam_stop_center_spot_message(microscope=None)
+    # display_beam_stop_center_spot_message(microscope=None)
 
     # display_start_message(microscope=None)
 
-    # display_end_message(microscope=None, out_file="C:/Users/LuciukMR/PycharmProjects/dummy_path.tif")
+    display_end_message(microscope=None, out_file="C:/PycharmProjects/dummy_path.tif", saved_as_stack=False)
 
     # display_good_bye_message(microscope=None)

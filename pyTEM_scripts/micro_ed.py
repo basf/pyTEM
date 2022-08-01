@@ -225,7 +225,7 @@ class MicroED:
                     acq.save_to_file(out_file=this_image_out_file, extension=file_extension)
 
             # The acquisition is now complete, inform the user.
-            display_end_message(microscope=self.microscope, out_file=out_file)  # TODO
+            display_end_message(microscope=self.microscope, out_file=out_file, saved_as_stack=save_as_stack)
 
             # Give thanks to the user, and direct them to report issues on GitHub.
             display_good_bye_message(microscope=self.microscope)
