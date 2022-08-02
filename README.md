@@ -1,6 +1,6 @@
 # Disclaimer
 
-```pyTEM``` was developed for use on the BASF SE TEM laboratory's Talos F200i transmission electron microscope. 
+```pyTEM``` was developed for use on the BASF SE TEM Laboratory's Talos F200i transmission electron microscope.
  The authors provide no guarantee that the software will function as intended, either in part or in whole, on any 
  other microscope installation.
 
@@ -8,64 +8,212 @@
 
 # About
 
-```pyTEM``` is a collection of Python modules enabling the *user-friendly* control of, and automated data acquisition 
-on, Thermo Fisher Scientific and FEI microscopes from a pure Python environment.
+```pyTEM``` is a *high-level* scripting interface enabling the *user-friendly* control of, and automated data acquisition
+ on, Thermo Fisher Scientific and FEI microscopes from a pure Python environment. Bolted directly on top of a COM 
+ interface, ```pyTEM``` is a Python wrapper for, and extension of, the prerequisite Thermo Fisher Scientific / FEI scripting 
+ interface.
 
-Most ```pyTEM``` modules will require the Thermo Fisher Scientific / FEI scripting interface. While it may depend on 
- your installation, ```pyTEM``` will likely need to be run on a microscope control computer with the prerequisite 
- Thermo Fisher Scientific / FEI scripting interface installed and properly configured.
-
-A list of available modules can be found [below](#modules).
-
-# Modules
-
-### Interface
-This is BASF's TEM scripting interface. Bolted directly on top of a COM interface, ```Interface``` is just a Python
- wrapper for the Thermo Fisher Scientific / FEI scripting interface. Therefore, this ```pyTEM``` module requires that 
- the Thermo Fisher Scientific / FEI scripting interface is properly configured on your microscope installation. For 
+While it may depend on your microscope installation, ```pyTEM``` will likely need to be run on a microscope control 
+ computer with the prerequisite Thermo Fisher Scientific / FEI scripting interface installed and properly configured. For 
  detailed information regarding your microscope's scripting capabilities, please refer to the documentation 
- accompanying your microscope or reach out to your microscope supplier.
+ accompanying your microscope or contact to your microscope supplier.
 
-This is not a complete interface in that it does not provide access to all the functionality of the underlying Thermo
- Fisher Scientific / FEI scripting interface. However, it provides access to all basic microscope functions as well
- as all those required by other ```pyTEM``` modules.
+In addition to the main scripting interface, pyTEM ships with various scripts. Besides being usful in-and-of-themselves, 
+ these scripts demonstrate how to interface with and control the microscopes using ```pyTEM```. A list of available scripts
+ can be found [below](#scripts).
 
-```Interface``` is much more *user-friendly* that the underlying Fisher Scientific / FEI scripting interface. To this 
- end, ```Interface``` functions return only built-in data types or instances of simple forward-facing classes, also 
- ```Interface``` provides many additional functions not directly available in the underlying interface 
- (some examples include ```print_available_magnifications()```, ```set_stage_position()```, and 
- ```print_camera_capabilities()```)
+# Interface
 
-This module is a good starting place for those interested in learning how to control their microscope from a pure 
+```pyTEM``` is a microscope scripting interface. This means that you can issue commands to, and recieve data from, compatible 
+ microscopes using ```pyTEM``` functions. This is not a complete interface in that it does not provide access to all of the microscope's 
+ functionality. However, it provides access to all fundamental microscope functions as well as some more advanced functions which 
+ were required for the development of one or more [```pyTEM``` scripts](#scripts).
+
+```pyTEM``` aims to be more *user-friendly* than the underlying Fisher Scientific / FEI scripting interface. To this end: 
+- ```pyTEM``` functions return only built-in data types or instances of useful, simple classes.
+- ```pyTEM``` accepts input and returns results in *user-friendly* units. For example, stage position is set in microns/degrees, and tilt sped in degrees-per-second.
+- ```pyTEM``` provides many additional functions not directly available through the underlying interface. For example, tilt-while-acquiring and save-to-file functionality.
+ - ```pyTEM``` is open source and liscenced such that users can make any changes or modifications required to
+  suit their own installation.
+
+Finally, ```pyTEM``` is a good starting place for those interested in learning how to control their microscope from a pure 
  Python environment.
+ 
 
-##### Quick-start Example
+  ```pyTEM``` provides the following [controls](#controls)
+  
+### Controls
+ 
+### Acquisition Controls
+
+Beam blanker optimized, allow aquire-while-tilting functionality. Return Acquisition 
+
+#### Acquisition Controls Example
 
 ```
 from pyTEM.Interface import Interface
 my_microscope = Interface()
 
-# Get the current magnification
+# TODO
+```
+
+### Magnification Controls
+
+Set and get magnification
+
+#### Magnification Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# Get the current magnification.
 magnification = my_microscope.get_magnification()
 
-# Shift the image 2 microns to the right, and 3 microns up
+# TODO
+
+
+```
+
+### Image and Beam Shift Controls
+
+
+#### Image and Beam Shift Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# Print out the current image shift.
 u = my_microscope.get_image_shift()
+print("Current image shift along the x-axis: " + str(u[0]))
+print("Current image shift along the y-axis: " + str(u[1]))
+
+# Shift the image 2 microns to the right, and 3 microns up
 my_microscope.set_image_shift(x=u[0] + 2, y=u[1] + 3)
 ```
 
-### MicroED
-This is BASF's micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows fast,
- high resolution 3D structure determination of small chemical compounds and biological macromolecules, and ```MicroED``` 
- enables the automated acquisition of the required data series. More on micro-crystal electron diffraction 
+### Mode Controls
+
+
+#### Mode Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# TODO
+```
+
+
+### Screen Controls
+
+Insert and retract the FluCam screen.
+
+#### Screen Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# TODO
+```
+
+### Beam Blanker Controls
+
+Blank and un-blank the electron beam.
+
+#### Beam Blanker Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# TODO
+```
+
+### Stage Controls
+
+
+
+#### Stage Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# TODO
+```
+
+### Vacuum Controls
+
+
+
+#### Vacuum Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# TODO
+```
+
+
+# Scripts
+
+```pyTEM``` scripts are stand-alone sequences of ```pyTEM``` instructions that perform usful acquisition series, initialize or 
+ return the microscope to some pre-defined state, or achieve some other common task. ```pyTEM``` scripts are distributed with, 
+ and automatically installed alongside, ```pyTEM``` itself. Please see [installation](#installation) for more.
+
+```pyTEM``` scipts are run from the command line. For example,
+```
+micro_ed --verbose
+```
+To view script usage, use the ```help``` option,
+```
+micro_ed --help
+```
+
+Often, ```pyTEM``` scripts utalize custom ```Tkinter``` user-interfaces to simplify and streamline IO.
+
+Since all ```pyTEM``` scripts utalize ```pyTEM``` itself, they all require that the prerequisite Thermo Fisher Scientific / FEI scripting 
+ interface is properly installed and configured.
+ 
+
+
+### micro_ed
+```micro_ed``` is BASF's micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows for fast,
+ high resolution 3D structure determination of small chemical compounds and biological macromolecules. More on MicroED 
  [here](https://en.wikipedia.org/wiki/Microcrystal_electron_diffraction).
 
-```MicroED``` achieves automated image alignment by computing the image deviation during a preparatory tilt 
- sequence and then applying a compensatory image shift during the main acquisition sequence. Automated image alignment 
- is optional. While useful, automated alignment increases both sample exposure and experiment run-time 
- (although usually not significantly).
+```micro_ed``` achieves automated image alignment by computing the image deviation during a preparatory tilt 
+ sequence and then applying a compensatory image shift during the main acquisition sequence. This automated image alignment 
+ is optional. 
+ 
+View script usage with
+```
+micro_ed --help
+```
 
-Since ```MicroED``` utilizes the ```Interface``` module, it requires that the Thermo Fisher Scientific / FEI scripting 
- interface is properly configured on your microscope installation.
+### align_images
+
+```align_images``` 
+
+User IO is handled ```Tkinter``` windows
+
+
+View script usage with
+```
+align_images --help
+```
+
+### bulk_carbon_analysis
+
+
+View script usage with
+```
+bulk_carbon_analysis --help
+```
 
 ##### Quick-start Example
 
@@ -134,21 +282,8 @@ Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you 
 
 # Contribution & Contact Info
 
-```pyTEM``` is developed and maintained by the TEM microscopy laboratory at BASF SE in Ludwigshafen, Germany. If you 
- have any questions about the ```pyTEM``` project or would like to contribute, please contact Philipp Müller at
+```pyTEM``` is developed and maintained by the TEM Microscopy Laboratory at BASF SE in Ludwigshafen, Germany. If you 
+ have any questions about the ```pyTEM``` project or would like to contribute or colaborate, please contact Philipp Müller at
  [philipp.mueller@basf.com](mailto:philipp.mueller@basf.com).
 
-Issues can be reported [here](https://github.com/mrl280/pyTEM/issues)
-
-# serailEM
-
-As further explained [here](https://bio3d.colorado.edu/SerialEM/), SerialEM is a program that can acquire a variety of 
- data from electron microscopes, including tilt series for electron tomography, large image areas for 3-D reconstruction 
- from serial sections, and images for reconstruction of macromolecules by single-particle methods.
-
-As further explained [here](https://sphinx-emdocs.readthedocs.io/en/latest/serialem-note-hidden-goodies.html#example-5-scripting-with-python), it is possible to call serialEM functions from Python scripts. Because SerialEM supports many sophisticated high-level 
- functions, it is likely that, in the future, pyTEM scripts will call serialEM functions to complete high-level 
- operations and tasks.
-
-In order to use pyTEM scripts that invoke serialEM functions, you need to make sure that you have a properly configured 
- serialEM client running on the microscope control computer.
+Issues should be reported [here](https://github.com/mrl280/pyTEM/issues)
