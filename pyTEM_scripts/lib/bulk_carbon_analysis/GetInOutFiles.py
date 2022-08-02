@@ -179,12 +179,13 @@ class GetInOutFiles:
         go_button = ttk.Button(root, text="Go", command=lambda: root.destroy(), style="big.TButton")
         go_button.grid(column=0, columnspan=3, row=11, padx=5, pady=5)
         go_button.config(state=tk.DISABLED)
-        exit_button = ttk.Button(root, text="Quit", command=lambda: sys.exit(), style="big.TButton")
+        exit_button = ttk.Button(root, text="Quit", command=lambda: sys.exit(0), style="big.TButton")
         exit_button.grid(column=0, columnspan=3, row=12, padx=5, pady=5)
 
         style.configure('big.TButton', font=(None, 10), foreground="blue4")
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+        root.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
         root.mainloop()
 
         # Build and return the complete path

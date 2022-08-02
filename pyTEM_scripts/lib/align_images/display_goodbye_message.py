@@ -64,6 +64,7 @@ def display_goodbye_message(out_path: Union[pathlib.Path, str]):
     # Center the window on the screen
     root.eval('tk::PlaceWindow . center')
 
+    root.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
     root.mainloop()
 
 

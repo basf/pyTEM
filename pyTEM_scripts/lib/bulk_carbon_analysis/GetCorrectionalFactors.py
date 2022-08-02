@@ -190,7 +190,7 @@ class GetCorrectionalFactors:
         continue_button.grid(row=14, column=4, padx=5, pady=5)
 
         # Create an 'exit' button that the user can use to exit the script.
-        exit_button = ttk.Button(root, text="Exit", command=lambda: sys.exit(), style="big.TButton")
+        exit_button = ttk.Button(root, text="Exit", command=lambda: sys.exit(0), style="big.TButton")
         exit_button.grid(row=14, column=5, padx=5, pady=5)
 
         # Add variable traces and initialize correctional factors from the initial entry box values.
@@ -204,6 +204,7 @@ class GetCorrectionalFactors:
 
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+        root.protocol("WM_DELETE_WINDOW", lambda: sys.exit(0))
         root.mainloop()
 
         if use_correctional_factors.get():
