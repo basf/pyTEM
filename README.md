@@ -24,7 +24,7 @@ In addition to the main scripting interface, pyTEM ships with various scripts. B
 
 # Interface
 
-```pyTEM``` is a microscope scripting interface. This means that you can issue commands to, and recieve data from, compatible 
+```pyTEM``` is a microscope scripting interface. This means that you can issue commands to, and recieve microscope data from, compatible 
  microscopes using ```pyTEM``` functions. This is not a complete interface in that it does not provide access to all of the microscope's 
  functionality. However, it provides access to all fundamental microscope functions as well as some more advanced functions which 
  were required for the development of one or more [```pyTEM``` scripts](#scripts).
@@ -41,28 +41,53 @@ Finally, ```pyTEM``` is a good starting place for those interested in learning h
  
 Several ```pyTEM``` functions and scripts use ```Hyperspy```'s ```estimate_shift2D()``` function to estimate the pixel offset between images. This function uses a phase correlation algorithm based on the following paper:
 <pre>
-Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction
-    for EFTEMmImage Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEMmImage Series.” 
+    Ultramicroscopy 102, no. 1 (December 2004): 27–36.
 </pre>
 
-```pyTEM``` [controls](#acquisition-controls) are divided into the following catagories:
+```pyTEM``` [controls](#acquisition-controls) are divided into the following catagories. Each set of controls is a single Python module.
  
 ### Acquisition Controls
 
-Beam blanker optimized, allow aquire-while-tilting functionality. Return Acquisition 
+Microscope acquisition controls including ```acquisition()``` and ```acquisition_series()``` functions. By means of multitasking, both of these functions offer beam-blanker optimization and aquire-while-tilting functionality.
+
+These functions return ```Acquistion``` and ```AcquisitionSeries``` objects, respectively. Both the ```Acquistion``` and ```AcquisitionSeries``` classes provide helpful methods for further image and metadata manipulation as well as ```save_to_file()``` functionality. 
 
 #### Acquisition Controls Example
 
 ```
 from pyTEM.Interface import Interface
+from pathlib import Path
+
+
 my_microscope = Interface()
 
-# TODO
+# Get a list of available cameras.
+available_cameras = my_microscope.get_available_cameras()
+
+if len(available_cameras) > 0:
+    # Let's see what each camera can do...
+    for camera in available_cameras:
+        my_microscope.print_camera_capabilities(camera_name=camera)
+
+    # Perform a single blanker-optimized acquisition using the first available camera.
+    acq = my_microscope.acquisition(camera_name=available_cameras[0], exposure_time=1, 
+                                    sampling='4k', blanker_optimization=True)
+
+    # Display a pop-up with the results of our acquisition.
+    acq.show_image()
+
+    # Save the acquisition to file.
+    downloads_path = str(Path.home() / "Downloads")
+    acq.save_to_file(out_file=downloads_path + "/test_acq.tif")
+
+else:
+    print("No available cameras!")
 ```
 
 ### Magnification Controls
 
-Set and get magnification
+Get and set both TEM and STEM magnification (only for *imaging* mode). Get and set camera-length (only for *diffraction* mode).
 
 #### Magnification Controls Example
 
@@ -70,16 +95,28 @@ Set and get magnification
 from pyTEM.Interface import Interface
 my_microscope = Interface()
 
-# Get the current magnification.
-magnification = my_microscope.get_magnification()
+# Make sure we are in TEM imaging mode.
+my_microscope.set_mode(new_mode="TEM")
+my_microscope.set_projection_mode(new_projection_mode="imaging")
 
-# TODO
+# Print out the current magnification.
+current_magnification = my_microscope.get_magnification()
+print("Current magnification: " + str(current_magnification) + "x Zoom")
 
+# Print a list of available magnifications.
+my_microscope.print_available_magnifications()
 
+# TEM magnification is set by index, lets increase the magnification by three notches.
+current_magnification_index = my_microscope.get_magnification_index()
+my_microscope.set_tem_magnification(new_magnification_index=current_magnification_index + 3)
+
+# And decrease it back down by one notch.
+my_microscope.shift_tem_magnification(magnification_shift=-1)
 ```
 
 ### Image and Beam Shift Controls
 
+Get and set both image and beam shift.
 
 #### Image and Beam Shift Controls Example
 
@@ -89,11 +126,32 @@ my_microscope = Interface()
 
 # Print out the current image shift.
 u = my_microscope.get_image_shift()
-print("Current image shift along the x-axis: " + str(u[0]))
-print("Current image shift along the y-axis: " + str(u[1]))
+print("Current image shift in the x-direction: " + str(u[0]))
+print("Current image shift in the y-axis: " + str(u[1]))
 
-# Shift the image 2 microns to the right, and 3 microns up
+# Print out the current beam shift.
+v = my_microscope.get_beam_shift()
+print("\nCurrent beam shift in the x-direction: " + str(v[0]))
+print("Current beam shift in the y-direction: " + str(v[1]))
+
+# Shift the image 2 microns to the right, and 3 microns up.
 my_microscope.set_image_shift(x=u[0] + 2, y=u[1] + 3)
+
+# Move the beam shift to (-10, 5).
+my_microscope.set_beam_shift(x=-10, y=5)
+
+# Print out the new image shift.
+u = my_microscope.get_image_shift()
+print("\nNew image shift in the x-direction: " + str(u[0]))
+print("New image shift in the y-direction: " + str(u[1]))
+
+# Print out the new beam shift.
+v = my_microscope.get_beam_shift()
+print("\nNew beam shift in the x-direction: " + str(v[0]))
+print("New beam shift in the y-direction: " + str(v[1]))
+
+# Zero both image and beam shift.
+my_microscope.zero_shifts()
 ```
 
 ### Mode Controls
