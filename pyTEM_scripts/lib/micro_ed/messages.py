@@ -218,7 +218,7 @@ def display_insert_and_align_sad_aperture_message(microscope: Union[Interface, N
     """
     Display the insert and align aperture message.
 
-    To improve the changes of the user actual aligning and remembering to remove the aperture, check boxes are
+    To improve the chances of the user actual aligning and remembering to remove the aperture, check boxes are
      provided, both of which need to be checked before the continue button becomes active.
 
     :param microscope: pyTEM Interface (or None):
@@ -310,7 +310,7 @@ def display_insert_camera_message(microscope: Union[Interface, None], camera_nam
     """
     Display the start message.
 
-    To improve the changes of the user actual inserting the aperture and beam-stop, check boxes are provided, both of
+    To improve the chances of the user actual inserting the aperture and beam-stop, check boxes are provided, both of
      which need to be checked before the continue button becomes active.
 
     :param camera_name: str:
@@ -378,7 +378,7 @@ def display_insert_sad_aperture_message(microscope: Union[Interface, None]) -> N
     """
     Display the message prompting the user to insert the SAD aperture.
 
-    To improve the changes of the user actual inserting the aperture, a checkbox is provided which need to be checked
+    To improve the chances of the user actual inserting the aperture, a checkbox is provided which need to be checked
      before the continue button becomes active.
 
     :param microscope: pyTEM Interface (or None):
@@ -446,7 +446,7 @@ def display_beam_stop_center_spot_message(microscope: Union[Interface, None]) ->
      - Insert the beam stop (if required)
      - Center the diffraction spot
 
-    To improve the changes of the user actual selecting an appropriate camera length, inserting beam-stop, and
+    To improve the chances of the user actual selecting an appropriate camera length, inserting beam-stop, and
      aligning the diffraction spot, check boxes are provided, all of which need to be checked before the continue
      button becomes active.
 
@@ -561,13 +561,16 @@ def display_start_message(microscope: Union[Interface, None]) -> None:
     display_message_centered(title=title, message=message, microscope=microscope)
 
 
-def display_end_message(microscope: Union[Interface, None], out_file: str, saved_as_stack: bool) -> None:
+def display_goodbye_message(microscope: Union[Interface, None], out_file: str, saved_as_stack: bool) -> None:
     """
-    Display an end message letting the user know that we have completed the MicroED sequence.
+    Display goodbye message letting the user know:
+     - That we have completed the MicroED sequence.
+     - Where they can find their results.
+     - Where they can report any issues.
+     - Some things will be taken care of automatically (like zeroing the image shift).
+     - They will need to remove the apertures and camera manually.
 
-    We inform the user of the things that will be taken care of automatically (like zeroing the image shift)
-
-    To improve the changes of the user actual inserting beam-stop and aligning the spot, check boxes are provided,
+    To improve the chances of the user actual removing the apertures and camera, check boxes are provided,
      both of which need to be checked before the continue button becomes active.
 
     :param microscope: pyTEM Interface (or None):
@@ -578,36 +581,32 @@ def display_end_message(microscope: Union[Interface, None], out_file: str, saved
     :param saved_as_stack: bool:
         Whether the images were saved as a single multi-image stack file.
     """
-    title = "Ladies and gentlemen, we have begun our descent into Ludwigshafen, where the weather is a balmy " \
-            "30 degrees centigrade."
-    upper_message = "We have now completed the MicroED tilt series acquisition!" \
-                    "\n\nThe results can be found here:"
-    lower_message = "Image shift and \u03B1 stage tilt will be zeroed automatically upon script termination. " \
-                    "However, the beam will remain blank, and both the apertures and the camera will remain inserted " \
-                    "until manually retracted."
-
     root = tk.Tk()
     style = ttk.Style()
-
-    root.title(title)
-    add_basf_icon_to_tkinter_window(root)
-
+    font = (None, 14)
     window_width = 650
 
-    # Display the upper part of the message.
-    upper_message_label = ttk.Label(root, text=upper_message, wraplength=window_width, font=(None, 15),
-                                    justify='center')
-    upper_message_label.grid(column=0, columnspan=2, row=0, padx=5, pady=(5, 0))
+    root.title("Thank you for flying with Air TEM, we hope to see you again soon!")
+    add_basf_icon_to_tkinter_window(root)
 
     def check_if_user_understands() -> None:
         """
         Check to see, if the user checks the box indicating that they understand that they must remove the apertures and
-         the camera manually, then can go ahead and enable the continue button.
+         the camera manually, then can go ahead and enable the exit button.
         """
         if user_understands.get():
-            continue_button.config(state=tk.NORMAL)
+            # Then all is good.
+            exit_button.config(state=tk.NORMAL)
+            root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=0))
         else:
-            continue_button.config(state=tk.DISABLED)
+            exit_button.config(state=tk.DISABLED)
+            root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
+
+    # Display the first part of the message.
+    message1 = "We have now completed the MicroED tilt series acquisition!" \
+               "\n\nThe results can be found here:"
+    message1_label = ttk.Label(root, text=message1, wraplength=window_width, font=font, justify='center')
+    message1_label.grid(column=0, row=0, padx=5, pady=(5, 0))
 
     # Display the out file location.
     if saved_as_stack:
@@ -615,14 +614,26 @@ def display_end_message(microscope: Union[Interface, None], out_file: str, saved
     else:
         file_name_base, file_extension = os.path.splitext(out_file)
         out_file_label_text = file_name_base + "_<tilt angle>" + file_extension
-    out_file_label = ttk.Label(root, text=out_file_label_text, wraplength=window_width, font=(None, 12, 'bold'),
+    out_file_label = ttk.Label(root, text=out_file_label_text, wraplength=window_width, font=font + ('bold',),
                                justify='center')
-    out_file_label.grid(column=0, columnspan=2, row=1, padx=5, pady=(0, 5))
+    out_file_label.grid(column=0, row=1, padx=5, pady=(0, 10))
 
-    # Display the lower part of the message.
-    lower_message_label = ttk.Label(root, text=lower_message, wraplength=window_width, font=(None, 15),
-                                    justify='center')
-    lower_message_label.grid(column=0, columnspan=2, row=2, padx=5, pady=(5, 0))
+    # Display the second part of the message.
+    message2 = "Please report any issues on GitHub:"
+    message2_label = ttk.Label(root, text=message2, wraplength=window_width, font=font, justify='center')
+    message2_label.grid(column=0, row=2, padx=5, pady=(5, 0))
+
+    # Display the GitHub link.
+    github_link_label = ttk.Label(root, text="https://github.com/mrl280/pyTEM/issues", wraplength=window_width,
+                                  font=(None, 15, 'bold'), justify='center')
+    github_link_label.grid(column=0, row=3, padx=5, pady=(0, 10))
+
+    # Display the third part of the message.
+    message3 = "Image shift and \u03B1 stage tilt will be zeroed and the projection mode reset automatically upon " \
+               "script termination. However, the beam will remain blank, and both the apertures and the camera will " \
+               "remain inserted until manually retracted."
+    message3_label = ttk.Label(root, text=message3, wraplength=window_width, font=font, justify='center')
+    message3_label.grid(column=0, row=4, padx=5, pady=(5, 0))
 
     # Create a checkbutton for the user to click if they understand they are responsible for removing the apertures
     #  and camera manually.
@@ -631,40 +642,21 @@ def display_end_message(microscope: Union[Interface, None], out_file: str, saved
     user_understands_checkbutton = ttk.Checkbutton(root, text="I understand the apertures and camera need to be "
                                                               "retracted manually.", variable=user_understands,
                                                    command=check_if_user_understands, style="big.TCheckbutton")
-    user_understands_checkbutton.grid(column=0, columnspan=2, row=3, padx=5, pady=(0, 5))
+    user_understands_checkbutton.grid(column=0, row=5, padx=5, pady=(0, 10))
 
-    # Create continue and exit buttons
-    continue_button = ttk.Button(root, text="Continue", command=lambda: root.destroy(), style="big.TButton")
-    continue_button.grid(column=0, row=4, sticky="e", padx=5, pady=5)
-    # Disable until user understands that the apertures and camera need to be retracted manually.
-    check_if_user_understands()
-    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=1),
+    # Create exit button.
+    exit_button = ttk.Button(root, text="Quit", command=lambda: exit_script(microscope=microscope, status=0),
                              style="big.TButton")
-    exit_button.grid(column=1, row=4, sticky="w", padx=5, pady=5)
+    exit_button.grid(column=0, row=6, padx=5, pady=5)
+    # But, disable until user understands that the apertures and camera need to be retracted manually.
+    check_if_user_understands()
 
-    style.configure('big.TCheckbutton', font=(None, 12, 'bold'))
+    style.configure('big.TCheckbutton', font=(None, 13, 'bold'))
     style.configure('big.TButton', font=(None, 10), foreground="blue4")
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen.
 
-    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
-
-
-def display_good_bye_message(microscope: Union[Interface, None]):
-    """
-    Display goodbye message.
-
-    :param microscope: pyTEM Interface (or None):
-        The microscope interface, needed to return the microscope to a safe state if the user exits the script
-         through the quit button on the message box.
-
-    :return: None.
-    """
-    title = "Thank you for flying with Air TEM, we hope to see you again soon!"
-    message = "Thank you for using BASF's in house MicroED automated imaging script. Please report any issues on " \
-              "GitHub: https://github.com/mrl280/pyTEM/issues."
-    display_message_centered(title=title, message=message, microscope=microscope)
 
 
 def display_message_centered(title: str, message: str, microscope: Union[Interface, None]) -> None:
@@ -734,11 +726,11 @@ def display_message_out_of_the_way(title: str, message: str, window_height: Unio
     """
     root = tk.Tk()
     style = ttk.Style()
+    window_width = 650
 
     root.title(title)
     add_basf_icon_to_tkinter_window(root)
 
-    window_width = 650
     message = ttk.Label(root, text=message, wraplength=window_width, font=(None, 15), justify='center')
     message.grid(column=0, columnspan=2, row=0, padx=5, pady=5)
 
@@ -787,6 +779,4 @@ if __name__ == "__main__":
 
     # display_start_message(microscope=None)
 
-    display_end_message(microscope=None, out_file="C:/PycharmProjects/dummy_path.tif", saved_as_stack=False)
-
-    # display_good_bye_message(microscope=None)
+    display_goodbye_message(microscope=None, out_file="C:/PycharmProjects/dummy_path.tif", saved_as_stack=False)

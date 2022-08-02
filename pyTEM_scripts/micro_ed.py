@@ -13,10 +13,9 @@ from pyTEM.Interface import Interface
 
 from pyTEM_scripts.lib.micro_ed.exit_script import exit_script
 from pyTEM_scripts.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
-    display_insert_and_align_sad_aperture_message, display_end_message, display_good_bye_message, \
-    display_initialization_message, have_user_center_particle, display_beam_stop_center_spot_message, \
-    display_second_condenser_message, display_insert_camera_message, display_insert_sad_aperture_message, \
-    display_start_message
+    display_insert_and_align_sad_aperture_message, display_initialization_message, have_user_center_particle, \
+    display_beam_stop_center_spot_message, display_second_condenser_message, display_insert_camera_message, \
+    display_insert_sad_aperture_message, display_start_message, display_goodbye_message
 from pyTEM_scripts.lib.micro_ed.obtain_shifts import obtain_shifts
 from pyTEM_scripts.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
     shift_correction_info
@@ -224,13 +223,8 @@ class MicroED:
                         print("  Saving image #" + str(i + 1) + " to file as: " + this_image_out_file)
                     acq.save_to_file(out_file=this_image_out_file, extension=file_extension)
 
-            # The acquisition is now complete, inform the user.
-            display_end_message(microscope=self.microscope, out_file=out_file, saved_as_stack=save_as_stack)
-
-            # Give thanks to the user, and direct them to report issues on GitHub.
-            display_good_bye_message(microscope=self.microscope)
-
-            exit_script(microscope=self.microscope, status=0)
+            # The acquisition is now complete, time to say goodbye.
+            display_goodbye_message(microscope=self.microscope, out_file=out_file, saved_as_stack=save_as_stack)
 
         except KeyboardInterrupt:
             warnings.warn("Keyboard interrupt detected...")
