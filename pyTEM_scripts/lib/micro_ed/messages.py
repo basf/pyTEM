@@ -134,6 +134,7 @@ def display_second_condenser_message(microscope: Union[Interface, None]) -> None
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 
@@ -289,6 +290,7 @@ def display_insert_and_align_sad_aperture_message(microscope: Union[Interface, N
                                                     x=int(0.65 * root.winfo_screenwidth()),
                                                     y=int(0.025 * root.winfo_screenheight())))
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 
@@ -368,6 +370,7 @@ def display_insert_camera_message(microscope: Union[Interface, None], camera_nam
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 
@@ -432,6 +435,7 @@ def display_insert_sad_aperture_message(microscope: Union[Interface, None]) -> N
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 
@@ -536,6 +540,7 @@ def display_beam_stop_center_spot_message(microscope: Union[Interface, None]) ->
                                                     x=int(0.65 * root.winfo_screenwidth()),
                                                     y=int(0.025 * root.winfo_screenheight())))
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 
@@ -642,6 +647,7 @@ def display_end_message(microscope: Union[Interface, None], out_file: str, saved
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen.
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 
@@ -701,6 +707,7 @@ def display_message_centered(title: str, message: str, microscope: Union[Interfa
     # Center the window on the screen
     root.eval('tk::PlaceWindow . center')
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 
@@ -749,6 +756,7 @@ def display_message_out_of_the_way(title: str, message: str, window_height: Unio
                                                     x=int(0.65 * root.winfo_screenwidth()),
                                                     y=int(0.025 * root.winfo_screenheight())))
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
 

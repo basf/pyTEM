@@ -133,6 +133,7 @@ class GetTiltRange:
         style.configure('big.TButton', font=(self.font, self.font_size), foreground="blue4")
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         return float(step.get())
@@ -228,6 +229,7 @@ class GetTiltRange:
                                                         x=int(0.65 * root.winfo_screenwidth()),
                                                         y=int(0.025 * root.winfo_screenheight())))
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         return float(start.get())
@@ -390,6 +392,8 @@ class GetTiltRange:
         root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=window_height,
                                                         x=int(0.65 * root.winfo_screenwidth()),
                                                         y=int(0.025 * root.winfo_screenheight())))
+
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         return float(stop.get())
@@ -581,6 +585,7 @@ def get_acquisition_parameters(microscope: Union[Interface, None]) -> Tuple[str,
         style.configure('big.TButton', font=(None, 10), foreground="blue4")
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
         root.mainloop()
 
         try:
@@ -756,6 +761,7 @@ class GetOutFile:
 
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen.
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         # Build and return the complete path
@@ -908,6 +914,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
     if use_automated_alignment.get():
