@@ -9,10 +9,12 @@ import comtypes.client as cc
 
 from numpy.typing import ArrayLike
 
+from pyTEM.lib.mixins.ModeMixin import ModeMixin
+
 # TODO: Still requires testing
 
 
-class BeamShiftMixin:
+class BeamShiftMixin(ModeMixin):
     """
     Microscope beam shift controls.
 
@@ -28,13 +30,6 @@ class BeamShiftMixin:
     # Note: For precise shifting, an offset vector is required to account for hysteresis in the len's magnets. However,
     #  this is negligible for most applications.
     # _beam_shift_vector: type(np.empty(shape=(2, 1)))
-
-    def get_projection_submode(self) -> str:
-        """
-        :return: str:
-            The current projection sub-mode.
-        """
-        return self._tem.Projection.SubModeString
 
     def get_beam_shift_matrix(self) -> np.ndarray:
         """
@@ -80,7 +75,7 @@ class BeamShiftMixin:
 
         :return: None
         """
-        if self._tem.Projection.SubModeString != "SA":
+        if self.get_projection_submode() != "SA":
             warnings.warn("Beam shift functions only tested for magnifications in SA range (4300 x -> 630 kx Zoom), "
                           "but the current projection submode is " + self._tem.Projection.SubModeString +
                           ". Magnifications in this range may require a different transformation matrix.")
