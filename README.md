@@ -31,7 +31,7 @@ In addition to the main scripting interface, pyTEM ships with various scripts. B
 
 ```pyTEM``` aims to be more *user-friendly* than the underlying Fisher Scientific / FEI scripting interface. To this end: 
 - ```pyTEM``` functions return only built-in data types or instances of useful, simple classes.
-- ```pyTEM``` accepts input and returns results in *user-friendly* units. For example, stage position is set in microns/degrees, and tilt sped in degrees-per-second.
+- ```pyTEM``` accepts input and returns results in *user-friendly* units. For example, stage position is set in microns/degrees, and tilt speed in degrees-per-second.
 - ```pyTEM``` provides many additional functions not directly available through the underlying interface. For example, tilt-while-acquiring and save-to-file functionality.
  - ```pyTEM``` is open source and liscenced such that users can make any changes or modifications required to
   suit their own installation.
@@ -39,10 +39,13 @@ In addition to the main scripting interface, pyTEM ships with various scripts. B
 Finally, ```pyTEM``` is a good starting place for those interested in learning how to control their microscope from a pure 
  Python environment.
  
+Several ```pyTEM``` functions and scripts use ```Hyperspy```'s ```estimate_shift2D()``` function to estimate the pixel offset between images. This function uses a phase correlation algorithm based on the following paper:
+<pre>
+Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction
+    for EFTEMmImage Series.” Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+</pre>
 
-  ```pyTEM``` provides the following [controls](#controls)
-  
-### Controls
+```pyTEM``` [controls](#acquisition-controls) are divided into the following catagories:
  
 ### Acquisition Controls
 
@@ -158,76 +161,81 @@ my_microscope = Interface()
 # TODO
 ```
 
+### Other Controls
+
+Additionally, ```pyTEM``` supports controls 
+
+#### Vacuum Controls Example
+
+```
+from pyTEM.Interface import Interface
+my_microscope = Interface()
+
+# Normalize all lenses.
+my_microscope.normalize()
+
+# Prepare the holder for removal.
+my_microscope.prepare_for_holder_removal()
+
+# Return the microscope to a safe state.
+my_microscope.make_safe()
+```
+
+Ability to build interfaces with limited subsets of control. # TODO.
 
 # Scripts
 
-```pyTEM``` scripts are stand-alone sequences of ```pyTEM``` instructions that perform usful acquisition series, initialize or 
+```pyTEM``` scripts are stand-alone sequences of ```pyTEM``` commands that perform usful data acquisitions, initialize or 
  return the microscope to some pre-defined state, or achieve some other common task. ```pyTEM``` scripts are distributed with, 
  and automatically installed alongside, ```pyTEM``` itself. Please see [installation](#installation) for more.
 
-```pyTEM``` scipts are run from the command line. For example,
+```pyTEM``` scipts are run from the command line. For example:
 ```
 micro_ed --verbose
 ```
-To view script usage, use the ```help``` option,
+To view script usage, use the ```--help``` option:
 ```
 micro_ed --help
 ```
 
-Often, ```pyTEM``` scripts utalize custom ```Tkinter``` user-interfaces to simplify and streamline IO.
+Often, ```pyTEM``` scripts utalize custom ```Tkinter``` UIs to simplify and streamline IO.
 
-Since all ```pyTEM``` scripts utalize ```pyTEM``` itself, they all require that the prerequisite Thermo Fisher Scientific / FEI scripting 
- interface is properly installed and configured.
- 
-
+Since all ```pyTEM``` scripts utilize ```pyTEM``` itself, runing ```pyTEM``` scripts requires all of ```pyTEM``` along with its prerequisites and dependencies.
 
 ### micro_ed
-```micro_ed``` is BASF's micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows for fast,
- high resolution 3D structure determination of small chemical compounds and biological macromolecules. More on MicroED 
+```micro_ed``` is BASF's micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows for the fast,
+ high-resolution 3D structure determination of small chemical compounds and biological macromolecules. More on MicroED 
  [here](https://en.wikipedia.org/wiki/Microcrystal_electron_diffraction).
 
 ```micro_ed``` achieves automated image alignment by computing the image deviation during a preparatory tilt 
- sequence and then applying a compensatory image shift during the main acquisition sequence. This automated image alignment 
- is optional. 
+ sequence and then applying a compensatory image shift during the main acquisition sequence. This automated image alignment functionality
+ is optional. ```micro_ed``` only collects the data, it does not analyse it.
  
-View script usage with
-```
-micro_ed --help
-```
+```micro_ed``` results can be saved as a single mulit-image stack file or as multiple single-image files. Since performing a MicroED acquisition sequence requires some actions that aren't easily automated (such as selecting suitable particles and setting the eucentric height), a series of ```Tkinter``` message boxes guide the user through those steps requiring manual interaction.
 
 ### align_images
 
-```align_images``` 
+```align_images``` allows the user to load some images from file (possibly from a single mulit-image stack file or possibly from multiple single-image files), align the images, and then save the results back to file as a single multi-image stack.
 
-User IO is handled ```Tkinter``` windows
-
-
-View script usage with
-```
-align_images --help
-```
+Colour images are converted to 8bit unsigned greyscale prior to alignment.
 
 ### bulk_carbon_analysis
 
+Given 16 natural light-micrographs of a bulk carbon sample sandwiched between polarizers of varying cross, produce both anisotropy and orientation maps.
 
-View script usage with
-```
-bulk_carbon_analysis --help
-```
+Colour images are converted to 8bit unsigned greyscale prior to analysis.
 
-##### Quick-start Example
-
-```
-from pyTEM.MicroED import MicroED
-
-MicroED().run(verbose=True)
-```
+This script uses the technique explained in the following paper:
+<pre>
+Gillard, Adrien & Couégnat, Guillaume & Caty, O. & Allemand, Alexandre & P, Weisbecker & Vignoles, Gerard. (2015). 
+    A quantitative, space-resolved method for optical anisotropy estimation in bulk carbons. Carbon. 91. 423-435. 10.1016/j.carbon.2015.05.005.
+</pre>
 
 # Authorship
 
 ```pyTEM``` is developed and maintained by the TEM microscopy laboratory at BASF SE in Ludwigshafen, Germany. The 
  initial development was performed by RISE (Research Internships in Science and Engineering) Interns from North America. 
- More on the RISE program here: https://www.daad.de/rise/en/.
+ More on the RISE program [here](https://www.daad.de/rise/en/).
 
 ### *[Meagan Jennings](https://github.com/MaeJennings) (Sept - Dec 2021)*
 
@@ -237,8 +245,8 @@ Baltimore, Maryland, USA
 #### Contributions:
 
 - Figured out how to interface with and control the microscope from a pure Python environment.
-- developed ```TEMPackage```, the predecessor to ```pyTEM```'s ```Interface``` module. View the project as it existed at the time of Meagan's final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
-- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```MicroED``` module. View on GitLab [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
+- developed ```TEMPackage```, the predecessor to ```pyTEM```. View the project as it existed at the time of Meagan's final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
+- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```micro_ed``` script. View on GitLab [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
 - Wrote the original TEM Scripting Guide, which can be found in [docs](/docs).
 
 ### *[Michael Luciuk](https://github.com/mrl280) (May - Aug 2022)*
@@ -248,35 +256,38 @@ Saskatoon, Saskatchewan, Canada
 
 #### Contributions:
 
-- Refactored the original ```TEMPackage``` and ```microED_Tilt_Series``` into the ```Interface``` and ```MicroED```
- ```pyTEM``` modules we know and love today.
+- Refactored the original ```TEMPackage``` module into the ```pyTEM``` library that we know and love today.
+- Refactored the original ```microED_Tilt_Series``` script into the ```micro_ed``` script that we know and love today.
+- Updated and improved both ```pyTEM``` and ```micro_ed```.
+- Developed the ```align_images``` and ```bulk_carbon_analysis``` scripts.
 
 You can view the ```pyTEM``` project as it existed at the time of Michael's final commit [here](https://github.com/mrl280/pyTEM). # TODO: Update after Michael leaves
   
 # Installation
 
 Because ```pyTEM``` is often required on microscope control machines which lack internet connectivity, pyTEM is not 
- listed on the Python Package Index (PyPI), nor anywhere else. Rather, we provide a wheel file in [dist](/dist) and 
+ listed on the Python Package Index, nor anywhere else. Rather, we provide a wheel file in [dist](/dist) and the following 
  [offline install instructions](#offline-install-instructions).
 
-### Offline install instructions
-##### On a system with internet access:
-1. Download [requirements.txt](./requirements.txt)
-2. Download the required dependencies with pip ```pip download -d ./pytem_dependencies -r requirements.txt```
-3. Download the ```pyTEM``` wheel file from [dist](/dist).
+### Offline Install Instructions
+##### Part 1. On a system with internet access:
+1. Download [requirements.txt](./requirements.txt).
+2. Download the required dependencies with pip ```pip download -d ./pytem_dependencies -r requirements.txt```.
+3. Download the ```pyTEM``` wheel from [dist](/dist).
 
-Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel file to the offline machine.
+Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel to the offline machine.
 
-##### On the offline system:
+##### Part 2. On the offline system:
 1. Install the required dependencies with pip: 
  ```pip install --no-index --find-links ./pytem_dependencies -r requirements.txt```
 2. Install ```pyTEM``` itself with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
 
+If you run into any problems installing the required dependancies, check that you are using the same version of pip on both the online and offile machines.
 
-### If you need to build your own custom ```pyTEM``` wheel:
-1. Install wheel with ```pip install wheel```, 
-2. Download the whole ```pyTEM``` project directory,
-3. Navigate to the pyTEM folder, 
+### Encase you need to build your own custom ```pyTEM``` wheel
+1. Install wheel with ```pip install wheel```.
+2. Download the whole ```pyTEM``` project directory.
+3. Navigate to the pyTEM folder.
 4. Run ```setup.py``` with the ```bdist_wheel``` setuptools command. 
  Example: ```python setup.py bdist_wheel```
 
@@ -286,4 +297,4 @@ Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you 
  have any questions about the ```pyTEM``` project or would like to contribute or colaborate, please contact Philipp Müller at
  [philipp.mueller@basf.com](mailto:philipp.mueller@basf.com).
 
-Issues should be reported [here](https://github.com/mrl280/pyTEM/issues)
+Issues should be reported to the issues board [here](https://github.com/mrl280/pyTEM/issues).
