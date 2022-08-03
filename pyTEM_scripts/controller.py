@@ -23,10 +23,13 @@ def controller():
             offset_y = (joy.read()[1]*10**(-6)) 
             adapter.xy(offset_x, offset_y)
 
-        if (joy.read()[4] or joy.read()[5]) != 0:
+        if (joy.read()[4]) != 0:
             offset_z_down = (joy.read()[4]*10**(-6))
+            adapter.down(offset_z_down)
+       
+        if (joy.read()[5]) != 0:
             offset_z_up = (joy.read()[5]*10**(-6))
-            adapter.z()
+            adapter.up(offset_z_up)
 
 
 def script_entry():

@@ -1,9 +1,11 @@
 import warnings
-from pyTEM_scripts.lib.controller.XboxController import XboxController
 from pyTEM.Interface import Interface
 
 
 class Adapter():
+    """
+    Test
+    """
 
 
     def __init__(self):
@@ -23,13 +25,14 @@ class Adapter():
         self.tem.set_stage_position(x = offset_x + cx, y = offset_y + cy)
 
 
-    def z(self, offset_z_down, offset_z_up):
+    def down(self, offset_z_down):
         cz = self.tem.get_stage_position()['z']
-
-        # SetZ = (joy.read()[4]*10**(-6)) + Cz
-        # SetZ = (joy.read()[5]*10**(-6)) - Cz
         self.tem.set_stage_position(z = offset_z_down - cz)
 
+    def up(self, offset_z_up):
+        cz = self.tem.get_stage_position()['z']
+        self.tem.set_stage_position(z = offset_z_up + cz)
+    
 
     def reset(self):
         self.tem.set_stage_position(x = 0, y = 0)
