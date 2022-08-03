@@ -18,9 +18,10 @@ While it may depend on your microscope installation, ```pyTEM``` will likely nee
  For detailed information regarding your microscope's scripting capabilities, please refer to the documentation 
  accompanying your microscope or contact to your microscope supplier.
 
-In addition to the main scripting interface, pyTEM ships with various scripts. Besides being useful 
+In addition to the main scripting interface, pyTEM ships with various [scripts](#scripts). Besides being useful 
  in-and-of-themselves, these scripts demonstrate how to interface with and control the microscopes using ```pyTEM```. 
- A list of available scripts can be found [below](#scripts).
+ A list of available scripts can be found [below](#scripts). These scripts are included as part of pyTEM for the sake 
+ of consolidating the TEM Labratory's scripting efforts.
 
 # Contribution & Contact Info
 
@@ -33,14 +34,14 @@ Issues should be reported to the issues board [here](https://github.com/mrl280/p
 # Interface
 
 ```pyTEM``` is a microscope scripting interface. This means that you can issue commands to, and receive microscope data 
- from, compatible microscopes calling ```pyTEM``` functions. This is not a complete interface in that it does not 
+ from, compatible microscopes by calling ```pyTEM``` functions. This is not a complete interface in that it does not 
  provide access to all the microscope's functionality. However, it provides access to all fundamental microscope 
  functions as well as some more advanced functions which were required for the development of one or more 
  [```pyTEM``` scripts](#scripts).
 
 ```pyTEM``` aims to be more *user-friendly* than the underlying Fisher Scientific / FEI scripting interface. To this 
  end: 
-- ```pyTEM``` functions return only built-in data types or instances of useful, simple classes.
+- ```pyTEM``` functions return only built-in data types or instances of useful, simple classes (no pointers).
 - ```pyTEM``` accepts input and returns results in *user-friendly* units. For example, stage position is set in 
  microns/degrees, and tilt speed in degrees-per-second.
 - ```pyTEM``` provides many additional functions not directly available through the underlying interface. For example, 
@@ -51,9 +52,10 @@ Issues should be reported to the issues board [here](https://github.com/mrl280/p
 Finally, ```pyTEM``` is a good starting place for those interested in learning how to control their microscope from a 
  pure Python environment.
 
-```pyTEM``` [controls](#controls) are divided across Python mixins. This [simplified class-diagram](/docs) 
+```pyTEM``` [controls](#controls) are divided across Python [mixins](https://www.pythontutorial.net/python-oop/python-mixin/). 
+ This simplified [class-diagram](/docs/pyTEM%20Class%20Diagram%20-%20Simple.jpg) 
  was built to help articulate ```pyTEM```'s architecture. Notice that some mixins include other mixins, and a pyTEM 
- interface includes all mixins along with some [interface-level controls](#interface-level-controls).
+ ```Interface``` includes all mixins along with some [interface-level controls](#interface-level-controls).
  
 ### Controls
 
@@ -103,8 +105,8 @@ else:
 
 #### Magnification Controls
 
-Get and set both TEM and STEM magnification (only for *imaging* mode). Get and set camera-length 
- (only for *diffraction* mode).
+When in *imaging* mode, get and set both TEM and STEM magnification. When in *diffraction* mode, get and set 
+ camera-length.
 
 #### Magnification Controls Example
 
@@ -123,7 +125,7 @@ print("Current magnification: " + str(current_magnification) + "x Zoom")
 # Print a list of available magnifications.
 my_microscope.print_available_magnifications()
 
-# TEM magnification is set by index, lets increase the magnification by three notches.
+# TEM magnification is set by index, let's increase the magnification by three notches.
 current_magnification_index = my_microscope.get_magnification_index()
 my_microscope.set_tem_magnification(new_magnification_index=current_magnification_index + 3)
 
@@ -144,7 +146,7 @@ my_microscope = Interface()
 # Print out the current image shift.
 u = my_microscope.get_image_shift()
 print("Current image shift in the x-direction: " + str(u[0]))
-print("Current image shift in the y-axis: " + str(u[1]))
+print("Current image shift in the y-direction: " + str(u[1]))
 
 # Print out the current beam shift.
 v = my_microscope.get_beam_shift()
@@ -154,7 +156,7 @@ print("Current beam shift in the y-direction: " + str(v[1]))
 # Shift the image 2 microns to the right, and 3 microns up.
 my_microscope.set_image_shift(x=u[0] + 2, y=u[1] + 3)
 
-# Move the beam shift to (-10, 5).
+# Move the beam shift to (-10 um, 5 um).
 my_microscope.set_beam_shift(x=-10, y=5)
 
 # Print out the new image shift.
@@ -189,9 +191,9 @@ my_microscope.set_projection_mode(new_projection_mode="imaging")
 my_microscope.print_projection_submode()
 
 # Print out the current illumination mode.
-print("Current illumination mode: " + my_microscope.get_illumination_mode())
+print("\nCurrent illumination mode: " + my_microscope.get_illumination_mode())
 if my_microscope.get_illumination_mode() == "microprobe":
-    print("This mode provides a nearly parallel illumination at the cost of a larger probe size.")
+    print("This mode provides nearly parallel illumination at the cost of a larger probe size.")
 else:
     print("Use this mode to get a small convergent electron beam.")
     
@@ -225,7 +227,7 @@ from pyTEM.Interface import Interface
 my_microscope = Interface()
 
 if my_microscope.beam_is_blank():
-    print("The beam is blank... un-blanking beam...")
+    print("The beam is blanked... un-blanking beam...")
     my_microscope.unblank_beam()
 else:
     print("The beam is un-blanked... blanking beam...")
@@ -247,12 +249,10 @@ my_microscope = Interface()
 my_microscope.print_stage_status()
 
 # Reset the microscope stage to the home position.
-if my_microscope.stage_is_home():
-    pass
-else:
+if not my_microscope.stage_is_home():
     my_microscope.reset_stage_position()
     
-# Update the stage position along the x, y, and alpha-tilt-angle axes. Move at half speed.
+# Update the stage position along the x, y, and alpha-tilt axes. Move at half speed.
 my_microscope.set_stage_position(x=5, y=10, alpha=-45, speed=0.5)
  
 # Print out the current stage position.
@@ -301,7 +301,7 @@ my_microscope = Interface()
 # Normalize all lenses.
 my_microscope.normalize()
 
-# Prepare the holder for removal.
+# Prepare for holder removal.
 my_microscope.prepare_for_holder_removal()
 
 # Return the microscope to a safe state.
@@ -310,7 +310,7 @@ my_microscope.make_safe()
 
 ### Limited Interfaces
 
-As we have seen, a ```pyTEM``` interface can be established by creating an instance of the ```Interface``` class. 
+As we have seen, a ```pyTEM``` interface can be established by creating an instance of the ```pyTEM.Interface``` class. 
  However, one can also create interfaces that support a limited subset of ```pyTEM``` functions. For example, we can 
  create a ```pyTEM``` interface with only stage controls: 
 ```
@@ -318,7 +318,7 @@ from pyTEM.lib.mixins.StageMixin import StageInterface
 stage_interface = StageInterface()
 ```
 
-Using ```stage_interface```, we can perform the same series of commands performed [above](#stage-controls):
+Using ```stage_interface```, we can perform the same series of stage commands performed [above](#stage-controls):
 ```
 # Print out the stage's current status.
 stage_interface.print_stage_status()
@@ -338,7 +338,7 @@ stage_interface.print_stage_position()
 
 This technique can be useful when speed is an issue, or when it's best-practice to restrict unnecessary control. 
  Custom interfaces can be created by including only the required mixins. For example, if you need stage and 
- beam-blanker controls but nothing else, you want to use an instance of the following limited interface:
+ beam-blanker controls but nothing else, you may want to use an instance of the following limited interface:
 ```
 import comtypes.client as cc
 
@@ -372,8 +372,7 @@ Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial
 
 ```pyTEM``` scripts are stand-alone sequences of ```pyTEM``` commands that perform useful data acquisitions, initialize 
  or return the microscope to some pre-defined state, or achieve some other common task. ```pyTEM``` scripts are 
- distributed with,  and automatically installed alongside, ```pyTEM``` itself. Please see [installation](#installation) 
- for more.
+ distributed with,  and automatically installed alongside, ```pyTEM``` itself.
 
 ```pyTEM``` scripts are run from the command line. For example:
 ```
@@ -428,8 +427,37 @@ Gillard, Adrien & Couégnat, Guillaume & Caty, O. & Allemand, Alexandre & P, Wei
 
 ### controller
 
-Control the microscope with an Xbox controller.
+Allows users to control their microscope with an Xbox controller. This is especially helpful for microscope operators working 
+ off-site.
+  
+# Installation
 
+Because ```pyTEM``` is often required on microscope control machines which lack internet connectivity, pyTEM is not 
+ listed on the Python Package Index, nor anywhere else. Rather, we provide a wheel file in [/dist](/dist) and the 
+ following [offline install instructions](#offline-install-instructions).
+
+### Offline Install Instructions
+##### Part 1. On a system with internet access:
+1. Download [requirements.txt](./requirements.txt).
+2. Download the required dependencies with pip ```pip download -d ./pytem_dependencies -r requirements.txt```.
+3. Download the ```pyTEM``` wheel from [/dist](/dist).
+
+Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel to the offline machine.
+
+##### Part 2. On the offline system:
+1. Install the required dependencies with pip: 
+ ```pip install --no-index --find-links ./pytem_dependencies -r requirements.txt```
+2. Install ```pyTEM``` itself with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
+
+If you run into any problems installing the required dependencies, check that you are using the same version of pip on 
+ both the online and offline systems.
+
+### Encase you need to build your own custom ```pyTEM``` wheel
+1. Install wheel with ```pip install wheel```.
+2. Download the whole ```pyTEM``` project directory.
+3. Navigate to the pyTEM folder.
+4. Run ```setup.py``` with the ```bdist_wheel``` setuptools command. 
+ Example: ```python setup.py bdist_wheel```
 
 # Authorship
 
@@ -449,7 +477,7 @@ Baltimore, Maryland, USA
  final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
 - Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```micro_ed``` script. View the project on 
  GitLab [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
-- Wrote the original TEM Scripting Guide, which can be found in [docs](/docs).
+- Wrote the original TEM Scripting Guide, which can be found in [/docs](/docs).
 
 ### *[Michael Luciuk](https://github.com/mrl280) (May - Aug 2022)*
 
@@ -459,40 +487,9 @@ Saskatoon, Saskatchewan, Canada
 #### Contributions:
 
 - Refactored the original ```TEMPackage``` module into the ```pyTEM``` library that we know and love today.
-- Refactored the original ```microED_Tilt_Series``` script into the ```micro_ed``` script that we know and love today.
+- Refactored the original ```microED_Tilt_Series``` script into the [```micro_ed```](#micro_ed) script that we know and love today.
 - Updated and improved both ```pyTEM``` and ```micro_ed```.
-- Developed the ```align_images``` and ```bulk_carbon_analysis``` scripts.
+- Developed the [```align_images```](#align_images) script and did some initial work on the [```bulk_carbon_analysis```](#bulk_carbon_analysis) script.
 
 You can view the ```pyTEM``` project as it existed at the time of Michael's final commit 
  [here](https://github.com/mrl280/pyTEM). # TODO: Update after Michael leaves
-  
-# Installation
-
-Because ```pyTEM``` is often required on microscope control machines which lack internet connectivity, pyTEM is not 
- listed on the Python Package Index, nor anywhere else. Rather, we provide a wheel file in [dist](/dist) and the 
- following [offline install instructions](#offline-install-instructions).
-
-### Offline Install Instructions
-##### Part 1. On a system with internet access:
-1. Download [requirements.txt](./requirements.txt).
-2. Download the required dependencies with pip ```pip download -d ./pytem_dependencies -r requirements.txt```.
-3. Download the ```pyTEM``` wheel from [dist](/dist).
-
-Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel to the offline machine.
-
-##### Part 2. On the offline system:
-1. Install the required dependencies with pip: 
- ```pip install --no-index --find-links ./pytem_dependencies -r requirements.txt```
-2. Install ```pyTEM``` itself with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
-
-If you run into any problems installing the required dependencies, check that you are using the same version of pip on 
- both the online and offline systems.
-
-### Encase you need to build your own custom ```pyTEM``` wheel
-1. Install wheel with ```pip install wheel```.
-2. Download the whole ```pyTEM``` project directory.
-3. Navigate to the pyTEM folder.
-4. Run ```setup.py``` with the ```bdist_wheel``` setuptools command. 
- Example: ```python setup.py bdist_wheel```
-
-
