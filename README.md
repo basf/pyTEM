@@ -426,6 +426,11 @@ Gillard, Adrien & Couégnat, Guillaume & Caty, O. & Allemand, Alexandre & P, Wei
     10.1016/j.carbon.2015.05.005.
 </pre>
 
+### controller
+
+Control the microscope with an Xbox controller.
+
+
 # Authorship
 
 ```pyTEM``` is developed and maintained by the TEM microscopy laboratory at BASF SE in Ludwigshafen, Germany. The 
