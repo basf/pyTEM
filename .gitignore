@@ -1,15 +1,51 @@
 # Test and calibration data
-/pyTEM/test/data/
-/pyTEM/test/TEMInferace Testing Log.xlsx
-/pyTEM/test/image_shift_calibration/Calibration_Data/
-/pyTEM/test/image_shift_calibration/Image Shift Calibration.xlsx
-/pyTEM/test/test_images/
+pyTEM/test/data/
+pyTEM/test/TEMInferace Testing Log.xlsx
+pyTEM/test/image_shift_calibration/Calibration_Data/
+pyTEM/test/image_shift_calibration/Image Shift Calibration.xlsx
+pyTEM/test/test_images/
 
-# Distribution/packaging
-/build/
-/pyTEM.egg-info/
-/pytem_dependencies/
+pyTEM_scripts/test/micro_ed/check_message_ordering.py
 
-# Other
-.idea/workspace.xml
-/pyTEM_scripts/test/micro_ed/check_message_ordering.py
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+pytem_dependencies/
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Sensitive or high-churn files
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+# pyenv
+.python-version
