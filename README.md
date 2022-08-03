@@ -11,12 +11,12 @@
 ```pyTEM``` is a *high-level* scripting interface enabling the *user-friendly* control of, and automated data 
  acquisition on, Thermo Fisher Scientific and FEI microscopes from a pure Python environment. Bolted directly on top 
  of a COM interface, ```pyTEM``` is a Python wrapper for, and extension of, the prerequisite Thermo Fisher Scientific 
- / FEI scripting interface.
+ / FEI scripting and advanced scripting interfaces.
 
 While it may depend on your microscope installation, ```pyTEM``` will likely need to be run on a microscope control 
- computer with the prerequisite Thermo Fisher Scientific / FEI scripting interface as well as the advanced scripting interface installed and properly configured. 
- For detailed information regarding your microscope's scripting capabilities, please refer to the documentation 
- accompanying your microscope or contact to your microscope supplier.
+ computer with the prerequisite Thermo Fisher Scientific / FEI scripting and advanced scripting interfaces installed 
+ and properly configured. For detailed information regarding your microscope's scripting capabilities, please refer to 
+ the documentation accompanying your microscope or contact to your microscope supplier.
 
 In addition to the main scripting interface, pyTEM ships with various [scripts](#scripts). Besides being useful 
  in-and-of-themselves, these scripts demonstrate how to interface with and control the microscopes using ```pyTEM```. 
@@ -39,8 +39,8 @@ Issues should be reported to the issues board [here](https://github.com/mrl280/p
  functions as well as some more advanced functions which were required for the development of one or more 
  [```pyTEM``` scripts](#scripts).
 
-```pyTEM``` aims to be more *user-friendly* than the underlying Fisher Scientific / FEI scripting interface. To this 
- end: 
+```pyTEM``` aims to be more *user-friendly* than the underlying Fisher Scientific / FEI scripting and advanced 
+ scripting interfaces. To this end: 
 - ```pyTEM``` functions return only built-in data types or instances of useful, simple classes (no pointers).
 - ```pyTEM``` accepts input and returns results in *user-friendly* units. For example, stage position is set in 
  microns/degrees, and tilt speed in degrees-per-second.
@@ -52,8 +52,9 @@ Issues should be reported to the issues board [here](https://github.com/mrl280/p
 Finally, ```pyTEM``` is a good starting place for those interested in learning how to control their microscope from a 
  pure Python environment.
 
-```pyTEM``` [controls](#controls) are divided across Python [mixins](https://www.pythontutorial.net/python-oop/python-mixin/). 
- This simplified [class-diagram](/docs/pyTEM%20Class%20Diagram%20-%20Simple.jpg) 
+```pyTEM``` [controls](#controls) are divided across Python 
+ [mixins](https://www.pythontutorial.net/python-oop/python-mixin/). This simplified 
+ [class-diagram](/docs/pyTEM%20Class%20Diagram%20-%20Simple.jpg) 
  was built to help articulate ```pyTEM```'s architecture. Notice that some mixins include other mixins, and a pyTEM 
  ```Interface``` includes all mixins along with some [interface-level controls](#interface-level-controls).
  
@@ -442,7 +443,8 @@ Because ```pyTEM``` is often required on microscope control machines which lack 
 2. Download the required dependencies with pip ```pip download -d ./pytem_dependencies -r requirements.txt```.
 3. Download the ```pyTEM``` wheel from [/dist](/dist).
 
-Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel to the offline machine. #ToDo: To wich directory?
+Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` 
+ wheel to the offline machine (any directory is fine; most opt for current user's Downloads directory).
 
 ##### Part 2. On the offline system:
 1. Install the required dependencies with pip: 
