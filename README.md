@@ -14,7 +14,7 @@
  / FEI scripting interface.
 
 While it may depend on your microscope installation, ```pyTEM``` will likely need to be run on a microscope control 
- computer with the prerequisite Thermo Fisher Scientific / FEI scripting interface installed and properly configured. 
+ computer with the prerequisite Thermo Fisher Scientific / FEI scripting interface as well as the advanced scripting interface installed and properly configured. 
  For detailed information regarding your microscope's scripting capabilities, please refer to the documentation 
  accompanying your microscope or contact to your microscope supplier.
 
@@ -442,7 +442,7 @@ Because ```pyTEM``` is often required on microscope control machines which lack 
 2. Download the required dependencies with pip ```pip download -d ./pytem_dependencies -r requirements.txt```.
 3. Download the ```pyTEM``` wheel from [/dist](/dist).
 
-Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel to the offline machine.
+Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you just created, and the ```pyTEM``` wheel to the offline machine. #ToDo: To wich directory?
 
 ##### Part 2. On the offline system:
 1. Install the required dependencies with pip: 
@@ -452,7 +452,7 @@ Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you 
 If you run into any problems installing the required dependencies, check that you are using the same version of pip on 
  both the online and offline systems.
 
-### Encase you need to build your own custom ```pyTEM``` wheel
+### In case you need to build your own custom ```pyTEM``` wheel
 1. Install wheel with ```pip install wheel```.
 2. Download the whole ```pyTEM``` project directory.
 3. Navigate to the pyTEM folder.
