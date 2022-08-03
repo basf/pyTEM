@@ -13,3 +13,4 @@
 # Other
 .idea/workspace.xml
 /pyTEM_scripts/test/micro_ed/check_message_ordering.py
+*__pycache__
