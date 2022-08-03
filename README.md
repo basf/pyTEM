@@ -8,50 +8,63 @@
 
 # About
 
-```pyTEM``` is a *high-level* scripting interface enabling the *user-friendly* control of, and automated data acquisition
- on, Thermo Fisher Scientific and FEI microscopes from a pure Python environment. Bolted directly on top of a COM 
- interface, ```pyTEM``` is a Python wrapper for, and extension of, the prerequisite Thermo Fisher Scientific / FEI scripting 
- interface.
+```pyTEM``` is a *high-level* scripting interface enabling the *user-friendly* control of, and automated data 
+ acquisition on, Thermo Fisher Scientific and FEI microscopes from a pure Python environment. Bolted directly on top 
+ of a COM interface, ```pyTEM``` is a Python wrapper for, and extension of, the prerequisite Thermo Fisher Scientific 
+ / FEI scripting interface.
 
 While it may depend on your microscope installation, ```pyTEM``` will likely need to be run on a microscope control 
- computer with the prerequisite Thermo Fisher Scientific / FEI scripting interface installed and properly configured. For 
- detailed information regarding your microscope's scripting capabilities, please refer to the documentation 
+ computer with the prerequisite Thermo Fisher Scientific / FEI scripting interface installed and properly configured. 
+ For detailed information regarding your microscope's scripting capabilities, please refer to the documentation 
  accompanying your microscope or contact to your microscope supplier.
 
-In addition to the main scripting interface, pyTEM ships with various scripts. Besides being usful in-and-of-themselves, 
- these scripts demonstrate how to interface with and control the microscopes using ```pyTEM```. A list of available scripts
- can be found [below](#scripts).
+In addition to the main scripting interface, pyTEM ships with various scripts. Besides being useful 
+ in-and-of-themselves, these scripts demonstrate how to interface with and control the microscopes using ```pyTEM```. 
+ A list of available scripts can be found [below](#scripts).
+
+# Contribution & Contact Info
+
+```pyTEM``` is developed and maintained by the TEM Microscopy Laboratory at BASF SE in Ludwigshafen, Germany. If you 
+ have any questions about the ```pyTEM``` project or would like to contribute or collaborate, please contact Philipp 
+ Müller at [philipp.mueller@basf.com](mailto:philipp.mueller@basf.com).
+
+Issues should be reported to the issues board [here](https://github.com/mrl280/pyTEM/issues).
 
 # Interface
 
-```pyTEM``` is a microscope scripting interface. This means that you can issue commands to, and recieve microscope data from, compatible 
- microscopes using ```pyTEM``` functions. This is not a complete interface in that it does not provide access to all of the microscope's 
- functionality. However, it provides access to all fundamental microscope functions as well as some more advanced functions which 
- were required for the development of one or more [```pyTEM``` scripts](#scripts).
+```pyTEM``` is a microscope scripting interface. This means that you can issue commands to, and receive microscope data 
+ from, compatible microscopes calling ```pyTEM``` functions. This is not a complete interface in that it does not 
+ provide access to all the microscope's functionality. However, it provides access to all fundamental microscope 
+ functions as well as some more advanced functions which were required for the development of one or more 
+ [```pyTEM``` scripts](#scripts).
 
-```pyTEM``` aims to be more *user-friendly* than the underlying Fisher Scientific / FEI scripting interface. To this end: 
+```pyTEM``` aims to be more *user-friendly* than the underlying Fisher Scientific / FEI scripting interface. To this 
+ end: 
 - ```pyTEM``` functions return only built-in data types or instances of useful, simple classes.
-- ```pyTEM``` accepts input and returns results in *user-friendly* units. For example, stage position is set in microns/degrees, and tilt speed in degrees-per-second.
-- ```pyTEM``` provides many additional functions not directly available through the underlying interface. For example, tilt-while-acquiring and save-to-file functionality.
- - ```pyTEM``` is open source and liscenced such that users can make any changes or modifications required to
+- ```pyTEM``` accepts input and returns results in *user-friendly* units. For example, stage position is set in 
+ microns/degrees, and tilt speed in degrees-per-second.
+- ```pyTEM``` provides many additional functions not directly available through the underlying interface. For example, 
+ tilt-while-acquiring, metadata evaluation, and save-to-file functionality.
+- ```pyTEM``` is open source and licensed such that users can make any changes or modifications required to
   suit their own installation.
 
-Finally, ```pyTEM``` is a good starting place for those interested in learning how to control their microscope from a pure 
- Python environment.
+Finally, ```pyTEM``` is a good starting place for those interested in learning how to control their microscope from a 
+ pure Python environment.
+
+```pyTEM``` [controls](#controls) are divided across Python mixins. This [simplified class-diagram](/docs) 
+ was built to help articulate ```pyTEM```'s architecture. Notice that some mixins include other mixins, and a pyTEM 
+ interface includes all mixins along with some [interface-level controls](#interface-level-controls).
  
-Several ```pyTEM``` functions and scripts use ```Hyperspy```'s ```estimate_shift2D()``` function to estimate the pixel offset between images. This function uses a phase correlation algorithm based on the following paper:
-<pre>
-Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEMmImage Series.” 
-    Ultramicroscopy 102, no. 1 (December 2004): 27–36.
-</pre>
+### Controls
 
-```pyTEM``` [controls](#acquisition-controls) are divided into the following catagories. Each set of controls is a single Python module.
- 
-### Acquisition Controls
+#### Acquisition Controls
 
-Microscope acquisition controls including ```acquisition()``` and ```acquisition_series()``` functions. By means of multitasking, both of these functions offer beam-blanker optimization and aquire-while-tilting functionality.
+Microscope acquisition controls including ```acquisition()``` and ```acquisition_series()``` functions. By means of 
+ multitasking, both functions offer beam-blanker optimization and acquire-while-tilting functionality.
 
-These functions return ```Acquistion``` and ```AcquisitionSeries``` objects, respectively. Both the ```Acquistion``` and ```AcquisitionSeries``` classes provide helpful methods for further image and metadata manipulation as well as ```save_to_file()``` functionality. 
+These functions return ```pyTEM``` ```Acquistion``` and ```AcquisitionSeries``` objects, respectively. Both the 
+ ```Acquistion``` and ```AcquisitionSeries``` classes provide helpful methods for further image and metadata 
+ manipulation as well as save-to-file functionality. 
 
 #### Acquisition Controls Example
 
@@ -74,6 +87,9 @@ if len(available_cameras) > 0:
     acq = my_microscope.acquisition(camera_name=available_cameras[0], exposure_time=1, 
                                     sampling='4k', blanker_optimization=True)
 
+    # Downsample the acquisition (bilinear decimation by a factor of 2).
+    acq.downsample()
+    
     # Display a pop-up with the results of our acquisition.
     acq.show_image()
 
@@ -85,9 +101,10 @@ else:
     print("No available cameras!")
 ```
 
-### Magnification Controls
+#### Magnification Controls
 
-Get and set both TEM and STEM magnification (only for *imaging* mode). Get and set camera-length (only for *diffraction* mode).
+Get and set both TEM and STEM magnification (only for *imaging* mode). Get and set camera-length 
+ (only for *diffraction* mode).
 
 #### Magnification Controls Example
 
@@ -114,7 +131,7 @@ my_microscope.set_tem_magnification(new_magnification_index=current_magnificatio
 my_microscope.shift_tem_magnification(magnification_shift=-1)
 ```
 
-### Image and Beam Shift Controls
+#### Image and Beam Shift Controls
 
 Get and set both image and beam shift.
 
@@ -154,8 +171,9 @@ print("New beam shift in the y-direction: " + str(v[1]))
 my_microscope.zero_shifts()
 ```
 
-### Mode Controls
+#### Mode Controls
 
+Microscope mode controls, including getters and setters for instrument, illumination, and projection mode.
 
 #### Mode Controls Example
 
@@ -163,11 +181,25 @@ my_microscope.zero_shifts()
 from pyTEM.Interface import Interface
 my_microscope = Interface()
 
-# TODO
+# Make sure we are in TEM imaging mode.
+my_microscope.set_mode(new_mode="TEM")
+my_microscope.set_projection_mode(new_projection_mode="imaging")
+
+# Print out the current projection submode.
+my_microscope.print_projection_submode()
+
+# Print out the current illumination mode.
+print("Current illumination mode: " + my_microscope.get_illumination_mode())
+if my_microscope.get_illumination_mode() == "microprobe":
+    print("This mode provides a nearly parallel illumination at the cost of a larger probe size.")
+else:
+    print("Use this mode to get a small convergent electron beam.")
+    
+# Switch to STEM mode.
+my_microscope.set_mode(new_mode="STEM")
 ```
 
-
-### Screen Controls
+#### Screen Controls
 
 Insert and retract the FluCam screen.
 
@@ -177,10 +209,12 @@ Insert and retract the FluCam screen.
 from pyTEM.Interface import Interface
 my_microscope = Interface()
 
-# TODO
+# Make sure the FluCam screen is inserted.
+if my_microscope.get_screen_position() == "retracted":
+    my_microscope.insert_screen()
 ```
 
-### Beam Blanker Controls
+#### Beam Blanker Controls
 
 Blank and un-blank the electron beam.
 
@@ -190,12 +224,18 @@ Blank and un-blank the electron beam.
 from pyTEM.Interface import Interface
 my_microscope = Interface()
 
-# TODO
+if my_microscope.beam_is_blank():
+    print("The beam is blank... un-blanking beam...")
+    my_microscope.unblank_beam()
+else:
+    print("The beam is un-blanked... blanking beam...")
+    my_microscope.blank_beam()
 ```
 
-### Stage Controls
+#### Stage Controls
 
-
+Microscope stage controls, including those to get and set the stage position, monitor the stage status, and inspect 
+ the current specimen-holder's capabilities.
 
 #### Stage Controls Example
 
@@ -203,12 +243,26 @@ my_microscope = Interface()
 from pyTEM.Interface import Interface
 my_microscope = Interface()
 
-# TODO
+# Print out the stage's current status.
+my_microscope.print_stage_status()
+
+# Reset the microscope stage to the home position.
+if my_microscope.stage_is_home():
+    pass
+else:
+    my_microscope.reset_stage_position()
+    
+# Update the stage position along the x, y, and alpha-tilt-angle axes. Move at half speed.
+my_microscope.set_stage_position(x=5, y=10, alpha=-45, speed=0.5)
+ 
+# Print out the current stage position.
+my_microscope.print_stage_position()
 ```
 
-### Vacuum Controls
+#### Vacuum Controls
 
-
+Vacuum system controls, including those to read gauge pressures, monitor the vacuum in the column, and control the 
+ column valve.
 
 #### Vacuum Controls Example
 
@@ -216,14 +270,29 @@ my_microscope = Interface()
 from pyTEM.Interface import Interface
 my_microscope = Interface()
 
-# TODO
+# Print out the current status of the vacuum system.
+my_microscope.print_vacuum_status()
+
+# Print out vacuum info in a table-like format.
+my_microscope.print_vacuum_info()
+
+# Check if the column is under vacuum.
+if my_microscope.column_under_vacuum():
+    print("The column is currently under vacuum; it is safe to open the column valve.")
+else:
+    print("Column vacuum is insufficient to open the column valve.")
+    
+# Make sure the column valve is closed.
+if my_microscope.get_column_valve_position() == "open":
+    my_microscope.close_column_valve()
 ```
 
-### Other Controls
+#### Interface-Level Controls
 
-Additionally, ```pyTEM``` supports controls 
+Additionally, some ```pyTEM``` functions are defined within the ```Interface``` class itself (rather than included from 
+ one of the other mixins). Often, these functions utilize functions from the included mixins.
 
-#### Vacuum Controls Example
+#### Interface-Level Controls Example
 
 ```
 from pyTEM.Interface import Interface
@@ -239,54 +308,122 @@ my_microscope.prepare_for_holder_removal()
 my_microscope.make_safe()
 ```
 
-Ability to build interfaces with limited subsets of control. # TODO.
+### Limited Interfaces
+
+As we have seen, a ```pyTEM``` interface can be established by creating an instance of the ```Interface``` class. 
+ However, one can also create interfaces that support a limited subset of ```pyTEM``` functions. For example, we can 
+ create a ```pyTEM``` interface with only stage controls: 
+```
+from pyTEM.lib.mixins.StageMixin import StageInterface
+stage_interface = StageInterface()
+```
+
+Using ```stage_interface```, we can perform the same series of commands performed [above](#stage-controls):
+```
+# Print out the stage's current status.
+stage_interface.print_stage_status()
+
+# Reset the microscope stage to the home position.
+if stage_interface.stage_is_home():
+    pass
+else:
+    stage_interface.reset_stage_position()
+
+# Update the x, y, and alpha stage positions. Move at half speed.
+stage_interface.set_stage_position(x=5, y=10, alpha=-45, speed=0.5)
+
+# Print out the current stage position.
+stage_interface.print_stage_position()
+```
+
+This technique can be useful when speed is an issue, or when it's best-practice to restrict unnecessary control. 
+ Custom interfaces can be created by including only the required mixins. For example, if you need stage and 
+ beam-blanker controls but nothing else, you want to use an instance of the following limited interface:
+```
+import comtypes.client as cc
+
+from pyTEM.lib.mixins.StageMixin import StageMixin
+from pyTEM.lib.mixins.BeamBlankerMixin import BeamBlankerMixin
+
+
+class StageBeamBlankerInterface(StageMixin, BeamBlankerMixin):
+    """
+    A microscope interface with only stage and beam blanker controls.
+    """
+
+    def __init__(self):
+        try:
+            self._tem = cc.CreateObject("TEMScripting.Instrument")
+        except OSError as e:
+            print("Unable to connect to the microscope.")
+            raise e
+```
+
+### Automated Image Alignment with ```Hyperspy```
+
+Several ```pyTEM``` functions and scripts use ```Hyperspy```'s ```estimate_shift2D()``` function to estimate the pixel 
+ offset between images. This function uses a phase correlation algorithm based on the following paper:
+<pre>
+Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEMmImage Series.” 
+    Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+</pre>
 
 # Scripts
 
-```pyTEM``` scripts are stand-alone sequences of ```pyTEM``` commands that perform usful data acquisitions, initialize or 
- return the microscope to some pre-defined state, or achieve some other common task. ```pyTEM``` scripts are distributed with, 
- and automatically installed alongside, ```pyTEM``` itself. Please see [installation](#installation) for more.
+```pyTEM``` scripts are stand-alone sequences of ```pyTEM``` commands that perform useful data acquisitions, initialize 
+ or return the microscope to some pre-defined state, or achieve some other common task. ```pyTEM``` scripts are 
+ distributed with,  and automatically installed alongside, ```pyTEM``` itself. Please see [installation](#installation) 
+ for more.
 
-```pyTEM``` scipts are run from the command line. For example:
+```pyTEM``` scripts are run from the command line. For example:
 ```
 micro_ed --verbose
 ```
+
 To view script usage, use the ```--help``` option:
 ```
 micro_ed --help
 ```
 
-Often, ```pyTEM``` scripts utalize custom ```Tkinter``` UIs to simplify and streamline IO.
+Often, ```pyTEM``` scripts utilize custom ```Tkinter``` UIs to simplify and streamline IO.
 
-Since all ```pyTEM``` scripts utilize ```pyTEM``` itself, runing ```pyTEM``` scripts requires all of ```pyTEM``` along with its prerequisites and dependencies.
+Since all ```pyTEM``` scripts utilize ```pyTEM``` itself, running ```pyTEM``` scripts requires all of ```pyTEM``` 
+ along with its prerequisites and dependencies.
 
 ### micro_ed
-```micro_ed``` is BASF's micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows for the fast,
- high-resolution 3D structure determination of small chemical compounds and biological macromolecules. More on MicroED 
- [here](https://en.wikipedia.org/wiki/Microcrystal_electron_diffraction).
+```micro_ed``` is BASF's micro-crystal electron diffraction (MicroED) automated imaging script. MicroED allows for the 
+ fast, high-resolution 3D structure determination of small chemical compounds and biological macromolecules. More on 
+ MicroED [here](https://en.wikipedia.org/wiki/Microcrystal_electron_diffraction).
 
 ```micro_ed``` achieves automated image alignment by computing the image deviation during a preparatory tilt 
- sequence and then applying a compensatory image shift during the main acquisition sequence. This automated image alignment functionality
- is optional. ```micro_ed``` only collects the data, it does not analyse it.
+ sequence and then applying a compensatory image shift during the main acquisition sequence. This automated image 
+ alignment functionality is optional. ```micro_ed``` only collects the data, it does not analyse it.
  
-```micro_ed``` results can be saved as a single mulit-image stack file or as multiple single-image files. Since performing a MicroED acquisition sequence requires some actions that aren't easily automated (such as selecting suitable particles and setting the eucentric height), a series of ```Tkinter``` message boxes guide the user through those steps requiring manual interaction.
+```micro_ed``` results can be saved as a single multi-image stack file or as multiple single-image files. Since 
+ performing a MicroED acquisition sequence requires some actions that aren't easily automated (such as selecting 
+ suitable particles and setting the eucentric height), a series of ```Tkinter``` message boxes guide the user through 
+ those steps requiring manual interaction.
 
 ### align_images
 
-```align_images``` allows the user to load some images from file (possibly from a single mulit-image stack file or possibly from multiple single-image files), align the images, and then save the results back to file as a single multi-image stack.
+```align_images``` allows the user to load some images from file (possibly from a single multi-image stack file or 
+ possibly from multiple single-image files), align the images, and then save the results back to file as a single 
+ multi-image stack.
 
 Colour images are converted to 8bit unsigned greyscale prior to alignment.
 
 ### bulk_carbon_analysis
 
-Given 16 natural light-micrographs of a bulk carbon sample sandwiched between polarizers of varying cross, produce both anisotropy and orientation maps.
+Given 16 natural light-micrographs of a bulk carbon sample sandwiched between polarizers of varying cross, produce both 
+ anisotropy and orientation maps.
 
 Colour images are converted to 8bit unsigned greyscale prior to analysis.
 
 This script uses the technique explained in the following paper:
 <pre>
 Gillard, Adrien & Couégnat, Guillaume & Caty, O. & Allemand, Alexandre & P, Weisbecker & Vignoles, Gerard. (2015). 
-    A quantitative, space-resolved method for optical anisotropy estimation in bulk carbons. Carbon. 91. 423-435. 10.1016/j.carbon.2015.05.005.
+    A quantitative, space-resolved method for optical anisotropy estimation in bulk carbons. Carbon. 91. 423-435. 
+    10.1016/j.carbon.2015.05.005.
 </pre>
 
 # Authorship
@@ -303,8 +440,10 @@ Baltimore, Maryland, USA
 #### Contributions:
 
 - Figured out how to interface with and control the microscope from a pure Python environment.
-- developed ```TEMPackage```, the predecessor to ```pyTEM```. View the project as it existed at the time of Meagan's final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
-- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```micro_ed``` script. View on GitLab [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
+- developed ```TEMPackage```, the predecessor to ```pyTEM```. View the project as it existed at the time of Meagan's 
+ final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
+- Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```micro_ed``` script. View the project on 
+ GitLab [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
 - Wrote the original TEM Scripting Guide, which can be found in [docs](/docs).
 
 ### *[Michael Luciuk](https://github.com/mrl280) (May - Aug 2022)*
@@ -319,13 +458,14 @@ Saskatoon, Saskatchewan, Canada
 - Updated and improved both ```pyTEM``` and ```micro_ed```.
 - Developed the ```align_images``` and ```bulk_carbon_analysis``` scripts.
 
-You can view the ```pyTEM``` project as it existed at the time of Michael's final commit [here](https://github.com/mrl280/pyTEM). # TODO: Update after Michael leaves
+You can view the ```pyTEM``` project as it existed at the time of Michael's final commit 
+ [here](https://github.com/mrl280/pyTEM). # TODO: Update after Michael leaves
   
 # Installation
 
 Because ```pyTEM``` is often required on microscope control machines which lack internet connectivity, pyTEM is not 
- listed on the Python Package Index, nor anywhere else. Rather, we provide a wheel file in [dist](/dist) and the following 
- [offline install instructions](#offline-install-instructions).
+ listed on the Python Package Index, nor anywhere else. Rather, we provide a wheel file in [dist](/dist) and the 
+ following [offline install instructions](#offline-install-instructions).
 
 ### Offline Install Instructions
 ##### Part 1. On a system with internet access:
@@ -340,7 +480,8 @@ Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you 
  ```pip install --no-index --find-links ./pytem_dependencies -r requirements.txt```
 2. Install ```pyTEM``` itself with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
 
-If you run into any problems installing the required dependancies, check that you are using the same version of pip on both the online and offile machines.
+If you run into any problems installing the required dependencies, check that you are using the same version of pip on 
+ both the online and offline systems.
 
 ### Encase you need to build your own custom ```pyTEM``` wheel
 1. Install wheel with ```pip install wheel```.
@@ -349,10 +490,4 @@ If you run into any problems installing the required dependancies, check that yo
 4. Run ```setup.py``` with the ```bdist_wheel``` setuptools command. 
  Example: ```python setup.py bdist_wheel```
 
-# Contribution & Contact Info
 
-```pyTEM``` is developed and maintained by the TEM Microscopy Laboratory at BASF SE in Ludwigshafen, Germany. If you 
- have any questions about the ```pyTEM``` project or would like to contribute or colaborate, please contact Philipp Müller at
- [philipp.mueller@basf.com](mailto:philipp.mueller@basf.com).
-
-Issues should be reported to the issues board [here](https://github.com/mrl280/pyTEM/issues).
