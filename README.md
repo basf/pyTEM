@@ -365,8 +365,8 @@ class StageBeamBlankerInterface(StageMixin, BeamBlankerMixin):
 Several ```pyTEM``` functions and scripts use ```Hyperspy```'s ```estimate_shift2D()``` function to estimate the pixel 
  offset between images. This function uses a phase correlation algorithm based on the following paper:
 <pre>
-Schaffer, Bernhard, Werner Grogger, and Gerald Kothleitner. “Automated Spatial Drift Correction for EFTEMmImage Series.” 
-    Ultramicroscopy 102, no. 1 (December 2004): 27–36.
+Schaffer B, Grogger W, Kothleitner G. Automated spatial drift correction for EFTEM image series. Ultramicroscopy. 
+    2004 Dec;102(1):27-36. doi: 10.1016/j.ultramic.2004.08.003. PMID: 15556698.
 </pre>
 
 # Scripts
@@ -447,12 +447,13 @@ Transfer ```requirements.txt```, the entire ```pytem_dependencies``` folder you 
  wheel to the offline machine (any directory is fine; most opt for current user's Downloads directory).
 
 ##### Part 2. On the offline system:
-1. Install the required dependencies with pip: 
+1. Ensure both [pip](https://pypi.org/project/pip/) and [wheel](https://pypi.org/project/wheel/) are already installed.
+2. Install the required dependencies with pip: 
  ```pip install --no-index --find-links ./pytem_dependencies -r requirements.txt```
-2. Install ```pyTEM``` itself with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
+3. Install ```pyTEM``` itself with pip. Example: ```pip install pyTEM-0.1.0-py3-none-any.whl```
 
-If you run into any problems installing the required dependencies, check that you are using the same version of pip on 
- both the online and offline systems.
+If you run into any problems installing the required dependencies, check that you are using the same version of pip and 
+ wheel on both the online and offline systems.
 
 ### In case you need to build your own custom ```pyTEM``` wheel
 1. Install wheel with ```pip install wheel```.
