@@ -1,10 +1,17 @@
-from inputs import get_gamepad
+"""
+ Author:  Jason Kobel
+ Date:    Summer 2022
+"""
+
 import math
 import threading
-
+from inputs import get_gamepad
 
 
 class XboxController(object):
+    """
+    Readout of the Xbox Controller
+    """
     MAX_TRIG_VAL = math.pow(2, 8)
     MAX_JOY_VAL = math.pow(2, 15)
 

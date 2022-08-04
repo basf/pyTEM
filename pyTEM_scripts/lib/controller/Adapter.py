@@ -4,7 +4,7 @@ from pyTEM.Interface import Interface
 
 class Adapter():
     """
-    Test
+    Connection to the TEM
     """
 
 
@@ -32,7 +32,7 @@ class Adapter():
     def up(self, offset_z_up):
         cz = self.tem.get_stage_position()['z']
         self.tem.set_stage_position(z = offset_z_up + cz)
-    
+
 
     def reset(self):
         self.tem.set_stage_position(x = 0, y = 0)

@@ -12,6 +12,9 @@ DESCRIPTION = "Xbox Script"
 
 
 def controller():
+    """
+    Get the wanted trigger/buttons from XboxController.py and send the commands to Adapter.py
+    """
     joy = XboxController()
     adapter = Adapter()
     while True:
@@ -19,14 +22,14 @@ def controller():
             adapter.reset()
 
         if (joy.read()[0] or joy.read()[1]) != 0:
-            offset_x = (joy.read()[0]*10**(-6)) 
-            offset_y = (joy.read()[1]*10**(-6)) 
+            offset_x = (joy.read()[0]*10**(-6))
+            offset_y = (joy.read()[1]*10**(-6))
             adapter.xy(offset_x, offset_y)
 
         if (joy.read()[4]) != 0:
             offset_z_down = (joy.read()[4]*10**(-6))
             adapter.down(offset_z_down)
-       
+
         if (joy.read()[5]) != 0:
             offset_z_up = (joy.read()[5]*10**(-6))
             adapter.up(offset_z_up)
