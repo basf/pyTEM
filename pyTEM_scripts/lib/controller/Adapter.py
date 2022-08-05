@@ -1,3 +1,8 @@
+"""
+ Author:  Jason Kobel
+ Date:    Summer 2022
+"""
+
 import warnings
 from pyTEM.Interface import Interface
 
@@ -20,7 +25,7 @@ class Adapter():
 
 
     def xy(self, offset_x, offset_y):
-        cx = self.tem.get_stage_position()['x']
+        cx = self.tem.get_stage_position()['Cx']
         cy = self.tem.get_stage_position()['y']
         self.tem.set_stage_position(x = offset_x + cx, y = offset_y + cy)
 
