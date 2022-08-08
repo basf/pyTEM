@@ -371,9 +371,10 @@ Schaffer B, Grogger W, Kothleitner G. Automated spatial drift correction for EFT
 
 # Scripts
 
-```pyTEM``` scripts are stand-alone sequences of ```pyTEM``` commands that perform useful data acquisitions, initialize 
- or return the microscope to some pre-defined state, or achieve some other common task. ```pyTEM``` scripts are 
- distributed with,  and automatically installed alongside, ```pyTEM``` itself.
+```pyTEM``` scripts are sequences of commands that perform useful data acquisitions, initialize 
+ or return the microscope to some pre-defined state, or achieve some other common task. They, often heavily, rely on 
+ the ```pyTEM``` ```Interface``` or other ```pyTEM``` library functions. ```pyTEM``` scripts are distributed with, 
+ and automatically installed alongside, ```pyTEM``` itself.
 
 ```pyTEM``` scripts are run from the command line. For example:
 ```
