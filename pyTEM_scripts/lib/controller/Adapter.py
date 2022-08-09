@@ -25,17 +25,17 @@ class Adapter():
 
 
     def xy(self, offset_x, offset_y):
-        cx = self.tem.get_stage_position()['Cx']
-        cy = self.tem.get_stage_position()['y']
+        cx = self.tem.get_stage_position().get_x()
+        cy = self.tem.get_stage_position().get_y()
         self.tem.set_stage_position(x = offset_x + cx, y = offset_y + cy)
 
 
     def down(self, offset_z_down):
-        cz = self.tem.get_stage_position()['z']
+        cz = self.tem.get_stage_position().get_z()
         self.tem.set_stage_position(z = offset_z_down - cz)
 
     def up(self, offset_z_up):
-        cz = self.tem.get_stage_position()['z']
+        cz = self.tem.get_stage_position().get_z()
         self.tem.set_stage_position(z = offset_z_up + cz)
 
 
