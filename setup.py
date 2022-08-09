@@ -33,6 +33,7 @@ setup(
                       'mrcfile',
                       'pathlib',
                       'Pillow',
+                      'inputs',
                       ],
     entry_points='''
                 [console_scripts]
