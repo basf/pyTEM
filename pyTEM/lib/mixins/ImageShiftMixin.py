@@ -50,7 +50,7 @@ class ImageShiftMixin(ModeMixin):
         :return: [x, y]: 2-element numpy.array:
             The x and y values of the image shift, in micrometres.
         """
-        if self.get_projection_submode() != "SA":
+        if self.get_projection_mode() == "imaging" and self.get_projection_submode() != "SA":
             warnings.warn("Image shift functions only tested for magnifications in SA range (4300 x -> 630 kx Zoom), "
                           "but the current projection submode is " + self._tem.Projection.SubModeString +
                           ". Magnifications in this range may require a different transformation matrix.")
