@@ -309,13 +309,25 @@ class Acquisition:
 
         Image size will change (obviously), but the image datatype should remain the same.
 
+        Metadata's 'PixelSize' property updated to reflect the change.
+
         :return: None. Operation performed inplace.
         """
         data_type = self.image_dtype()
         width, height = np.shape(self.get_image())
         image = Image.fromarray(self.get_image())
-        resized_image = image.resize(size=(int(width / 2), int(height / 2)), resample=Image.BILINEAR)
+
+        new_image_size = (int(width / 2), int(height / 2))
+        resized_image = image.resize(size=new_image_size, resample=Image.BILINEAR)
         self.__image = np.array(resized_image, dtype=data_type)
+
+        # Update metadata to reflect the change -> pixel size is now twice as large.
+        if 'PixelSize' in self.get_metadata().keys():
+            new_pixel_size = (int(2 * self.get_metadata()['PixelSize'][0]),
+                              int(2 * self.get_metadata()['PixelSize'][1]))
+            self.update_metadata_parameter(key='PixelSize', value=new_pixel_size)
+        else:
+            warnings.warn("Image downsampled but metadata not updated.")
 
     def save_as_tif(self, out_file: Union[str, pathlib.Path]) -> None:
         """
@@ -357,8 +369,9 @@ class Acquisition:
                              photometric='minisblack')
             return
 
-        tifffile.imwrite(out_file, data=self.get_image(), metadata=self.get_metadata(), photometric='minisblack',
-                         resolution=(1 / pixel_size_x_in_cm, 1 / pixel_size_y_in_cm, resolution_unit))
+        tifffile.imwrite(out_file, data=self.get_image(), metadata=make_dict_jsonable(self.get_metadata()),
+                         resolution=(1 / pixel_size_x_in_cm, 1 / pixel_size_y_in_cm, resolution_unit),
+                         photometric='minisblack')
 
     def save_as_mrc(self, out_file: Union[str, pathlib.Path]) -> None:
         """
