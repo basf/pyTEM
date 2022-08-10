@@ -63,6 +63,10 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
         If they are not already, the column valve will be opened and the screen retracted. They will be returned to
          the position in which the were found upon completion of the series.
 
+        # TODO: Display a window showing the user a live preview of the images being acquired, a counter (e.g.
+           Performing acquisition x out of y), and a "save & cancel" button which, when pushed, will 1. finish the
+           current acquisition, 2. cancel the remaining acquisitions, and 3. return the partial acquisition series.
+
         :param num: int:
             The number of acquisitions to perform.
         :param camera_name: str:
