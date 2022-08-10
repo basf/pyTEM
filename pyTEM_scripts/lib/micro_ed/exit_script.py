@@ -5,7 +5,9 @@
 
 import sys
 import warnings
+
 from typing import Union
+
 from pyTEM.Interface import Interface
 
 
@@ -19,15 +21,15 @@ def exit_script(microscope: Union[Interface, None], status: int) -> None:
 
     :param status: int:
         Exit status, one of:
-            1: Early exit (script not yet complete)
             0: Success
-            -1: Failure
+            1: Early exit (script not yet complete) / Failure
     """
     if microscope is not None:
         warnings.warn("Returning the microscope to a safe state, zeroing the alpha tilt, "
                       "zeroing the image and beam shifts, and restoring the projection mode to 'imaging'...")
         microscope.make_safe()
+        microscope.set_projection_mode(new_projection_mode="imaging")
         microscope.set_stage_position_alpha(alpha=0)
         microscope.zero_shifts()
-        microscope.set_projection_mode(new_projection_mode="imaging")
+
     sys.exit(status)

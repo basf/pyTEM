@@ -133,6 +133,7 @@ class GetTiltRange:
         style.configure('big.TButton', font=(self.font, self.font_size), foreground="blue4")
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         return float(step.get())
@@ -228,6 +229,7 @@ class GetTiltRange:
                                                         x=int(0.65 * root.winfo_screenwidth()),
                                                         y=int(0.025 * root.winfo_screenheight())))
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         return float(start.get())
@@ -390,6 +392,8 @@ class GetTiltRange:
         root.geometry("{width}x{height}+{x}+{y}".format(width=window_width, height=window_height,
                                                         x=int(0.65 * root.winfo_screenwidth()),
                                                         y=int(0.025 * root.winfo_screenheight())))
+
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         return float(stop.get())
@@ -581,6 +585,7 @@ def get_acquisition_parameters(microscope: Union[Interface, None]) -> Tuple[str,
         style.configure('big.TButton', font=(None, 10), foreground="blue4")
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
         root.mainloop()
 
         try:
@@ -681,8 +686,8 @@ class GetOutFile:
                 file_name_index_label.config(text="")  # We have no index.
             else:
                 # We are saving as multiple single image files, and therefore have more freedom.
-                file_extension_options = ['.mrc', '.tif', '.jpeg', '.png']
-                file_name_index_label.config(text="_<tilt angle>")  # We need to index the files.
+                file_extension_options = ['.tif', '.mrc', '.jpeg', '.png']
+                file_name_index_label.config(text="_<frame #>")  # We need to index the files.
 
             # Update the drop-down menu with the new list of options.
             menu = file_extension_menu["menu"]
@@ -731,7 +736,8 @@ class GetOutFile:
         complete_out_file_label.grid(column=0, row=3, columnspan=4, padx=5, pady=5)
 
         # Add radio buttons for single image stack or multiple single-image files.
-        self.stack_bool_var = tk.BooleanVar(value=True)
+        # TODO: Reset default to single image stack once we can write metadata to MRC.
+        self.stack_bool_var = tk.BooleanVar(value=False)
         stack_bool_var_radio_button1 = ttk.Radiobutton(root, text="Single Image Stack", variable=self.stack_bool_var,
                                                        value=True, style="big.TRadiobutton",
                                                        command=lambda: update_file_extension_options_based_on_stack())
@@ -756,6 +762,7 @@ class GetOutFile:
 
         root.eval('tk::PlaceWindow . center')  # Center the window on the screen.
 
+        root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=self.microscope, status=1))
         root.mainloop()
 
         # Build and return the complete path
@@ -908,6 +915,7 @@ def shift_correction_info(microscope: Union[Interface, None], tilt_start: float,
 
     root.eval('tk::PlaceWindow . center')  # Center the window on the screen
 
+    root.protocol("WM_DELETE_WINDOW", lambda: exit_script(microscope=microscope, status=1))
     root.mainloop()
 
     if use_automated_alignment.get():
@@ -969,7 +977,7 @@ def compute_sample_arr(tilt_start: float, tilt_stop: float, num_correctional_ima
     elif spacing == "exponential":
         # This implementation uses powspace() with an exponent <1 to build an array where the values are spaced
         #  increasingly closer together the farther you get from 0.
-        power = 0.7
+        power = 0.5
         # Because powspace() only allows positive start/stop values, we have to break our interval across 0 and compute
         #  the positive and negative samples separately.
 
@@ -1064,11 +1072,11 @@ if __name__ == "__main__":
     print("Save as stack: " + str(save_as_stack__))
 
     """ Test getting shift correction samples """
-    # use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=35, tilt_stop=-5,
+    # use_shift_corrections, samples__ = shift_correction_info(microscope=scope, tilt_start=-60, tilt_stop=60,
     #                                                          exposure_time=0.25)
     # print("Use shift: " + str(use_shift_corrections))
     # print("Samples: " + str(samples__))
-
+    #
     # samples__ = compute_sample_arr(tilt_start=45, tilt_stop=-30, num_correctional_images=12,
     #                                spacing='exponential', verbose=True)
     # print("\n" + str(samples__))

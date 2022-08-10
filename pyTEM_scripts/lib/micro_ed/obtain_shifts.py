@@ -33,7 +33,7 @@ def obtain_shifts(microscope: Interface,
      while tilting because, depending on the ratio of tilt range to exposure time, this may result in very blurry
      images.
 
-    This function does not compensate for things like backlash and gear hysteresis. # TODO: Compensate for them
+    This function does not compensate for things like backlash and gear hysteresis. # TODO: Compensate for them.
 
     Image shifts are estimated using Hyperspy's estimate_shift2D() function. This function uses a phase correlation
      algorithm based on the following paper:
@@ -157,6 +157,10 @@ def obtain_shifts(microscope: Interface,
                                                    exposure_time=exposure_time, sampling=sampling,
                                                    blanker_optimization=True, tilt_bounds=None,
                                                    shifts=None, alphas=alphas, verbose=verbose)
+
+        # Downsampling helps reduce the pixel distance between images, allowing us to handle more drift. Also, it
+        #  significantly speeds up the shift estimation.
+        acq_series.downsample()
 
         # Compute image shifts from the results of the series acquisition.
         image_stack_arr = acq_series.get_image_stack()
@@ -352,22 +356,21 @@ if __name__ == "__main__":
         print("Unable to connect to microscope, proceeding with None object.")
         scope = None
 
-    start_alpha = -15
-    stop_alpha = 15
-    step_alpha = 2
+    start_alpha = -60
+    stop_alpha = 60
+    num = 11
 
-    exp_time = 0.25
-    sampling_ = '1k'
+    exp_time = 1
+    sampling_ = '0.5k'
 
-    num_alpha = int((stop_alpha - start_alpha) / step_alpha + 1)
-    alpha_arr = np.linspace(start=start_alpha, stop=stop_alpha, num=num_alpha, endpoint=True)
-    middle_alphas = alpha_arr[0:-1] + step_alpha / 2
+    from pyTEM_scripts.lib.micro_ed.user_inputs import compute_sample_arr
+    samples = compute_sample_arr(tilt_start=start_alpha, tilt_stop=stop_alpha, num_correctional_images=num,
+                                 spacing='exponential', verbose=True)
 
-    print("\nWhole alpha array: " + str(alpha_arr))
-    print("\nAlphas at which shifts will be computed: " + str(middle_alphas))
+    print("\nAlphas at which shifts will be computed: " + str(samples))
 
     print("\nObtaining shifts all in one go (not batch-wise)...")
-    obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=middle_alphas, sampling=sampling_,
+    obtain_shifts(microscope=scope, camera_name='BM-Ceta', alphas=samples, sampling=sampling_,
                   exposure_time=exp_time, batch_wise=False, verbose=True)
 
     # print("\nObtaining shifts batch-wise...")

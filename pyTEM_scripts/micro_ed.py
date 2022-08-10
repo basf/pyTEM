@@ -13,10 +13,9 @@ from pyTEM.Interface import Interface
 
 from pyTEM_scripts.lib.micro_ed.exit_script import exit_script
 from pyTEM_scripts.lib.micro_ed.messages import display_welcome_message, display_eucentric_height_message, \
-    display_insert_and_align_sad_aperture_message, display_end_message, display_good_bye_message, \
-    display_initialization_message, have_user_center_particle, display_beam_stop_center_spot_message, \
-    display_second_condenser_message, display_insert_camera_message, display_insert_sad_aperture_message, \
-    display_start_message
+    display_insert_and_align_sad_aperture_message, display_initialization_message, have_user_center_particle, \
+    display_beam_stop_center_spot_message, display_second_condenser_message, display_insert_camera_message, \
+    display_insert_sad_aperture_message, display_start_message, display_goodbye_message
 from pyTEM_scripts.lib.micro_ed.obtain_shifts import obtain_shifts
 from pyTEM_scripts.lib.micro_ed.user_inputs import get_tilt_range, get_acquisition_parameters, get_out_file, \
     shift_correction_info
@@ -79,9 +78,9 @@ class MicroED:
 
         # In order to minimize sample destruction, we want to expose as little as possible. However, during image shift
         #  calibration, we need to expose for long enough that we get usable images.
-        # TODO: Find the lowest exposure time that still allows for reliable calibration
-        shift_calibration_exposure_time = 0.25  # seconds
-        shift_calibration_sampling = '1k'  # Lower resolution is faster but less precise
+        shift_calibration_exposure_time = 0.5  # Seconds.
+        # Lower calibration sampling is faster and allows us to handle more drift - however is less precise.
+        shift_calibration_sampling = '0.5k'
 
         try:
             # Display welcome and initialization messages
@@ -125,6 +124,7 @@ class MicroED:
             self.microscope.blank_beam()
 
             # The user is done making their adjustments, we can now retract the screen.
+            # This is required to reduce screen retraction/insertion while setting the tilt range.
             self.microscope.retract_screen()
 
             # Get the required acquisition parameters.
@@ -175,11 +175,11 @@ class MicroED:
             display_insert_sad_aperture_message(microscope=self.microscope)
 
             # Switch to diffraction mode.
+            self.microscope.insert_screen()  # Just here to reduce screen insertion/retractions.
             self.microscope.set_projection_mode("diffraction")
 
             # If required, have the user insert the beam stop.
             # Additionally, this message will have the user center the diffraction spot.
-            self.microscope.insert_screen()
             self.microscope.unblank_beam()
             display_beam_stop_center_spot_message(microscope=self.microscope)
             self.microscope.retract_screen()
@@ -218,19 +218,16 @@ class MicroED:
                 if verbose:
                     print("Saving the results to file as " + str(acq_stack.length()) + " single-image files.")
                 file_name_base, file_extension = os.path.splitext(out_file)
+
                 for i, acq in enumerate(acq_stack):
-                    this_image_out_file = file_name_base + "_" + str(round(alphas[i], 1)) + file_extension
+                    this_image_out_file = file_name_base + "_" + str(i + 1) + file_extension
+                    # this_image_out_file = file_name_base + "_" + str(round(alphas[i], 1)) + file_extension
                     if verbose:
                         print("  Saving image #" + str(i + 1) + " to file as: " + this_image_out_file)
                     acq.save_to_file(out_file=this_image_out_file, extension=file_extension)
 
-            # The acquisition is now complete, inform the user.
-            display_end_message(microscope=self.microscope, out_file=out_file, saved_as_stack=save_as_stack)
-
-            # Give thanks to the user, and direct them to report issues on GitHub.
-            display_good_bye_message(microscope=self.microscope)
-
-            exit_script(microscope=self.microscope, status=0)
+            # The acquisition is now complete, time to say goodbye.
+            display_goodbye_message(microscope=self.microscope, out_file=out_file, saved_as_stack=save_as_stack)
 
         except KeyboardInterrupt:
             warnings.warn("Keyboard interrupt detected...")
