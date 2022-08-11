@@ -29,7 +29,7 @@ In addition to the main scripting interface, pyTEM ships with various [scripts](
  have any questions about the ```pyTEM``` project or would like to contribute or collaborate, please contact Philipp 
  Müller at [philipp.mueller@basf.com](mailto:philipp.mueller@basf.com).
 
-Issues should be reported to the issues board [here](https://github.com/mrl280/pyTEM/issues).
+Issues should be reported to the issues board [here](https://github.com/basf/pyTEM/issues).
 
 # Interface
 
@@ -478,7 +478,7 @@ Baltimore, Maryland, USA
 
 - Figured out how to interface with and control the microscope from a pure Python environment.
 - developed ```TEMPackage```, the predecessor to ```pyTEM```. View the project as it existed at the time of Meagan's 
- final commit [here](https://github.com/mrl280/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
+ final commit [here](https://github.com/basf/pyTEM/tree/a91f30e11cc648c47cd2d977442754d2cda1e31c).
 - Developed ```microED_Tilt_Series```, the predecessor to ```pyTEM```'s ```micro_ed``` script. View the project on 
  GitLab [here](https://gitlab.roqs.basf.net/raa-os-apps/xem/microed-tem-python-script).
 - Wrote the original TEM Scripting Guide, which can be found in [/docs](/docs).
@@ -496,4 +496,4 @@ Saskatoon, Saskatchewan, Canada
 - Developed the [```align_images```](#align_images) script and did some initial work on the [```bulk_carbon_analysis```](#bulk_carbon_analysis) script.
 
 You can view the ```pyTEM``` project as it existed at the time of Michael's final commit 
- [here](https://github.com/mrl280/pyTEM). # TODO: Update after Michael leaves
+ [here](https://github.com/basf/pyTEM/tree/c0c19a4c8bc481adb15af3e491dd494d15b46ee7).

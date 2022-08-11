@@ -59,7 +59,7 @@ def display_goodbye_message(anisotropy_out_path: Union[pathlib.Path, str],
     thanks_message_label = ttk.Label(root, text="Thank you for using pyTEM, please report any issues on GitHub:",
                                      wraplength=max_window_width, font=(None, 15), justify='center')
     thanks_message_label.grid(column=0, row=5, padx=5, pady=(5, 0))
-    github_issues_label = ttk.Label(root, text="https://github.com/mrl280/pyTEM/issues", wraplength=max_window_width,
+    github_issues_label = ttk.Label(root, text="https://github.com/basf/pyTEM/issues", wraplength=max_window_width,
                                     font=(None, 15, 'bold'), justify='center')
     github_issues_label.grid(column=0, row=6, padx=5, pady=(0, 5))
 

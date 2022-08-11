@@ -52,7 +52,7 @@ def display_goodbye_message(out_path: Union[pathlib.Path, str]):
     upper_message_label.grid(column=0, row=2, padx=5, pady=(5, 0))
 
     # Display the link to the GitHub issues board.
-    github_issues_label = ttk.Label(root, text="https://github.com/mrl280/pyTEM/issues", wraplength=window_width,
+    github_issues_label = ttk.Label(root, text="https://github.com/basf/pyTEM/issues", wraplength=window_width,
                                     font=(None, 15, 'bold'), justify='center')
     github_issues_label.grid(column=0, row=3, padx=5, pady=(0, 5))
 
