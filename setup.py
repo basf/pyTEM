@@ -14,7 +14,7 @@ setup(
     version='0.1.0',
     description='Control and Automation of Transmission Electron Microscopes',
     long_description=long_description,
-    url='https://github.com/mrl280/pyTEM',
+    url='https://github.com/basf/pyTEM/',
     author='BASF TEM Laboratory',
     author_email='philipp.mueller@basf.com',
     keywords=['transmission electron microscopy', 'TEM', 'microscopy', 'electron microscopy',

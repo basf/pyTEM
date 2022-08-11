@@ -624,7 +624,7 @@ def display_goodbye_message(microscope: Union[Interface, None], out_file: str, s
     message2_label.grid(column=0, row=2, padx=5, pady=(5, 0))
 
     # Display the GitHub link.
-    github_link_label = ttk.Label(root, text="https://github.com/mrl280/pyTEM/issues", wraplength=window_width,
+    github_link_label = ttk.Label(root, text="https://github.com/basf/pyTEM/issues", wraplength=window_width,
                                   font=(None, 15, 'bold'), justify='center')
     github_link_label.grid(column=0, row=3, padx=5, pady=(0, 10))
 
