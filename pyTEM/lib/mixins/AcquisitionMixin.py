@@ -26,6 +26,7 @@ from pyTEM.lib.AcquisitionSeries import AcquisitionSeries
 from pyTEM.lib.Acquisition import Acquisition
 from pyTEM.lib.blanker_control import blanker_control
 from pyTEM.lib.tilt_control import tilt_control
+from pyTEM.lib.AcquisitionSeriesGUI import AcquisitionSeriesGUI
 
 
 class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image shifts
@@ -223,6 +224,19 @@ class AcquisitionMixin(ImageShiftMixin,     # So we can apply compensatory image
                 print("Starting the tilt process...")
 
             tilt_process.start()
+
+
+
+
+
+
+        # TODO: Implement acquisition series GUI
+        acq_series_gui = AcquisitionSeriesGUI(microscope=self, num=num, exposure_time=exposure_time)
+
+
+
+
+
 
         acq_series = AcquisitionSeries()
         for i in range(num):
