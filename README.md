@@ -22,6 +22,8 @@ In addition to the main scripting interface, pyTEM ships with various [scripts](
  in-and-of-themselves, these scripts demonstrate how to interface with and control the microscopes using ```pyTEM```. 
  A list of available scripts can be found [below](#scripts). These scripts are included as part of pyTEM for the sake 
  of consolidating the TEM Laboratory's scripting efforts.
+ 
+Supported Python versions: [3.8](https://www.python.org/downloads/release/python-380/).
 
 # Contribution & Contact Info
 
